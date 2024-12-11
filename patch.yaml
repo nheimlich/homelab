@@ -1,0 +1,75 @@
+debug: false
+machine:
+  features:
+    kubePrism:
+      enabled: false
+    hostDNS:
+      enabled: true
+      resolveMemberNames: false
+      forwardKubeDNSToHost: false
+  network:
+    hostname: talos.nhlabs.local
+    nameservers:
+        - 1.1.1.1
+        - 8.8.8.8
+        - 10.96.0.10
+    extraHostEntries:
+        - ip: 10.96.0.1
+          aliases:
+            - kubernetes.default.svc
+  certSANs:
+    - talos.nhlabs.local
+  install:
+    disk: /dev/nvme0n1
+    wipe: true
+  systemDiskEncryption:
+    ephemeral:
+      provider: luks2
+      keys:
+        - slot: 0
+          tpm: {}
+    state:
+      provider: luks2
+      keys:
+        - slot: 0
+          tpm: {}
+  kubelet:
+    extraArgs:
+      rotate-server-certificates: true
+    extraMounts:
+      - destination: /var/local-path-provisioner
+        type: bind
+        source: /var/local-path-provisioner
+        options:
+          - bind
+          - rshared
+          - rw
+cluster:
+  extraManifests:
+    - https://raw.githubusercontent.com/alex1989hu/kubelet-serving-cert-approver/main/deploy/standalone-install.yaml
+    - https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
+    - https://github.com/nheimlich/talos.nhlabs.org/releases/download/v0.0.2/local-storage-provisioner.yaml
+    - https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/v1.1.0/config/crd/standard/gateway.networking.k8s.io_gatewayclasses.yaml
+    - https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/v1.1.0/config/crd/standard/gateway.networking.k8s.io_gateways.yaml
+    - https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/v1.1.0/config/crd/standard/gateway.networking.k8s.io_httproutes.yaml
+    - https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/v1.1.0/config/crd/standard/gateway.networking.k8s.io_referencegrants.yaml
+    - https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/v1.1.0/config/crd/standard/gateway.networking.k8s.io_grpcroutes.yaml
+    - https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/v1.1.0/config/crd/experimental/gateway.networking.k8s.io_tlsroutes.yaml
+
+  allowSchedulingOnControlPlanes: true
+  network:
+    cni:
+      name: custom
+      urls:
+        - https://github.com/nheimlich/talos.nhlabs.org/releases/download/v0.0.1/cilium.yaml
+  proxy:
+    disabled: true
+
+  apiServer:
+    admissionControl:
+        - name: PodSecurity
+          configuration:
+            apiVersion: pod-security.admission.config.k8s.io/v1alpha1
+            defaults:
+                enforce: privileged
+                enforce-version: latest
