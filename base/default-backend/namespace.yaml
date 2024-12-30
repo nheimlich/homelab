@@ -1,0 +1,7 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: default-backend
+  labels:
+    shared-gateway-access: "true"

@@ -1,0 +1,21 @@
+---
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: letsencrypt-production
+spec:
+  acme:
+    server: https://acme-v02.api.letsencrypt.org/directory
+    email: nolan.heimlich@gmail.com
+    privateKeySecretRef:
+      name: letsencrypt-production
+    solvers:
+    - dns01:
+        cloudflare:
+          email: nolan.heimlich@gmail.com
+          apiTokenSecretRef:
+            name: cloudflare-secret
+            key: apikey
+      selector:
+        dnsZones:
+        - '*.nhlabs.org'

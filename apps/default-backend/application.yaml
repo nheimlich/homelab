@@ -1,0 +1,15 @@
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: default-backend
+  namespace: argocd
+spec:
+  destination:
+    namespace: default-backend
+    server: https://kubernetes.default.svc
+  project: default
+  source:
+    path: base/default-backend
+    repoURL: https://github.com/nheimlich/k8s.nhlabs.org
+    targetRevision: HEAD

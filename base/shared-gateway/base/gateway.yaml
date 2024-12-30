@@ -1,0 +1,25 @@
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: shared-gateway
+spec:
+  gatewayClassName: cilium
+  listeners:
+  - name: https
+    hostname: "*.nhlabs.org"
+    protocol: HTTP
+    port: 443
+    allowedRoutes:
+      namespaces:
+        from: Selector
+        selector:
+          matchLabels:
+            shared-gateway-access: "true"
+  - name: http
+    hostname: "*.nhlabs.org"
+    protocol: HTTP
+    port: 80
+    allowedRoutes:
+      namespaces:
+        from: Same

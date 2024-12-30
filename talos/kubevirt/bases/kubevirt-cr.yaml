@@ -1,0 +1,25 @@
+---
+apiVersion: kubevirt.io/v1
+kind: KubeVirt
+metadata:
+  name: kubevirt
+  namespace: kubevirt
+spec:
+  certificateRotateStrategy: {}
+  configuration:
+    smbios:
+      sku: "TalosCloud"
+      version: "v0.1.0"
+      manufacturer: "Talos Virtualization"
+      product: "talosvm"
+      family: "ccio"
+    developerConfiguration:
+      featureGates: []
+  customizeComponents:
+    patches:
+    - resourceType: Deployment
+      resourceName: virt-controller
+      patch: '[{"op": "replace", "path": "/spec/replicas", "value": 1}]'
+      type: json
+  imagePullPolicy: IfNotPresent
+  workloadUpdateStrategy: {}

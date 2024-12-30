@@ -1,0 +1,15 @@
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: shared-gateway
+  namespace: argocd
+spec:
+  destination:
+    namespace: shared-gateway
+    server: https://kubernetes.default.svc
+  project: default
+  source:
+    path: base/shared-gateway
+    repoURL: https://github.com/nheimlich/k8s.nhlabs.org
+    targetRevision: HEAD
