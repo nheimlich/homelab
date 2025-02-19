@@ -12,10 +12,8 @@ spec:
     server: https://kubernetes.default.svc
   project: default
   source:
-    path: overlays/production
+    path: applications/
     repoURL: https://github.com/nheimlich/homelab
     targetRevision: baseline-prod-cluster
     directory:
       recurse: true
-    kustomize:
-      enableHelm: true
