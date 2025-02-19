@@ -17,3 +17,5 @@ spec:
     targetRevision: baseline-prod-cluster
     directory:
       recurse: true
+    kustomize:
+      enableHelm: true
