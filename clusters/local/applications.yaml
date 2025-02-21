@@ -12,8 +12,8 @@ spec:
     server: https://kubernetes.default.svc
   project: default
   source:
-    path: overlays/standalone
-    repoURL: https://github.com/nheimlich/k8s.nhlabs.org
+    path: overlays/local
+    repoURL: https://github.com/nheimlich/homelab
     targetRevision: HEAD
     directory:
       recurse: true
