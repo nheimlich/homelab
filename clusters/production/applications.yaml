@@ -9,7 +9,7 @@ spec:
   goTemplateOptions: ["missingkey=error"]
   generators:
     - git:
-        repoURL: https://github.com/argoproj/argo-cd.git
+        repoURL: https://github.com/nheimlich/homelab
         revision: init-cluster-prod
         directories:
           - path: overlays/production/*
