@@ -10,7 +10,7 @@ spec:
   generators:
     - git:
         repoURL: https://github.com/nheimlich/homelab
-        revision: init-cluster-prod
+        revision: HEAD
         directories:
           - path: overlays/production/*
   template:
@@ -20,8 +20,14 @@ spec:
       project: "default"
       source:
         repoURL: https://github.com/nheimlich/homelab
-        targetRevision: init-cluster-prod
+        targetRevision: HEAD
         path: '{{.path.path}}'
       destination:
         server: https://kubernetes.default.svc
         namespace: argocd
+      syncPolicy:
+        automated:
+          prune: true
+          allowEmpty: true
+          selfHeal: true
+
