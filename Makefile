@@ -1,8 +1,8 @@
-.PHONY: all check clean setup generate bootstrap install help
+.PHONY: all check clean setup generate bootstrap help
 .DEFAULT_GOAL := help
 
 
-all: check clean setup generate bootstrap install clean
+all: check clean setup generate bootstrap clean
 
 help:
 	# check: Validate all tools are installed
@@ -10,7 +10,6 @@ help:
 	# setup: Setup the environment
 	# generate: Generate config patches
 	# bootstrap: Bootstrap the system
-	# install: Post install steps
 	# reset: Reset all nodes
 	# all: Run all steps in the correct order
 	# help: Show this help message
@@ -21,17 +20,14 @@ check:
 clean:
 	@./scripts/common.sh clean
 
-setup:
-	@./scripts/setup.sh
-
 generate:
 	@./scripts/generate.sh
 
+setup:
+	@./scripts/setup.sh
+
 bootstrap:
 	@./scripts/bootstrap.sh
-
-install:
-	@./scripts/install.sh
 
 reset:
 	@./scripts/reset.sh
