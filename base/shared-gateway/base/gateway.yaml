@@ -10,7 +10,7 @@ spec:
   listeners:
   - name: https
     hostname: "*.nhlabs.org"
-    protocol: HTTP
+    protocol: HTTPS
     port: 443
     allowedRoutes:
       namespaces:
@@ -20,8 +20,8 @@ spec:
             shared-gateway-access: "true"
     tls:
       mode: Terminate
-      certificateRef:
-        name: nhlabs-org-tls
+      certificateRefs:
+      - name: nhlabs-org-tls
   - name: http
     hostname: "*.nhlabs.org"
     protocol: HTTP
