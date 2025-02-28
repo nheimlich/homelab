@@ -5,9 +5,8 @@
 /scripts
   ├── common.sh      # Shared functions
   ├── config.sh      # Configuration variables
-  ├── setup.sh       # Pre-setup logic
+  ├── setup.sh       # Dynamic host lookup
   ├── generate.sh    # Configuration generation
   ├── bootstrap.sh   # Bootstrap logic
-  ├── install.sh     # Post-installation bootstrap
   ├── reset.sh       # Reset nodes
 ```

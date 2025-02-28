@@ -1,45 +1,33 @@
 #!/usr/bin/env bash
-#generate.sh
 set -euo pipefail
-
-# Source config if it exists, otherwise exit
 CONFIG_FILE="$(dirname "$0")/config.sh"
-
-if [[ -f "${CONFIG_FILE}" ]]; then
-    source "${CONFIG_FILE}"
+if [[ -f $CONFIG_FILE ]]; then
+	source "$CONFIG_FILE"
 else
-    echo "Error: Missing ${CONFIG_FILE}" >&2
-    exit 1
+	echo "Error: Missing $CONFIG_FILE" >&2
+	exit 1
 fi
 
-# Ensure required variables are set
 : "${stat_data:?Error: stat_data is not set}"
 : "${network:?Error: network is not set}"
 : "${install_disk:?Error: install_disk is not set}"
 : "${image:?Error: image is not set}"
 : "${lbvip:?Error: lbvip is not set}"
-
-# Pre-setup 1Password Connect server and retrieve secrets
 OP_TOKEN=$(op document get "op.nhlabs.org-token")
 OP_DOCUMENT=$(op document get "op.nhlabs.org-credentials" | base64)
 op document get "Talos Secrets" -o secrets.yaml --force >/dev/null 2>&1
-
 : "${OP_TOKEN:?Error: OP_TOKEN is not set}"
 : "${OP_DOCUMENT:?Error: OP_DOCUMENT is not set}"
 
-# Generate configuration patches for Talos
 generate_configs() {
-    mkdir -p configs/patches
-
-    talosctl gen config k8s.nhlabs.local --with-secrets secrets.yaml https://"${network}${lbvip}":6443 --force --additional-sans \
-      "${network}"111,"${network}"112,"${network}"113,sol,clu,ion,sol.nhlabs.local,clu.nhlabs.local,ion.nhlabs.local --with-docs=false -p \
-      --install-image "${image}" --output-types controlplane -o controlplane.yaml
-
-    for pair in "${stat_data[@]}"; do
-        IFS=":" read -r n i <<< "$pair"
-        echo "Generating patch for $n (IP: ${network}${i})..."
-
-        cat <<EOF > configs/patches/"${n}".patch
+	mkdir -p configs/patches
+	talosctl gen config k8s.nhlabs.local --with-secrets secrets.yaml https://"$network$lbvip":6443 --force --additional-sans \
+		"$network"111,"$network"112,"$network"113,sol,clu,ion,sol.nhlabs.local,clu.nhlabs.local,ion.nhlabs.local --with-docs=false -p \
+		--install-image "$image" --output-types controlplane -o controlplane.yaml
+	for pair in "${stat_data[@]}"; do
+		IFS=":" read -r n i <<<"$pair"
+		echo "Generating patch for $n (IP: $network$i)..."
+		cat <<EOF >configs/patches/"$n".patch
 debug: false
 machine:
   kubelet:
@@ -63,23 +51,23 @@ machine:
           tpm: {}
 
   install:
-      disk: "${install_disk}"
-      image: "${image}"
+      disk: "$install_disk"
+      image: "$image"
       wipe: true
 
   nodeLabels:
     \$patch: delete
 
   network:
-    hostname: "${n}"
+    hostname: "$n"
     interfaces:
       - deviceSelector:
           physical: true
         dhcp: false
         vip:
-          ip: "${network}${lbvip}"
+          ip: "$network$lbvip"
         addresses:
-          - "${network}${i}/24"
+          - "$network$i/24"
         routes:
           - network: 0.0.0.0/0
             gateway: "${network}1"
@@ -107,7 +95,7 @@ cluster:
   allowSchedulingOnControlPlanes: true
 
   inlineManifests:
-    - name: secrets-bootstrap
+    - name: cluster-bootstrap
       contents: |-
         ---
         apiVersion: v1
@@ -123,7 +111,7 @@ cluster:
         type: Opaque
         stringData:
           1password-credentials.json: |-
-            ${OP_DOCUMENT}
+            $OP_DOCUMENT
         ---
         apiVersion: v1
         kind: Secret
@@ -132,44 +120,35 @@ cluster:
           namespace: connect
         type: Opaque
         stringData:
-          token: ${OP_TOKEN}
-    - name: cilium-install
-      contents: |
+          token: $OP_TOKEN
         ---
         apiVersion: rbac.authorization.k8s.io/v1
         kind: ClusterRoleBinding
         metadata:
-          name: cilium-install
+          name: bootstrap-admin
         roleRef:
           apiGroup: rbac.authorization.k8s.io
           kind: ClusterRole
           name: cluster-admin
         subjects:
         - kind: ServiceAccount
-          name: cilium-install
-          namespace: kube-system
-        ---
-        apiVersion: v1
-        kind: ServiceAccount
-        metadata:
-          name: cilium-install
+          name: default
           namespace: kube-system
         ---
         apiVersion: batch/v1
         kind: Job
         metadata:
-          name: cilium-install
+          name: bootstrap-install
           namespace: kube-system
         spec:
           backoffLimit: 10
           template:
             metadata:
               labels:
-                app: cilium-install
+                app: bootstrap-install
             spec:
               restartPolicy: OnFailure
               tolerations:
-                - operator: Exists
                 - effect: NoSchedule
                   operator: Exists
                 - effect: NoExecute
@@ -192,43 +171,48 @@ cluster:
                       - matchExpressions:
                           - key: node-role.kubernetes.io/control-plane
                             operator: Exists
-              serviceAccount: cilium-install
-              serviceAccountName: cilium-install
+              serviceAccount: default
+              serviceAccountName: default
               hostNetwork: true
               containers:
-              - name: cilium-install
-                image: quay.io/cilium/cilium-cli-ci:latest
+              - name: bootstrap-install
+                image: alpine
                 env:
                 - name: KUBERNETES_SERVICE_HOST
-                  valueFrom:
-                    fieldRef:
-                      apiVersion: v1
-                      fieldPath: status.podIP
+                  value: "localhost"
                 - name: KUBERNETES_SERVICE_PORT
-                  value: "6443"
+                  value: "7445"
                 command:
-                  - cilium
-                  - install
-                  - --set
-                  - ipam.mode=kubernetes
-                  - --set
-                  - kubeProxyReplacement=true
-                  - --set
-                  - securityContext.capabilities.ciliumAgent={CHOWN,KILL,NET_ADMIN,NET_RAW,IPC_LOCK,SYS_ADMIN,SYS_RESOURCE,DAC_OVERRIDE,FOWNER,SETGID,SETUID}
-                  - --set
-                  - securityContext.capabilities.cleanCiliumState={NET_ADMIN,SYS_ADMIN,SYS_RESOURCE}
-                  - --set
-                  - cgroup.autoMount.enabled=false
-                  - --set
-                  - cgroup.hostRoot=/sys/fs/cgroup
-                  - --set
-                  - k8sServiceHost=localhost
-                  - --set
-                  - k8sServicePort=7445
-EOF
-    echo "Creating config for ${n} (${network}${i})..."
-    talosctl machineconfig patch controlplane.yaml --patch @configs/patches/"${n}".patch --output configs/"${n}".yaml
-done
-}
+                  - "/bin/sh"
+                  - "-c"
+                  - |
+                    echo "Updating APK and installing dependencies..."
+                    apk update && apk add --no-cache kubectl kustomize helm git
 
+                    echo "Cloning repository..."
+                    git clone -b main --single-branch https://github.com/nheimlich/homelab.git /repo
+                    cd /repo/overlays/production
+
+                    echo "Applying Cilium manifests..."
+                    kubectl apply -f <(kustomize build --enable-helm cilium)
+
+                    echo "Applying Connect manifests..."
+                    kubectl apply -f <(kustomize build connect)
+
+                    echo "Applying ArgoCD manifests..."
+                    kubectl apply -f <(kustomize build argocd)
+
+                    cd /repo
+
+                    kubectl apply -f clusters/production/applications.yaml
+
+                    echo "Deleting bootstrap-admin ClusterRoleBinding..."
+                    kubectl delete clusterrolebinding bootstrap-admin || true
+
+                    echo "Bootstrap complete!"
+EOF
+		echo "Creating config for $n ($network$i)..."
+		talosctl machineconfig patch controlplane.yaml --patch @configs/patches/"$n".patch --output configs/"$n".yaml
+	done
+}
 generate_configs
