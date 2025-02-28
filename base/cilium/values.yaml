@@ -14,6 +14,13 @@ cgroup:
 ipam:
   mode: kubernetes
 
+l2announcements:
+  enabled: true
+
+k8sClientRateLimit:
+  qps: 100
+  burst: 200
+
 gatewayAPI:
   enabled: true
 
