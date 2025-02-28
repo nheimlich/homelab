@@ -1,0 +1,17 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app.kubernetes.io/instance: default-backend
+  name: nginx-service-lb
+  namespace: default-backend
+spec:
+  type: LoadBalancer
+  ipFamilies:
+  - IPv4
+  ipFamilyPolicy: SingleStack
+  ports:
+  - port: 80
+  selector:
+    app: nginx
