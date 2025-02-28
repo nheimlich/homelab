@@ -12,3 +12,7 @@ helmCharts:
   skipHooks: true
   skipTests: true
   valuesFile: values.yaml
+
+resources:
+  - policy.yaml
+  - ippool.yaml
