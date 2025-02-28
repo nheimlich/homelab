@@ -17,3 +17,6 @@ helmCharts:
       enableGatewayAPI: true
     crds:
       enabled: true
+
+resources:
+  - namespace.yaml
