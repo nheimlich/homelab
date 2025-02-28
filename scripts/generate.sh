@@ -142,6 +142,7 @@ cluster:
           namespace: kube-system
         spec:
           backoffLimit: 10
+          ttlSecondsAfterFinished: 100
           template:
             metadata:
               labels:
