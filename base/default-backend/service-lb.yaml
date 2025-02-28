@@ -3,7 +3,7 @@ apiVersion: v1
 kind: Service
 metadata:
   labels:
-    cilium-lb: true
+    cilium-lb: "true"
     app.kubernetes.io/instance: default-backend
   name: nginx-service-lb
   namespace: default-backend
