@@ -32,16 +32,16 @@
 
 - creating configuration
 ```sh
-talosctl gen config talos.nhlabs.org https://10.0.0.5:6443 --install-image=factory.talos.dev/installer-secureboot/376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba:v1.8.0 --config-patch @talos/patch.yaml --force
+talosctl gen config talos.nhlabs.org https://<host-ip>:6443 --install-image=factory.talos.dev/installer-secureboot/376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba:v1.8.0 --config-patch @talos/patch.yaml --force
 ```
 - bootstrap cluster
 
 ```sh
-talosctl -n 10.0.0.5 -e 10.0.0.5 bootstrap --talosconfig talosconfig
+talosctl -n <host-ip> -e <host-ip>  bootstrap --talosconfig talosconfig
 ```
 - upgrade cluster
 ```sh
-talosctl upgrade --preserve -n 10.0.0.5 -e 10.0.0.5 --talosconfig=talosconfig --image factory.talos.dev/installer-secureboot/376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba:v1.8.3
+talosctl upgrade --preserve -n <host-ip> -e <host-ip> --talosconfig=talosconfig --image factory.talos.dev/installer-secureboot/376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba:v1.8.3
 ```
 **custom manifests for bootstraping**
 ```sh
@@ -53,3 +53,9 @@ kustomize build . > local-storage-provisioner.yaml
 pwd: ~/talos/cilium
 helm template cilium cilium/cilium -f cilium-config.yaml > cilium.yaml
 ```
+
+### OnePass Base Configuration
+```sh
+echo "<mac-addr>" | op document create --vault kubernetes --title "<host>-macaddr" -
+```
+
