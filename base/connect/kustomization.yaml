@@ -11,3 +11,6 @@ helmCharts:
   includeCRDs: true
   skipHooks: true
   skipTests: true
+  valuesInline:
+    operator:
+      create: true
