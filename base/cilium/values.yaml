@@ -27,9 +27,6 @@ k8sClientRateLimit:
 gatewayAPI:
   enabled: true
 
-ipam:
-  multiPoolPreAllocation: "prod=8"
-
 kubeProxyReplacement: true
 
 securityContext:
