@@ -4,4 +4,15 @@ kind: Kustomization
 namespace: cert-manager
 
 resources:
-  - https://github.com/cert-manager/cert-manager/releases/download/v1.17.0/cert-manager.yaml
+- namespace.yaml
+
+helmCharts:
+- name: cert-manager
+  namespace: cert-manager
+  releaseName: cert-manager
+  version: 1.17.1
+  repo: https://charts.jetstack.io
+  includeCRDs: true
+  skipHooks: true
+  skipTests: true
+  valuesFile: values.yaml
