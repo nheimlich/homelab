@@ -9,3 +9,4 @@ resources:
 - http_redirect.yaml
 - service-account.yaml
 - service.yaml
+- service-lb.yaml

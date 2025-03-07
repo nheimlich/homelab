@@ -14,8 +14,21 @@ cgroup:
 ipam:
   mode: kubernetes
 
+l2announcements:
+  enabled: true
+  leaseDuration: 3s
+  leaseRenewDeadline: 1s
+  leaseRetryPeriod: 200ms
+
+k8sClientRateLimit:
+  qps: 100
+  burst: 200
+
 gatewayAPI:
   enabled: true
+
+ipam:
+  multiPoolPreAllocation: "prod=8"
 
 kubeProxyReplacement: true
 

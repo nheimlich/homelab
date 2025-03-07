@@ -5,6 +5,20 @@ metadata:
   name: argocd-cm
 data:
   kustomize.buildOptions: --enable-helm
+  resource.exclusions: |
+    - apiGroups:
+      - cilium.io
+      kinds:
+      - CiliumIdentity
+      clusters:
+      - "*"
+  resource.customizations.ignoreDifferences: |
+    v1/Secret:
+      jsonPointers:
+        - /metadata/labels/app.kubernetes.io~1instance
+    v1/ConfigMap:
+      jsonPointers:
+        - /data/ipam-multi-pool-pre-allocation
   statusbadge.enabled: 'true'
   url: https://cd.nhlabs.org
   users.anonymous.enabled: 'true'

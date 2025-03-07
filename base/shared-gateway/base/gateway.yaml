@@ -3,12 +3,14 @@ apiVersion: gateway.networking.k8s.io/v1
 kind: Gateway
 metadata:
   name: shared-gateway
+  annotations:
+    cert-manager.io/issuer: letsencrypt-production
 spec:
   gatewayClassName: cilium
   listeners:
   - name: https
     hostname: "*.nhlabs.org"
-    protocol: HTTP
+    protocol: HTTPS
     port: 443
     allowedRoutes:
       namespaces:
@@ -16,6 +18,10 @@ spec:
         selector:
           matchLabels:
             shared-gateway-access: "true"
+    tls:
+      mode: Terminate
+      certificateRefs:
+      - name: nhlabs-org-tls
   - name: http
     hostname: "*.nhlabs.org"
     protocol: HTTP

@@ -1,4 +1,4 @@
-.PHONY: all check clean setup generate bootstrap help
+.PHONY: all check clean setup generate bootstrap shutdown help
 .DEFAULT_GOAL := help
 
 
@@ -11,6 +11,7 @@ help:
 	# generate: Generate config patches
 	# bootstrap: Bootstrap the system
 	# reset: Reset all nodes
+	# shutdown: Shutdown all nodes
 	# all: Run all steps in the correct order
 	# help: Show this help message
 
@@ -31,3 +32,6 @@ bootstrap:
 
 reset:
 	@./scripts/reset.sh
+
+shutdown:
+	@talosctl shutdown -n 10.0.0.111,10.0.0.112,10.0.0.113 -e 10.0.0.115 --wait=false

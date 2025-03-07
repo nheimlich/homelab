@@ -1,0 +1,8 @@
+apiVersion: onepassword.com/v1
+kind: OnePasswordItem
+metadata:
+  name: argocd-auth
+  labels:
+    app.kubernetes.io/part-of: argocd
+spec:
+  itemPath: "vaults/kubernetes/items/argocd"
