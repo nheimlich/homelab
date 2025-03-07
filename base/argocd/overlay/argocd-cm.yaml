@@ -5,7 +5,14 @@ metadata:
   name: argocd-cm
 data:
   kustomize.buildOptions: --enable-helm
-#  statusbadge.enabled: 'true'
+  resource.exclusions: |
+    - apiGroups:
+      - cilium.io
+      kinds:
+      - CiliumIdentity
+      clusters:
+      - "*"
+  statusbadge.enabled: 'true'
 #  url: https://cd.nhlabs.org
 #  users.anonymous.enabled: 'true'
 #  admin.enabled: 'false'
