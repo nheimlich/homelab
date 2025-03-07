@@ -13,16 +13,16 @@ data:
       clusters:
       - "*"
   statusbadge.enabled: 'true'
-#  url: https://cd.nhlabs.org
-#  users.anonymous.enabled: 'true'
-#  admin.enabled: 'false'
-#  dex.config: |
-#    connectors:
-#    - type: github
-#      id: github
-#      name: GitHub
-#      config:
-#        clientID: $argocd-auth:dex.github.clientID
-#        clientSecret: $argocd-auth:dex.github.clientSecret
-#        orgs:
-#        - name: nhlabs-sso
+  url: https://cd.nhlabs.org
+  users.anonymous.enabled: 'true'
+  admin.enabled: 'false'
+  dex.config: |
+    connectors:
+    - type: github
+      id: github
+      name: GitHub
+      config:
+        clientID: $argocd-auth:dex.github.clientID
+        clientSecret: $argocd-auth:dex.github.clientSecret
+        orgs:
+        - name: nhlabs-sso
