@@ -5,6 +5,7 @@ namespace: shared-gateway
 
 resources:
 - base/namespace.yaml
-- base/gateway.yaml
 - base/cloudflare-secret.yaml
+- base/gateway.yaml
 - base/issuer-le-stage.yaml
+- base/issuer-le-prod.yaml
