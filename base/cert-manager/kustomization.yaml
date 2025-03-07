@@ -12,5 +12,5 @@ helmCharts:
   repo: https://charts.jetstack.io
   includeCRDs: true
   skipHooks: false
-  skipTests: false
+  skipTests: true
   valuesFile: values.yaml
