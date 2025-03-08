@@ -3,3 +3,4 @@ kind: Kustomization
 
 resources:
   - https://github.com/kubevirt/kubevirt/releases/download/v1.4.0/kubevirt-operator.yaml
+  - kubevirt-cr.yaml
