@@ -80,11 +80,6 @@ cluster:
   proxy:
     disabled: true
 
-  extraManifests:
-  - https://raw.githubusercontent.com/alex1989hu/kubelet-serving-cert-approver/main/deploy/standalone-install.yaml
-  - https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
-  - https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.2.0/standard-install.yaml
-
   apiServer:
     admissionControl:
       - name: PodSecurity
@@ -142,7 +137,7 @@ cluster:
           namespace: kube-system
         spec:
           backoffLimit: 10
-          ttlSecondsAfterFinished: 100
+          ttlSecondsAfterFinished: 1000
           template:
             metadata:
               labels:
@@ -198,10 +193,10 @@ cluster:
                     kubectl apply -f <(kustomize build --enable-helm cilium)
 
                     echo "Applying Connect manifests..."
-                    kubectl apply -f <(kustomize build connect)
+                    kubectl apply -f <(kustomize build --enable-helm connect)
 
                     echo "Applying ArgoCD manifests..."
-                    kubectl apply -f <(kustomize build argocd)
+                    kubectl apply -f <(kustomize build --enable-helm argocd)
 
                     cd /repo
 
