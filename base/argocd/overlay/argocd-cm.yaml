@@ -19,9 +19,6 @@ data:
     v1/ConfigMap:
       jsonPointers:
         - /data/ipam-multi-pool-pre-allocation
-    argoproj.io/v1alpha1/applications
-      jsonPointers:
-        - /spec/syncPolicy/automated
   statusbadge.enabled: 'true'
   url: https://cd.nhlabs.org
   users.anonymous.enabled: 'true'
