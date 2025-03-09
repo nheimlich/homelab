@@ -22,9 +22,6 @@ data:
     argoproj.io/v1alpha1/applications
       jsonPointers:
         - /spec/syncPolicy/automated
-        - /spec/syncPolicy/automated/allowEmpty
-        - /spec/syncPolicy/automated/prune
-        - /spec/syncPolicy/automated/selfHeal
   statusbadge.enabled: 'true'
   url: https://cd.nhlabs.org
   users.anonymous.enabled: 'true'
