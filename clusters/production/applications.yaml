@@ -13,6 +13,11 @@ spec:
         revision: HEAD
         directories:
           - path: overlays/production/*
+  ignoreApplicationDifferences:
+    - jsonPointers:
+        - /spec/syncPolicy
+        - /metadata/annotations/argocd.argoproj.io~1refresh
+        - /operation
   template:
     metadata:
       name: '{{.path.basename}}'
@@ -27,7 +32,17 @@ spec:
         namespace: argocd
       syncPolicy:
         automated:
-          prune: false
-          allowEmpty: false
-          selfHeal: false
-
+          prune: true
+          selfHeal: true
+          allowEmpty: true
+      ignoreDifferences:
+        - group: ""
+          kind: "ConfigMap"
+          namespace: "kube-system"
+          jsonPointers:
+            - /data/ipam-multi-pool-pre-allocation
+        - group: "*"
+          kind: "*"
+          namespace: "*"
+          jsonPointers:
+            - /metadata/labels/app.kubernetes.io/instance
