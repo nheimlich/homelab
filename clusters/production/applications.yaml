@@ -46,3 +46,4 @@ spec:
           namespace: "*"
           jsonPointers:
             - /metadata/labels/app.kubernetes.io/instance
+            - /metadata/labels/app.kubernetes.io~1instance
