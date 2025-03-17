@@ -5,14 +5,9 @@ ACTION=$1
 APP_NAME=$2
 NAMESPACE="argocd"
 
-if [ -z "$ACTION" ] || [ -z "$APP_NAME" ]; then
-    echo "Usage: make patch ACTION=<enable|disable> APP=<application-name>"
-    exit 1
-fi
-
-if [ "$ACTION" == "enable" ]; then
-    echo "Enabling sync policy for $APP_NAME..."
-    kubectl patch application "$APP_NAME" -n "$NAMESPACE" --type=merge -p '{
+if [[ "${ACTION}" == "enable" ]]; then
+	echo "Enabling sync policy for ${APP_NAME}..."
+	kubectl patch application "${APP_NAME}" -n "${NAMESPACE}" --type=merge -p '{
       "spec": {
         "syncPolicy": {
           "automated": {
@@ -23,13 +18,13 @@ if [ "$ACTION" == "enable" ]; then
         }
       }
     }'
-elif [ "$ACTION" == "disable" ]; then
-    echo "Disabling sync policy for $APP_NAME..."
-    kubectl patch application "$APP_NAME" -n "$NAMESPACE" --type=json -p '[{
+elif [[ "${ACTION}" == "disable" ]]; then
+	echo "Disabling sync policy for ${APP_NAME}..."
+	kubectl patch application "${APP_NAME}" -n "${NAMESPACE}" --type=json -p '[{
       "op": "remove",
       "path": "/spec/syncPolicy/automated"
     }]'
 else
-    echo "Invalid action: $ACTION. Use 'enable' or 'disable'."
-    exit 1
+	echo "Invalid action: ${ACTION}. Use 'enable' or 'disable'."
+	exit 1
 fi

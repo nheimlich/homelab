@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 CONFIG_FILE="$(dirname "$0")/config.sh"
-if [[ -f $CONFIG_FILE ]]; then
-	source "$CONFIG_FILE"
+if [[ -f ${CONFIG_FILE} ]]; then
+	source "${CONFIG_FILE}"
 else
-	echo "Error: Missing $CONFIG_FILE" >&2
+	echo "Error: Missing ${CONFIG_FILE}" >&2
 	exit 1
 fi
 
@@ -21,13 +21,13 @@ op document get "Talos Secrets" -o secrets.yaml --force >/dev/null 2>&1
 
 generate_configs() {
 	mkdir -p configs/patches
-	talosctl gen config k8s.nhlabs.local --with-secrets secrets.yaml https://"$network$lbvip":6443 --force --additional-sans \
-		"$network"111,"$network"112,"$network"113,sol,clu,ion,sol.nhlabs.local,clu.nhlabs.local,ion.nhlabs.local --with-docs=false -p \
-		--install-image "$image" --output-types controlplane -o controlplane.yaml
+	talosctl gen config k8s.nhlabs.local --with-secrets secrets.yaml https://"${network}${lbvip}":6443 --force --additional-sans \
+		"${network}"111,"${network}"112,"${network}"113,sol,clu,ion,sol.nhlabs.local,clu.nhlabs.local,ion.nhlabs.local --with-docs=false -p \
+		--install-image "${image}" --output-types controlplane -o controlplane.yaml
 	for pair in "${stat_data[@]}"; do
-		IFS=":" read -r n i <<<"$pair"
-		echo "Generating patch for $n (IP: $network$i)..."
-		cat <<EOF >configs/patches/"$n".patch
+		IFS=":" read -r n i <<<"${pair}"
+		echo "Generating patch for ${n} (IP: ${network}${i})..."
+		cat <<EOF >configs/patches/"${n}".patch
 debug: false
 machine:
   kubelet:
@@ -51,23 +51,23 @@ machine:
           tpm: {}
 
   install:
-      disk: "$install_disk"
-      image: "$image"
+      disk: "${install_disk}"
+      image: "${image}"
       wipe: true
 
   nodeLabels:
     \$patch: delete
 
   network:
-    hostname: "$n"
+    hostname: "${n}"
     interfaces:
       - deviceSelector:
           physical: true
         dhcp: false
         vip:
-          ip: "$network$lbvip"
+          ip: "${network}${lbvip}"
         addresses:
-          - "$network$i/24"
+          - "${network}${i}/24"
         routes:
           - network: 0.0.0.0/0
             gateway: "${network}1"
@@ -106,7 +106,7 @@ cluster:
         type: Opaque
         stringData:
           1password-credentials.json: |-
-            $OP_DOCUMENT
+            ${OP_DOCUMENT}
         ---
         apiVersion: v1
         kind: Secret
@@ -115,7 +115,7 @@ cluster:
           namespace: connect
         type: Opaque
         stringData:
-          token: $OP_TOKEN
+          token: ${OP_TOKEN}
         ---
         apiVersion: rbac.authorization.k8s.io/v1
         kind: ClusterRoleBinding
@@ -136,7 +136,7 @@ cluster:
           name: bootstrap-install
           namespace: kube-system
         spec:
-          backoffLimit: 10
+          backoffLimit: 2
           ttlSecondsAfterFinished: 1000
           template:
             metadata:
@@ -182,6 +182,25 @@ cluster:
                   - "/bin/sh"
                   - "-c"
                   - |
+                    TOKEN=\$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)
+                    NAMESPACE="kube-system"
+                    API_SERVER="https://kubernetes.default.svc"
+
+                    if wget --quiet --spider --no-check-certificate \
+                            --header="Authorization: Bearer \$TOKEN" \
+                            --header="Accept: application/json" \
+                            "\$API_SERVER/apis/apps/v1/namespaces/\$NAMESPACE/deployments/cilium-operators"; then
+                        printf "cilium-operator deployment exists. Please reprovision cluster.\n"
+
+                        wget --quiet --no-check-certificate \
+                            --method=DELETE \
+                            --header="Authorization: Bearer \$TOKEN" \
+                            --header="Accept: application/json" \
+                            "\$API_SERVER/apis/rbac.authorization.k8s.io/v1/clusterrolebindings/bootstrap-admin"
+
+                        exit 0
+                    fi
+
                     echo "Updating APK and installing dependencies..."
                     apk update && apk add --no-cache kubectl kustomize helm git
 
@@ -192,11 +211,27 @@ cluster:
                     echo "Applying Cilium manifests..."
                     kubectl apply -f <(kustomize build --enable-helm cilium)
 
+                    sleep 10
+
                     echo "Applying Connect manifests..."
                     kubectl apply -f <(kustomize build --enable-helm connect)
 
+                    sleep 10
+
+                    echo "Applying cert-manager manifests..."
+                    kubectl apply -f <(kustomize build --enable-helm cert-manager)
+
+                    sleep 10
+
+                    echo "Applying Shared Gateway manifests..."
+                    kubectl apply -f <(kustomize build --enable-helm shared-gateway)
+
+                    sleep 10
+
                     echo "Applying ArgoCD manifests..."
                     kubectl apply -f <(kustomize build --enable-helm argocd)
+
+                    sleep 10
 
                     cd /repo
 
@@ -207,8 +242,8 @@ cluster:
 
                     echo "Bootstrap complete!"
 EOF
-		echo "Creating config for $n ($network$i)..."
-		talosctl machineconfig patch controlplane.yaml --patch @configs/patches/"$n".patch --output configs/"$n".yaml
+		echo "Creating config for ${n} (${network}${i})..."
+		talosctl machineconfig patch controlplane.yaml --patch @configs/patches/"${n}".patch --output configs/"${n}".yaml
 	done
 }
 generate_configs
