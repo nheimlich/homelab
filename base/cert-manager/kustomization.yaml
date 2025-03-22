@@ -1,8 +1,57 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
-
 resources:
-- https://github.com/cert-manager/cert-manager/releases/download/v1.17.0/cert-manager.yaml
-
-patches:
-- path: patch-cert-manager-deployment.yaml
+- manifests/namespace.yaml
+- manifests/clusterrole-cert-manager-cainjector.yaml
+- manifests/clusterrole-cert-manager-cluster-view.yaml
+- manifests/clusterrole-cert-manager-controller-approve:cert-manager-io.yaml
+- manifests/clusterrole-cert-manager-controller-certificates.yaml
+- manifests/clusterrole-cert-manager-controller-certificatesigningrequests.yaml
+- manifests/clusterrole-cert-manager-controller-challenges.yaml
+- manifests/clusterrole-cert-manager-controller-clusterissuers.yaml
+- manifests/clusterrole-cert-manager-controller-ingress-shim.yaml
+- manifests/clusterrole-cert-manager-controller-issuers.yaml
+- manifests/clusterrole-cert-manager-controller-orders.yaml
+- manifests/clusterrole-cert-manager-edit.yaml
+- manifests/clusterrole-cert-manager-view.yaml
+- manifests/clusterrole-cert-manager-webhook:subjectaccessreviews.yaml
+- manifests/clusterrolebinding-cert-manager-cainjector.yaml
+- manifests/clusterrolebinding-cert-manager-controller-approve:cert-manager-io.yaml
+- manifests/clusterrolebinding-cert-manager-controller-certificates.yaml
+- manifests/clusterrolebinding-cert-manager-controller-certificatesigningrequests.yaml
+- manifests/clusterrolebinding-cert-manager-controller-challenges.yaml
+- manifests/clusterrolebinding-cert-manager-controller-clusterissuers.yaml
+- manifests/clusterrolebinding-cert-manager-controller-ingress-shim.yaml
+- manifests/clusterrolebinding-cert-manager-controller-issuers.yaml
+- manifests/clusterrolebinding-cert-manager-controller-orders.yaml
+- manifests/clusterrolebinding-cert-manager-webhook:subjectaccessreviews.yaml
+- manifests/configmap-cert-manager.yaml
+- manifests/customresourcedefinition-certificaterequests.cert-manager.io.yaml
+- manifests/customresourcedefinition-certificates.cert-manager.io.yaml
+- manifests/customresourcedefinition-challenges.acme.cert-manager.io.yaml
+- manifests/customresourcedefinition-clusterissuers.cert-manager.io.yaml
+- manifests/customresourcedefinition-issuers.cert-manager.io.yaml
+- manifests/customresourcedefinition-orders.acme.cert-manager.io.yaml
+- manifests/deployment-cert-manager-cainjector.yaml
+- manifests/deployment-cert-manager-webhook.yaml
+- manifests/deployment-cert-manager.yaml
+- manifests/job-cert-manager-startupapicheck.yaml
+- manifests/mutatingwebhookconfiguration-cert-manager-webhook.yaml
+- manifests/role-cert-manager-cainjector:leaderelection.yaml
+- manifests/role-cert-manager-startupapicheck:create-cert.yaml
+- manifests/role-cert-manager-tokenrequest.yaml
+- manifests/role-cert-manager-webhook:dynamic-serving.yaml
+- manifests/role-cert-manager:leaderelection.yaml
+- manifests/rolebinding-cert-manager-cainjector:leaderelection.yaml
+- manifests/rolebinding-cert-manager-cert-manager-tokenrequest.yaml
+- manifests/rolebinding-cert-manager-startupapicheck:create-cert.yaml
+- manifests/rolebinding-cert-manager-webhook:dynamic-serving.yaml
+- manifests/rolebinding-cert-manager:leaderelection.yaml
+- manifests/service-cert-manager-cainjector.yaml
+- manifests/service-cert-manager-webhook.yaml
+- manifests/service-cert-manager.yaml
+- manifests/serviceaccount-cert-manager-cainjector.yaml
+- manifests/serviceaccount-cert-manager-startupapicheck.yaml
+- manifests/serviceaccount-cert-manager-webhook.yaml
+- manifests/serviceaccount-cert-manager.yaml
+- manifests/validatingwebhookconfiguration-cert-manager-webhook.yaml
