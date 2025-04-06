@@ -7,4 +7,4 @@ resources:
 - base/customresourcedefinition-network-attachment-definitions.k8s.cni.cncf.io.yaml
 - base/daemonset-kube-multus-ds.yaml
 - base/serviceaccount-multus.yaml
-- overlay/nad.yaml
+- overlay/networkattachmentdefinition-macvlan-conf.yaml
