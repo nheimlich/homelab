@@ -15,6 +15,7 @@ curl -sL https://github.com/kubevirt/kubevirt/releases/download/${RELEASE}/kubev
 for dir in base overlay; do
   if [ -d "$dir" ]; then
     pushd "$dir" > /dev/null
+    rm kustomization.yaml || true
     kustomize create --autodetect
     popd > /dev/null
   else
