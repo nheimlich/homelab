@@ -31,6 +31,14 @@ generate_configs() {
 debug: false
 machine:
   kubelet:
+    extraMounts:
+      - destination: /var/local-path-provisioner
+        type: bind
+        source: /var/local-path-provisioner
+        options:
+          - bind
+          - rshared
+          - rw
     extraConfig:
       featureGates:
         UserNamespacesSupport: true
