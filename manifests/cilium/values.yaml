@@ -29,6 +29,9 @@ gatewayAPI:
 
 kubeProxyReplacement: true
 
+cni:
+  exclusive: false
+
 securityContext:
   capabilities:
     ciliumAgent:
