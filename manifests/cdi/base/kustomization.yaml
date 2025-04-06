@@ -1,0 +1,11 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+- clusterrole-cdi-operator-cluster.yaml
+- clusterrolebinding-cdi-operator.yaml
+- customresourcedefinition-cdis.cdi.kubevirt.io.yaml
+- deployment-cdi-operator.yaml
+- namespace-cdi.yaml
+- role-cdi-operator.yaml
+- rolebinding-cdi-operator.yaml
+- serviceaccount-cdi-operator.yaml
