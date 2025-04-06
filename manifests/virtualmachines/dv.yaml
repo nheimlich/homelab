@@ -1,0 +1,15 @@
+apiVersion: cdi.kubevirt.io/v1beta1
+kind: DataVolume
+metadata:
+  name: debian-12
+spec:
+  source:
+    http:
+      url: "https://mirrors.lug.mtu.edu/debian-cd/current-live/amd64/iso-hybrid/debian-live-12.10.0-amd64-standard.iso"
+  storage:
+    storageClassName: "rook-cephfs"
+    accessModes:
+      - "ReadWriteMany"
+    resources:
+      requests:
+        storage: 2Gi
