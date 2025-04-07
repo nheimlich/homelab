@@ -240,7 +240,10 @@ cluster:
 
                     cd /repo || exit
 
-                    kubectl apply -f clusters/production/applications.yaml
+                    until kubectl apply -f clusters/production/applications.yaml; do
+                      echo "Failed to apply ArgoCD applications, retrying in 5 seconds..."
+                      sleep 5
+                    done
 
                     echo "Deleting bootstrap-admin ClusterRoleBinding..."
                     kubectl delete clusterrolebinding bootstrap-admin || true
