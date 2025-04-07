@@ -180,7 +180,7 @@ cluster:
               hostNetwork: true
               containers:
               - name: bootstrap-install
-                image: alpine
+                image: alpine/curl
                 env:
                 - name: KUBERNETES_SERVICE_HOST
                   value: "localhost"
@@ -192,20 +192,17 @@ cluster:
                   - |
                     TOKEN=\$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)
                     NAMESPACE="kube-system"
-                    API_SERVER="https://kubernetes.default.svc"
+                    API_SERVER="https://\${KUBERNETES_SERVICE_HOST}:\${KUBERNETES_SERVICE_PORT}"
+                    AUTH_HEADER="Authorization: Bearer \${TOKEN}"
+                    ACCEPT_HEADER="Accept: application/json"
+                    DEPLOYMENT_URL="\${API_SERVER}/apis/apps/v1/namespaces/\${NAMESPACE}/deployments/cilium-operators"
+                    CRB_URL="\${API_SERVER}/apis/rbac.authorization.k8s.io/v1/clusterrolebindings/bootstrap-admin"
 
-                    if wget --quiet --spider --no-check-certificate \
-                            --header="Authorization: Bearer \$TOKEN" \
-                            --header="Accept: application/json" \
-                            "\$API_SERVER/apis/apps/v1/namespaces/\$NAMESPACE/deployments/cilium-operators"; then
-                        printf "cilium-operator deployment exists. Please reprovision cluster.\n"
+                    status=\$(curl -sSk -o /dev/null -w "%{http_code}" -H "\${AUTH_HEADER}" -H "\${ACCEPT_HEADER}" "\${DEPLOYMENT_URL}")
 
-                        wget --quiet --no-check-certificate \
-                            --method=DELETE \
-                            --header="Authorization: Bearer \$TOKEN" \
-                            --header="Accept: application/json" \
-                            "\$API_SERVER/apis/rbac.authorization.k8s.io/v1/clusterrolebindings/bootstrap-admin"
-
+                    if [ "\${status}" -eq 200 ]; then
+                        echo "cilium-operator deployment exists. Deleting ClusterRoleBinding."
+                        curl -sSk -X DELETE -H "\${AUTH_HEADER}" -H "\${ACCEPT_HEADER}" "\${CRB_URL}" -o /dev/null -w "%{http_code}\n"
                         exit 0
                     fi
 
@@ -214,7 +211,7 @@ cluster:
 
                     echo "Cloning repository..."
                     git clone -b main --single-branch https://github.com/nheimlich/homelab.git /repo
-                    cd /repo/overlays/production
+                    cd /repo/overlays/production || exit
 
                     echo "Applying Cilium manifests..."
                     kubectl apply -f <(kustomize build --enable-helm cilium)
@@ -241,7 +238,7 @@ cluster:
 
                     sleep 10
 
-                    cd /repo
+                    cd /repo || exit
 
                     kubectl apply -f clusters/production/applications.yaml
 
