@@ -30,7 +30,7 @@ gatewayAPI:
 kubeProxyReplacement: true
 
 cni:
-  exclusive: false
+  exclusive: true
 
 securityContext:
   capabilities:
