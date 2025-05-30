@@ -6,7 +6,7 @@ namespace: argocd
 
 resources:
 - base/namespace.yaml
-- https://github.com/argoproj/argo-cd/manifests/cluster-install?ref=v2.13.0
+- https://github.com/argoproj/argo-cd/manifests/cluster-install?ref=v2.14.1
 - base/http_route.yaml
 - base/http_redirect.yaml
 - base/argocd-auth.yaml
