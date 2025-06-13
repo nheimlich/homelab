@@ -3,3 +3,4 @@ kind: Kustomization
 resources:
   - ../../../manifests/kubevirt
   - ../../../manifests/cdi
+  - svc-lb.yaml
