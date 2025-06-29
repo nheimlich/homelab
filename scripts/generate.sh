@@ -2,10 +2,10 @@
 set -euo pipefail
 CONFIG_FILE="$(dirname "$0")/config.sh"
 if [[ -f ${CONFIG_FILE} ]]; then
-	source "${CONFIG_FILE}"
+  source "${CONFIG_FILE}"
 else
-	echo "Error: Missing ${CONFIG_FILE}" >&2
-	exit 1
+  echo "Error: Missing ${CONFIG_FILE}" >&2
+  exit 1
 fi
 
 : "${stat_data:?Error: stat_data is not set}"
@@ -15,19 +15,19 @@ fi
 : "${lbvip:?Error: lbvip is not set}"
 OP_TOKEN=$(op document get "op.nhlabs.org-token")
 OP_DOCUMENT=$(op document get "op.nhlabs.org-credentials" | base64)
-op document get "Talos Secrets" -o secrets.yaml --force >/dev/null 2>&1
+op document get "Talos Secrets" -o secrets.yaml --force > /dev/null 2>&1
 : "${OP_TOKEN:?Error: OP_TOKEN is not set}"
 : "${OP_DOCUMENT:?Error: OP_DOCUMENT is not set}"
 
 generate_configs() {
-	mkdir -p configs/patches
-	talosctl gen config k8s.nhlabs.local --with-secrets secrets.yaml https://"${network}${lbvip}":6443 --force --additional-sans \
-		"${network}"111,"${network}"112,"${network}"113,sol,clu,ion,sol.nhlabs.local,clu.nhlabs.local,ion.nhlabs.local --with-docs=false -p \
-		--install-image "${image}" --output-types controlplane -o controlplane.yaml
-	for pair in "${stat_data[@]}"; do
-		IFS=":" read -r n i <<<"${pair}"
-		echo "Generating patch for ${n} (IP: ${network}${i})..."
-		cat <<EOF >configs/patches/"${n}".patch
+  mkdir -p configs/patches
+  talosctl gen config k8s.nhlabs.local --with-secrets secrets.yaml https://"${network}${lbvip}":6443 --force --additional-sans \
+    "${network}"111,"${network}"112,"${network}"113,sol,clu,ion,sol.nhlabs.local,clu.nhlabs.local,ion.nhlabs.local --with-docs=false -p \
+    --install-image "${image}" --output-types controlplane -o controlplane.yaml
+  for pair in "${stat_data[@]}"; do
+    IFS=":" read -r n i <<< "${pair}"
+    echo "Generating patch for ${n} (IP: ${network}${i})..."
+    cat << EOF > configs/patches/"${n}".patch
 debug: false
 machine:
   kubelet:
@@ -250,8 +250,8 @@ cluster:
 
                     echo "Bootstrap complete!"
 EOF
-		echo "Creating config for ${n} (${network}${i})..."
-		talosctl machineconfig patch controlplane.yaml --patch @configs/patches/"${n}".patch --output configs/"${n}".yaml
-	done
+    echo "Creating config for ${n} (${network}${i})..."
+    talosctl machineconfig patch controlplane.yaml --patch @configs/patches/"${n}".patch --output configs/"${n}".yaml
+  done
 }
 generate_configs
