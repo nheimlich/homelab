@@ -27,6 +27,7 @@ versions() {
   CDI_VERSION=${CDI_VERSION:-v1.62.0}
   CONNECT_VERSION=${CONNECT_VERSION:-1.17.0}
   CERT_MANAGER_VERSION=${CERT_MANAGER_VERSION:-v1.17.2}
+  EXTERNAL_DNS_VERSION=${EXTERNAL_DNS_VERSION:-1.16.1}
 }
 
 print_versions() {
@@ -35,6 +36,7 @@ print_versions() {
   printf "CDI Version: %s\n" "${CDI_VERSION}"
   printf "Connect Version: %s\n" "${CONNECT_VERSION}"
   printf "Cert-Manager Version: %s\n" "${CERT_MANAGER_VERSION}"
+  printf "External DNS Version: %s\n" "${EXTERNAL_DNS_VERSION}"
 }
 
 generate_versions() {
@@ -148,10 +150,59 @@ EOF
 cert-manager() {
   print_helper "${FUNCNAME[@]}"
 
-  helm template cert-manager jetstack/cert-manager --namespace cert-manager --version "${CERT_MANAGER_VERSION}" --set crds.enabled=true \
-    --set config.apiVersion="controller.config.cert-manager.io/v1alpha1" --set config.kind="ControllerConfiguration" --set config.enableGatewayAPI=true \
+  patch=$(
+    cat << EOF
+config:
+  enableGatewayAPI: true
+  apiVersion: "controller.config.cert-manager.io/v1alpha1"
+  kind: "ControllerConfiguration"
+crds:
+  enabled: true
+EOF
+  )
+
+  helm template cert-manager jetstack/cert-manager --namespace cert-manager --version "${CERT_MANAGER_VERSION}" -f <(echo "${patch}") \
     | kubectl-slice --prune --remove-comments -t "{{ .kind | lower }}.yaml" -o manifests/cert-manager/base/ && pushd manifests/cert-manager/base \
     && kubectl create ns cert-manager --dry-run=client -oyaml > 01-namespace.yaml && kustomize create --recursive --autodetect && popd
+}
+
+external-dns() {
+  print_helper "${FUNCNAME[@]}"
+
+  patch=$(
+    cat << EOF
+rbac:
+  create: true
+serviceAccount:
+  create: true
+  automountServiceAccountToken: true
+env:
+  - name: CF_API_TOKEN
+    valueFrom:
+      secretKeyRef:
+        name: cloudflare-secret
+        key: apikey
+  - name: CF_API_EMAIL
+    valueFrom:
+      secretKeyRef:
+        name: cloudflare-secret
+        key: email
+sources:
+  - service
+  - gateway-httproute
+domainFilters:
+  - nhlabs.org
+provider:
+  name: cloudflare
+policy: sync
+EOF
+  )
+
+  helm template external-dns external-dns/external-dns --version "${EXTERNAL_DNS_VERSION}" --namespace external-dns --no-hooks --include-crds --skip-tests \
+    -f <(echo "${patch}") \
+    | kubectl-slice --prune --remove-comments -t "{{ .kind | lower }}.yaml" -o manifests/external-dns/base/
+  pushd manifests/external-dns/base/ && kubectl create ns external-dns --dry-run=client -oyaml > 01-namespace.yaml && kustomize create --recursive --autodetect && popd
+  unset patch
 }
 
 # Main execution
