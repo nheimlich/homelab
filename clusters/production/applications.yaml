@@ -35,6 +35,8 @@ spec:
           prune: true
           selfHeal: true
           allowEmpty: true
+        syncOptions:
+        - ServerSideApply=true
       ignoreDifferences:
         - group: ""
           kind: "ConfigMap"
