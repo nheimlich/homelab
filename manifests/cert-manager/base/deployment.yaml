@@ -108,10 +108,10 @@ spec:
         seccompProfile:
           type: RuntimeDefault
       volumes:
-        - name: config
-          configMap:
+        - name: config 
+          configMap: 
             name: cert-manager
-
+        
       containers:
         - name: cert-manager-controller
           image: "quay.io/jetstack/cert-manager-controller:v1.17.2"
@@ -137,7 +137,7 @@ spec:
               - ALL
             readOnlyRootFilesystem: true
           volumeMounts:
-            - name: config
+            - name: config 
               mountPath: /var/cert-manager/config
           env:
           - name: POD_NAMESPACE
@@ -214,7 +214,7 @@ spec:
           - --dynamic-serving-dns-names=cert-manager-webhook
           - --dynamic-serving-dns-names=cert-manager-webhook.$(POD_NAMESPACE)
           - --dynamic-serving-dns-names=cert-manager-webhook.$(POD_NAMESPACE).svc
-
+          
           ports:
           - name: https
             protocol: TCP
