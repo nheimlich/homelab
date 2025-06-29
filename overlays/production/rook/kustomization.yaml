@@ -3,3 +3,4 @@ kind: Kustomization
 resources:
   - ../../../manifests/rook
   - https://raw.githubusercontent.com/rook/rook/refs/heads/release-1.16/deploy/examples/cluster.yaml
+  - https://raw.githubusercontent.com/rook/rook/refs/heads/release-1.16/deploy/examples/toolbox.yaml
