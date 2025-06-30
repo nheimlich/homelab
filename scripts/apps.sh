@@ -29,6 +29,7 @@ versions() {
   CERT_MANAGER_VERSION=${CERT_MANAGER_VERSION:-v1.17.2}
   EXTERNAL_DNS_VERSION=${EXTERNAL_DNS_VERSION:-1.16.1}
   ROOK_VERSION=${ROOK_VERSION:-1.16}
+  LOCAL_PATH_VERSION=${LOCAL_PATH_VERSION:-v0.0.31}
 }
 
 print_versions() {
@@ -38,6 +39,8 @@ print_versions() {
   printf "Connect Version: %s\n" "${CONNECT_VERSION}"
   printf "Cert-Manager Version: %s\n" "${CERT_MANAGER_VERSION}"
   printf "External DNS Version: %s\n" "${EXTERNAL_DNS_VERSION}"
+  printf "Rook Version: %s\n" "${ROOK_VERSION}"
+  printf "Local Path Version: %s\n" "${LOCAL_PATH_VERSION}"
 }
 
 generate_versions() {
@@ -209,8 +212,17 @@ EOF
 rook() {
   print_helper "${FUNCNAME[@]}"
 
-  helm template --namespace rook-ceph rook-ceph rook-release/rook-ceph --version ${ROOK_VERSION} --include-crds | sed -e 's/^#.*//g' | kubectl-slice --prune --remove-comments -t "{{ .kind | lower }}.yaml" -o manifests/rook/base/
+  helm template --namespace rook-ceph rook-ceph rook-release/rook-ceph --version "${ROOK_VERSION}" --include-crds | sed -e 's/^#.*//g' | kubectl-slice --prune --remove-comments -t "{{ .kind | lower }}.yaml" -o manifests/rook/base/
   pushd manifests/rook/base/ && kubectl create ns rook-ceph --dry-run=client -oyaml > 01-namespace.yaml && kustomize create --autodetect --recursive && popd
+}
+
+local-path() {
+  print_helper "${FUNCNAME[@]}"
+
+  rm -rf manifests/local-path-provisioner/base/*
+  curl -sL "https://raw.githubusercontent.com/rancher/local-path-provisioner/refs/tags/${LOCAL_PATH_VERSION}/deploy/local-path-storage.yaml" | kubectl-slice --prune --remove-comments -t "{{ .kind | lower }}.yaml" -o manifests/local-path/base/
+  pushd manifests/local-path/base/ && kustomize create --autodetect --recursive && popd
+
 }
 # Main execution
 main "$@"
