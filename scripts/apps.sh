@@ -28,7 +28,7 @@ versions() {
   CONNECT_VERSION=${CONNECT_VERSION:-1.17.0}
   CERT_MANAGER_VERSION=${CERT_MANAGER_VERSION:-v1.17.2}
   EXTERNAL_DNS_VERSION=${EXTERNAL_DNS_VERSION:-1.16.1}
-  ROOK_VERSION=${ROOK_VERSION:-1.16}
+  ROOK_VERSION=${ROOK_VERSION:-1.17}
   LOCAL_PATH_VERSION=${LOCAL_PATH_VERSION:-v0.0.31}
 }
 
@@ -224,5 +224,6 @@ local-path() {
   pushd manifests/local-path/base/ && kustomize create --autodetect --recursive && popd
 
 }
+
 # Main execution
 main "$@"

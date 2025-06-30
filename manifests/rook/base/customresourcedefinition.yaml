@@ -11,6 +11,9 @@ spec:
     kind: CephBlockPoolRadosNamespace
     listKind: CephBlockPoolRadosNamespaceList
     plural: cephblockpoolradosnamespaces
+    shortNames:
+      - cephbprns
+      - cephrns
     singular: cephblockpoolradosnamespace
   scope: Namespaced
   versions:
@@ -62,7 +65,7 @@ spec:
                   description: Mirroring configuration of CephBlockPoolRadosNamespace
                   properties:
                     mode:
-                      description: Mode is the mirroring mode; either pool or image
+                      description: Mode is the mirroring mode; either pool or image.
                       enum:
                         - ""
                         - pool
@@ -102,6 +105,28 @@ spec:
             status:
               description: Status represents the status of a CephBlockPool Rados Namespace
               properties:
+                conditions:
+                  items:
+                    description: Condition represents a status condition on any Rook-Ceph Custom Resource.
+                    properties:
+                      lastHeartbeatTime:
+                        format: date-time
+                        type: string
+                      lastTransitionTime:
+                        format: date-time
+                        type: string
+                      message:
+                        type: string
+                      reason:
+                        description: ConditionReason is a reason for a condition
+                        type: string
+                      status:
+                        type: string
+                      type:
+                        description: ConditionType represent a resource's status
+                        type: string
+                    type: object
+                  type: array
                 info:
                   additionalProperties:
                     type: string
@@ -163,12 +188,68 @@ spec:
                         daemon_health:
                           description: DaemonHealth is the health of the mirroring daemon
                           type: string
+                        group_health:
+                          description: GroupHealth is the health of the mirrored image group
+                          nullable: true
+                          type: string
+                        group_states:
+                          description: GroupStates is the various state for all mirrored image groups
+                          nullable: true
+                          properties:
+                            error:
+                              description: Error is when the mirroring state is errored
+                              type: integer
+                            replaying:
+                              description: Replaying is when the replay of the mirroring journal is on-going
+                              type: integer
+                            starting_replay:
+                              description: StartingReplay is when the replay of the mirroring journal starts
+                              type: integer
+                            stopped:
+                              description: Stopped is when the mirroring state is stopped
+                              type: integer
+                            stopping_replay:
+                              description: StopReplaying is when the replay of the mirroring journal stops
+                              type: integer
+                            syncing:
+                              description: Syncing is when the image is syncing
+                              type: integer
+                            unknown:
+                              description: Unknown is when the mirroring state is unknown
+                              type: integer
+                          type: object
                         health:
                           description: Health is the mirroring health
                           type: string
                         image_health:
                           description: ImageHealth is the health of the mirrored image
                           type: string
+                        image_states:
+                          description: ImageStates is the various state for all mirrored images
+                          nullable: true
+                          properties:
+                            error:
+                              description: Error is when the mirroring state is errored
+                              type: integer
+                            replaying:
+                              description: Replaying is when the replay of the mirroring journal is on-going
+                              type: integer
+                            starting_replay:
+                              description: StartingReplay is when the replay of the mirroring journal starts
+                              type: integer
+                            stopped:
+                              description: Stopped is when the mirroring state is stopped
+                              type: integer
+                            stopping_replay:
+                              description: StopReplaying is when the replay of the mirroring journal stops
+                              type: integer
+                            syncing:
+                              description: Syncing is when the image is syncing
+                              type: integer
+                            unknown:
+                              description: Unknown is when the mirroring state is unknown
+                              type: integer
+                          type: object
                         states:
                           description: States is the various state for all mirrored images
                           nullable: true
@@ -267,6 +348,8 @@ spec:
     kind: CephBlockPool
     listKind: CephBlockPoolList
     plural: cephblockpools
+    shortNames:
+      - cephbp
     singular: cephblockpool
   scope: Namespaced
   versions:
@@ -386,7 +469,11 @@ spec:
                       description: Enabled whether this pool is mirrored or not
                       type: boolean
                     mode:
-                      description: 'Mode is the mirroring mode: either pool or image'
+                      description: 'Mode is the mirroring mode: pool, image or init-only.'
+                      enum:
+                        - pool
+                        - image
+                        - init-only
                       type: string
                     peers:
                       description: Peers represents the peers spec
@@ -591,12 +678,68 @@ spec:
                         daemon_health:
                           description: DaemonHealth is the health of the mirroring daemon
                           type: string
+                        group_health:
+                          description: GroupHealth is the health of the mirrored image group
+                          nullable: true
+                          type: string
+                        group_states:
+                          description: GroupStates is the various state for all mirrored image groups
+                          nullable: true
+                          properties:
+                            error:
+                              description: Error is when the mirroring state is errored
+                              type: integer
+                            replaying:
+                              description: Replaying is when the replay of the mirroring journal is on-going
+                              type: integer
+                            starting_replay:
+                              description: StartingReplay is when the replay of the mirroring journal starts
+                              type: integer
+                            stopped:
+                              description: Stopped is when the mirroring state is stopped
+                              type: integer
+                            stopping_replay:
+                              description: StopReplaying is when the replay of the mirroring journal stops
+                              type: integer
+                            syncing:
+                              description: Syncing is when the image is syncing
+                              type: integer
+                            unknown:
+                              description: Unknown is when the mirroring state is unknown
+                              type: integer
+                          type: object
                         health:
                           description: Health is the mirroring health
                           type: string
                         image_health:
                           description: ImageHealth is the health of the mirrored image
                           type: string
+                        image_states:
+                          description: ImageStates is the various state for all mirrored images
+                          nullable: true
+                          properties:
+                            error:
+                              description: Error is when the mirroring state is errored
+                              type: integer
+                            replaying:
+                              description: Replaying is when the replay of the mirroring journal is on-going
+                              type: integer
+                            starting_replay:
+                              description: StartingReplay is when the replay of the mirroring journal starts
+                              type: integer
+                            stopped:
+                              description: Stopped is when the mirroring state is stopped
+                              type: integer
+                            stopping_replay:
+                              description: StopReplaying is when the replay of the mirroring journal stops
+                              type: integer
+                            syncing:
+                              description: Syncing is when the image is syncing
+                              type: integer
+                            unknown:
+                              description: Unknown is when the mirroring state is unknown
+                              type: integer
+                          type: object
                         states:
                           description: States is the various state for all mirrored images
                           nullable: true
@@ -702,6 +845,8 @@ spec:
     kind: CephBucketNotification
     listKind: CephBucketNotificationList
     plural: cephbucketnotifications
+    shortNames:
+      - cephbn
     singular: cephbucketnotification
   scope: Namespaced
   versions:
@@ -865,6 +1010,8 @@ spec:
     kind: CephBucketTopic
     listKind: CephBucketTopicList
     plural: cephbuckettopics
+    shortNames:
+      - cephbt
     singular: cephbuckettopic
   scope: Namespaced
   versions:
@@ -958,6 +1105,38 @@ spec:
                         disableVerifySSL:
                           description: Indicate whether the server certificate is validated by the client or not
                           type: boolean
+                        mechanism:
+                          default: PLAIN
+                          description: The authentication mechanism for this topic (PLAIN/SCRAM-SHA-512/SCRAM-SHA-256/GSSAPI/OAUTHBEARER)
+                          enum:
+                            - PLAIN
+                            - SCRAM-SHA-512
+                            - SCRAM-SHA-256
+                            - GSSAPI
+                            - OAUTHBEARER
+                          type: string
+                        passwordSecretRef:
+                          description: The kafka password to use for authentication
+                          properties:
+                            key:
+                              description: The key of the secret to select from.  Must be a valid secret key.
+                              type: string
+                            name:
+                              default: ""
+                              description: |-
+                                Name of the referent.
+                                This field is effectively required, but due to backwards compatibility is
+                                allowed to be empty. Instances of this type with an empty value here are
+                                almost certainly wrong.
+                                More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                              type: string
+                            optional:
+                              description: Specify whether the Secret or its key must be defined
+                              type: boolean
+                          required:
+                            - key
+                          type: object
+                          x-kubernetes-map-type: atomic
                         uri:
                           description: The URI of the Kafka endpoint to push notification to
                           minLength: 1
@@ -965,6 +1144,28 @@ spec:
                         useSSL:
                           description: Indicate whether to use SSL when communicating with the broker
                           type: boolean
+                        userSecretRef:
+                          description: The kafka user name to use for authentication
+                          properties:
+                            key:
+                              description: The key of the secret to select from.  Must be a valid secret key.
+                              type: string
+                            name:
+                              default: ""
+                              description: |-
+                                Name of the referent.
+                                This field is effectively required, but due to backwards compatibility is
+                                allowed to be empty. Instances of this type with an empty value here are
+                                almost certainly wrong.
+                                More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                              type: string
+                            optional:
+                              description: Specify whether the Secret or its key must be defined
+                              type: boolean
+                          required:
+                            - key
+                          type: object
+                          x-kubernetes-map-type: atomic
                       required:
                         - uri
                       type: object
@@ -1001,6 +1202,26 @@ spec:
                   type: integer
                 phase:
                   type: string
+                secrets:
+                  items:
+                    properties:
+                      name:
+                        description: name is unique within a namespace to reference a secret resource.
+                        type: string
+                      namespace:
+                        description: namespace defines the space within which the secret name must be unique.
+                        type: string
+                      resourceVersion:
+                        type: string
+                      uid:
+                        description: |-
+                          UID is a type that holds unique ID values, including UUIDs.  Because we
+                          don't ONLY use UUIDs, this is an alias to string.  Being a type captures
+                          intent and helps make sure that UIDs and names do not get conflated.
+                        type: string
+                    type: object
+                    x-kubernetes-map-type: atomic
+                  type: array
               type: object
               x-kubernetes-preserve-unknown-fields: true
           required:
@@ -1025,6 +1246,8 @@ spec:
     kind: CephClient
     listKind: CephClientList
     plural: cephclients
+    shortNames:
+      - cephcl
     singular: cephclient
   scope: Namespaced
   versions:
@@ -1109,6 +1332,8 @@ spec:
     kind: CephCluster
     listKind: CephClusterList
     plural: cephclusters
+    shortNames:
+      - ceph
     singular: cephcluster
   scope: Namespaced
   versions:
@@ -1183,6 +1408,34 @@ spec:
                       type: string
                     type: object
                   description: Ceph Config options
+                  nullable: true
+                  type: object
+                cephConfigFromSecret:
+                  additionalProperties:
+                    additionalProperties:
+                      description: SecretKeySelector selects a key of a Secret.
+                      properties:
+                        key:
+                          description: The key of the secret to select from.  Must be a valid secret key.
+                          type: string
+                        name:
+                          default: ""
+                          description: |-
+                            Name of the referent.
+                            This field is effectively required, but due to backwards compatibility is
+                            allowed to be empty. Instances of this type with an empty value here are
+                            almost certainly wrong.
+                            More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                          type: string
+                        optional:
+                          description: Specify whether the Secret or its key must be defined
+                          type: boolean
+                      required:
+                        - key
+                      type: object
+                      x-kubernetes-map-type: atomic
+                    type: object
+                  description: CephConfigFromSecret works exactly like CephConfig but takes config value from Secret Key reference.
                   nullable: true
                   type: object
                 cephVersion:
@@ -1783,6 +2036,16 @@ spec:
                       maximum: 9
                       minimum: 0
                       type: integer
+                    externalMonIDs:
+                      description: |-
+                        ExternalMonIDs - optional list of monitor IDs which are deployed externally and not managed by Rook.
+                        If set, Rook will not remove mons with given IDs from quorum.
+                        This parameter is used only for local Rook cluster running in normal mode
+                        and will be ignored if external or stretched mode is used.
+                        leading
+                      items:
+                        type: string
+                      type: array
                     failureDomainLabel:
                       type: string
                     stretchCluster:
@@ -2716,7 +2979,7 @@ spec:
                       type: string
                       x-kubernetes-validations:
                         - message: network provider must be disabled (reverted to empty string) before a new provider is enabled
-                          rule: self == '' || self == oldSelf
+                          rule: self == '' || oldSelf == '' || self == oldSelf
                     selectors:
                       additionalProperties:
                         type: string
@@ -6219,6 +6482,8 @@ spec:
     kind: CephFilesystemMirror
     listKind: CephFilesystemMirrorList
     plural: cephfilesystemmirrors
+    shortNames:
+      - cephfsm
     singular: cephfilesystemmirror
   scope: Namespaced
   versions:
@@ -6894,6 +7159,8 @@ spec:
     kind: CephFilesystem
     listKind: CephFilesystemList
     plural: cephfilesystems
+    shortNames:
+      - cephfs
     singular: cephfilesystem
   scope: Namespaced
   versions:
@@ -7001,7 +7268,11 @@ spec:
                             description: Enabled whether this pool is mirrored or not
                             type: boolean
                           mode:
-                            description: 'Mode is the mirroring mode: either pool or image'
+                            description: 'Mode is the mirroring mode: pool, image or init-only.'
+                            enum:
+                              - pool
+                              - image
+                              - init-only
                             type: string
                           peers:
                             description: Peers represents the peers spec
@@ -7185,7 +7456,11 @@ spec:
                           description: Enabled whether this pool is mirrored or not
                           type: boolean
                         mode:
-                          description: 'Mode is the mirroring mode: either pool or image'
+                          description: 'Mode is the mirroring mode: pool, image or init-only.'
+                          enum:
+                            - pool
+                            - image
+                            - init-only
                           type: string
                         peers:
                           description: Peers represents the peers spec
@@ -8474,6 +8749,9 @@ spec:
     kind: CephFilesystemSubVolumeGroup
     listKind: CephFilesystemSubVolumeGroupList
     plural: cephfilesystemsubvolumegroups
+    shortNames:
+      - cephfssvg
+      - cephsvg
     singular: cephfilesystemsubvolumegroup
   scope: Namespaced
   versions:
@@ -8615,6 +8893,7 @@ spec:
     plural: cephnfses
     shortNames:
       - nfs
+      - cephnfs
     singular: cephnfs
   scope: Namespaced
   versions:
@@ -10596,6 +10875,8 @@ spec:
     kind: CephObjectRealm
     listKind: CephObjectRealmList
     plural: cephobjectrealms
+    shortNames:
+      - cephor
     singular: cephobjectrealm
   scope: Namespaced
   versions:
@@ -10687,6 +10968,8 @@ spec:
     kind: CephObjectStore
     listKind: CephObjectStoreList
     plural: cephobjectstores
+    shortNames:
+      - cephos
     singular: cephobjectstore
   scope: Namespaced
   versions:
@@ -10841,7 +11124,11 @@ spec:
                           description: Enabled whether this pool is mirrored or not
                           type: boolean
                         mode:
-                          description: 'Mode is the mirroring mode: either pool or image'
+                          description: 'Mode is the mirroring mode: pool, image or init-only.'
+                          enum:
+                            - pool
+                            - image
+                            - init-only
                           type: string
                         peers:
                           description: Peers represents the peers spec
@@ -11866,6 +12153,25 @@ spec:
                     priorityClassName:
                       description: PriorityClassName sets priority classes on the rgw pods
                       type: string
+                    readAffinity:
+                      description: |-
+                        ReadAffinity defines the RGW read affinity policy to optimize the read requests for the RGW clients
+                        Note: Only supported from Ceph Tentacle (v20)
+                      properties:
+                        type:
+                          description: |-
+                            Type defines the RGW ReadAffinity type
+                            localize: read from the nearest OSD based on crush location of the RGW client
+                            balance: picks a random OSD from the PG's active set
+                            default: read from the primary OSD
+                          enum:
+                            - localize
+                            - balance
+                            - default
+                          type: string
+                      required:
+                        - type
+                      type: object
                     resources:
                       description: The resource requirements for the rgw pods
                       nullable: true
@@ -12418,7 +12724,11 @@ spec:
                           description: Enabled whether this pool is mirrored or not
                           type: boolean
                         mode:
-                          description: 'Mode is the mirroring mode: either pool or image'
+                          description: 'Mode is the mirroring mode: pool, image or init-only.'
+                          enum:
+                            - pool
+                            - image
+                            - init-only
                           type: string
                         peers:
                           description: Peers represents the peers spec
@@ -12728,7 +13038,7 @@ spec:
                   nullable: true
                   properties:
                     name:
-                      description: RGW Zone the Object Store is in
+                      description: CephObjectStoreZone name this CephObjectStore is part of
                       type: string
                   required:
                     - name
@@ -12813,6 +13123,7 @@ spec:
     shortNames:
       - rcou
       - objectuser
+      - cephosu
     singular: cephobjectstoreuser
   scope: Namespaced
   versions:
@@ -12987,6 +13298,61 @@ spec:
                 displayName:
                   description: The display name for the ceph users
                   type: string
+                keys:
+                  description: |-
+                    Allows specifying credentials for the user. If not provided, the operator
+                    will generate them.
+                  items:
+                    description: |-
+                      ObjectUserKey defines a set of rgw user access credentials to be retrieved
+                      from secret resources.
+                    properties:
+                      accessKeyRef:
+                        description: Secret key selector for the access_key (commonly referred to as AWS_ACCESS_KEY_ID).
+                        properties:
+                          key:
+                            description: The key of the secret to select from.  Must be a valid secret key.
+                            type: string
+                          name:
+                            default: ""
+                            description: |-
+                              Name of the referent.
+                              This field is effectively required, but due to backwards compatibility is
+                              allowed to be empty. Instances of this type with an empty value here are
+                              almost certainly wrong.
+                              More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                            type: string
+                          optional:
+                            description: Specify whether the Secret or its key must be defined
+                            type: boolean
+                        required:
+                          - key
+                        type: object
+                        x-kubernetes-map-type: atomic
+                      secretKeyRef:
+                        description: Secret key selector for the secret_key (commonly referred to as AWS_SECRET_ACCESS_KEY).
+                        properties:
+                          key:
+                            description: The key of the secret to select from.  Must be a valid secret key.
+                            type: string
+                          name:
+                            default: ""
+                            description: |-
+                              Name of the referent.
+                              This field is effectively required, but due to backwards compatibility is
+                              allowed to be empty. Instances of this type with an empty value here are
+                              almost certainly wrong.
+                              More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                            type: string
+                          optional:
+                            description: Specify whether the Secret or its key must be defined
+                            type: boolean
+                        required:
+                          - key
+                        type: object
+                        x-kubernetes-map-type: atomic
+                    type: object
+                  type: array
                 quotas:
                   description: ObjectUserQuotaSpec can be used to set quotas for the object store user to limit their usage. See the [Ceph docs](https://docs.ceph.com/en/latest/radosgw/admin/?#quota-management) for more
                   nullable: true
@@ -13023,6 +13389,27 @@ spec:
                     type: string
                   nullable: true
                   type: object
+                keys:
+                  items:
+                    properties:
+                      name:
+                        description: name is unique within a namespace to reference a secret resource.
+                        type: string
+                      namespace:
+                        description: namespace defines the space within which the secret name must be unique.
+                        type: string
+                      resourceVersion:
+                        type: string
+                      uid:
+                        description: |-
+                          UID is a type that holds unique ID values, including UUIDs.  Because we
+                          don't ONLY use UUIDs, this is an alias to string.  Being a type captures
+                          intent and helps make sure that UIDs and names do not get conflated.
+                        type: string
+                    type: object
+                    x-kubernetes-map-type: atomic
+                  nullable: true
+                  type: array
                 observedGeneration:
                   description: ObservedGeneration is the latest generation observed by the controller.
                   format: int64
@@ -13053,6 +13440,8 @@ spec:
     kind: CephObjectZoneGroup
     listKind: CephObjectZoneGroupList
     plural: cephobjectzonegroups
+    shortNames:
+      - cephozg
     singular: cephobjectzonegroup
   scope: Namespaced
   versions:
@@ -13149,6 +13538,8 @@ spec:
     kind: CephObjectZone
     listKind: CephObjectZoneList
     plural: cephobjectzones
+    shortNames:
+      - cephoz
     singular: cephobjectzone
   scope: Namespaced
   versions:
@@ -13267,7 +13658,11 @@ spec:
                           description: Enabled whether this pool is mirrored or not
                           type: boolean
                         mode:
-                          description: 'Mode is the mirroring mode: either pool or image'
+                          description: 'Mode is the mirroring mode: pool, image or init-only.'
+                          enum:
+                            - pool
+                            - image
+                            - init-only
                           type: string
                         peers:
                           description: Peers represents the peers spec
@@ -13446,7 +13841,11 @@ spec:
                           description: Enabled whether this pool is mirrored or not
                           type: boolean
                         mode:
-                          description: 'Mode is the mirroring mode: either pool or image'
+                          description: 'Mode is the mirroring mode: pool, image or init-only.'
+                          enum:
+                            - pool
+                            - image
+                            - init-only
                           type: string
                         peers:
                           description: Peers represents the peers spec
@@ -13711,6 +14110,8 @@ spec:
     kind: CephRBDMirror
     listKind: CephRBDMirrorList
     plural: cephrbdmirrors
+    shortNames:
+      - cephrbdm
     singular: cephrbdmirror
   scope: Namespaced
   versions:
