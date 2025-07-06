@@ -224,6 +224,15 @@ EOF
   )
   helm template --namespace rook-ceph rook-ceph rook-release/rook-ceph --version "${ROOK_VERSION}" -f <(echo "${patch}") | sed -e 's/^#.*//g' | kubectl-slice --prune --remove-comments -t "{{ .kind | lower }}.yaml" -o manifests/rook/base/
   pushd manifests/rook/base/ && kubectl create ns rook-ceph --dry-run=client -oyaml > 01-namespace.yaml && kustomize create --autodetect --recursive && popd
+
+  patch2=$(
+    cat << EOF
+toolbox:
+  enabled: true
+EOF
+  )
+  helm template --namespace rook-ceph rook-ceph-cluster rook-release/rook-ceph-cluster --version "${ROOK_VERSION}" -f <(echo "${patch2}") | sed -e 's/^#.*//g' | kubectl-slice --prune --remove-comments -t "{{ .kind | lower }}.yaml" -o manifests/rook/overlays/
+  pushd manifests/rook/overlays/ && kustomize create --autodetect --recursive && popd
 }
 
 local-path() {
