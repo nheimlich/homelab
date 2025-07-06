@@ -9,7 +9,7 @@ metadata:
     app.kubernetes.io/part-of: rook-ceph-operator
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/created-by: helm
-    helm.sh/chart: "rook-ceph-v1.17.3"
+    helm.sh/chart: "rook-ceph-v1.17.5"
 spec:
   replicas: 1
   selector:
@@ -21,7 +21,7 @@ spec:
     metadata:
       labels:
         app: rook-ceph-operator
-        helm.sh/chart: "rook-ceph-v1.17.3"
+        helm.sh/chart: "rook-ceph-v1.17.5"
     spec:
       tolerations:
         - effect: NoExecute
@@ -30,7 +30,7 @@ spec:
           tolerationSeconds: 5
       containers:
       - name: rook-ceph-operator
-        image: "docker.io/rook/ceph:v1.17.3"
+        image: "docker.io/rook/ceph:v1.17.5"
         imagePullPolicy: IfNotPresent
         args: ["ceph", "operator"]
         securityContext:

@@ -8,7 +8,7 @@ metadata:
     app.kubernetes.io/part-of: rook-ceph-operator
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/created-by: helm
-    helm.sh/chart: "rook-ceph-v1.17.3"
+    helm.sh/chart: "rook-ceph-v1.17.5"
 rules:
   # Most resources are represented by a string representation of their name, such as "pods", just as it appears in the URL for the relevant API endpoint.
   # However, some Kubernetes APIs involve a "subresource", such as the logs for a pod. [...]
@@ -49,7 +49,7 @@ metadata:
     app.kubernetes.io/part-of: rook-ceph-operator
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/created-by: helm
-    helm.sh/chart: "rook-ceph-v1.17.3"
+    helm.sh/chart: "rook-ceph-v1.17.5"
 rules:
 - apiGroups:
   - ""
@@ -84,7 +84,7 @@ metadata:
     app.kubernetes.io/part-of: rook-ceph-operator
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/created-by: helm
-    helm.sh/chart: "rook-ceph-v1.17.3"
+    helm.sh/chart: "rook-ceph-v1.17.5"
 rules:
 - apiGroups:
   - ""
@@ -289,7 +289,7 @@ metadata:
     app.kubernetes.io/part-of: rook-ceph-operator
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/created-by: helm
-    helm.sh/chart: "rook-ceph-v1.17.3"
+    helm.sh/chart: "rook-ceph-v1.17.5"
 rules:
 - apiGroups:
   - ""
@@ -345,7 +345,7 @@ metadata:
     app.kubernetes.io/part-of: rook-ceph-operator
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/created-by: helm
-    helm.sh/chart: "rook-ceph-v1.17.3"
+    helm.sh/chart: "rook-ceph-v1.17.5"
 rules:
   - apiGroups: [""]
     resources: ["secrets", "configmaps"]
@@ -511,7 +511,7 @@ metadata:
     app.kubernetes.io/part-of: rook-ceph-operator
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/created-by: helm
-    helm.sh/chart: "rook-ceph-v1.17.3"
+    helm.sh/chart: "rook-ceph-v1.17.5"
 rules:
   - apiGroups: [""]
     resources: ["secrets"]

@@ -570,6 +570,7 @@ spec:
                       type: string
                     targetSizeRatio:
                       description: TargetSizeRatio gives a hint (%) to Ceph in terms of expected consumption of the total cluster capacity
+                      minimum: 0
                       type: number
                   required:
                     - size
@@ -1496,6 +1497,11 @@ spec:
                             - quick
                           type: string
                       type: object
+                    wipeDevicesFromOtherClusters:
+                      description: |-
+                        WipeDevicesFromOtherClusters wipes the OSD disks belonging to other clusters. This is useful in scenarios where ceph cluster
+                        was reinstalled but OSD disk still contains the metadata from previous ceph cluster.
+                      type: boolean
                   type: object
                 continueUpgradeAfterChecksEvenIfNotHealthy:
                   description: ContinueUpgradeAfterChecksEvenIfNotHealthy defines if an upgrade should continue even if PGs are not clean
@@ -7365,6 +7371,7 @@ spec:
                             type: string
                           targetSizeRatio:
                             description: TargetSizeRatio gives a hint (%) to Ceph in terms of expected consumption of the total cluster capacity
+                            minimum: 0
                             type: number
                         required:
                           - size
@@ -7553,6 +7560,7 @@ spec:
                           type: string
                         targetSizeRatio:
                           description: TargetSizeRatio gives a hint (%) to Ceph in terms of expected consumption of the total cluster capacity
+                          minimum: 0
                           type: number
                       required:
                         - size
@@ -8893,7 +8901,6 @@ spec:
     plural: cephnfses
     shortNames:
       - nfs
-      - cephnfs
     singular: cephnfs
   scope: Namespaced
   versions:
@@ -11218,6 +11225,7 @@ spec:
                           type: string
                         targetSizeRatio:
                           description: TargetSizeRatio gives a hint (%) to Ceph in terms of expected consumption of the total cluster capacity
+                          minimum: 0
                           type: number
                       required:
                         - size
@@ -12818,6 +12826,7 @@ spec:
                           type: string
                         targetSizeRatio:
                           description: TargetSizeRatio gives a hint (%) to Ceph in terms of expected consumption of the total cluster capacity
+                          minimum: 0
                           type: number
                       required:
                         - size
@@ -13752,6 +13761,7 @@ spec:
                           type: string
                         targetSizeRatio:
                           description: TargetSizeRatio gives a hint (%) to Ceph in terms of expected consumption of the total cluster capacity
+                          minimum: 0
                           type: number
                       required:
                         - size
@@ -13935,6 +13945,7 @@ spec:
                           type: string
                         targetSizeRatio:
                           description: TargetSizeRatio gives a hint (%) to Ceph in terms of expected consumption of the total cluster capacity
+                          minimum: 0
                           type: number
                       required:
                         - size

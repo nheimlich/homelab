@@ -28,7 +28,7 @@ versions() {
   CONNECT_VERSION=${CONNECT_VERSION:-1.17.0}
   CERT_MANAGER_VERSION=${CERT_MANAGER_VERSION:-v1.17.2}
   EXTERNAL_DNS_VERSION=${EXTERNAL_DNS_VERSION:-1.16.1}
-  ROOK_VERSION=${ROOK_VERSION:-1.17}
+  ROOK_VERSION=${ROOK_VERSION:-1.17.5}
   LOCAL_PATH_VERSION=${LOCAL_PATH_VERSION:-v0.0.31}
 }
 
@@ -212,7 +212,17 @@ EOF
 rook() {
   print_helper "${FUNCNAME[@]}"
 
-  helm template --namespace rook-ceph rook-ceph rook-release/rook-ceph --version "${ROOK_VERSION}" --include-crds | sed -e 's/^#.*//g' | kubectl-slice --prune --remove-comments -t "{{ .kind | lower }}.yaml" -o manifests/rook/base/
+  patch=$(
+    cat << EOF
+crds:
+  enabled: true
+rbacEnable: true
+nfs:
+  enabled: true
+
+EOF
+  )
+  helm template --namespace rook-ceph rook-ceph rook-release/rook-ceph --version "${ROOK_VERSION}" -f <(echo "${patch}") | sed -e 's/^#.*//g' | kubectl-slice --prune --remove-comments -t "{{ .kind | lower }}.yaml" -o manifests/rook/base/
   pushd manifests/rook/base/ && kubectl create ns rook-ceph --dry-run=client -oyaml > 01-namespace.yaml && kustomize create --autodetect --recursive && popd
 }
 
