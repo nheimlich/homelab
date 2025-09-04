@@ -43,19 +43,17 @@ talosctl -n <host-ip> -e <host-ip>  bootstrap --talosconfig talosconfig
 ```sh
 talosctl upgrade --preserve -n <host-ip> -e <host-ip> --talosconfig=talosconfig --image factory.talos.dev/installer-secureboot/376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba:v1.8.3
 ```
-**custom manifests for bootstraping**
+**standalone cluster configuration**
+- podman configuration
 ```sh
-# Local Storage Class
-pwd: ~/talos/local-storage
-kustomize build . > local-storage-provisioner.yaml
-
-# Cilium CNI
-pwd: ~/talos/cilium
-helm template cilium cilium/cilium -f cilium-config.yaml > cilium.yaml
+podman machine set --rootful=true podman-machine-default
+```
+- creating cluster
+```sh
+talosctl cluster create --config-patch @patch.yaml --skip-k8s-node-readiness-check --cpus=4.0 --memory=8096 --workers 0 --docker-disable-ipv6
 ```
 
 ### OnePass Base Configuration
 ```sh
 echo "<mac-addr>" | op document create --vault kubernetes --title "<host>-macaddr" -
 ```
-
