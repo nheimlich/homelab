@@ -11,7 +11,6 @@ helmCharts:
   includeCRDs: true
   skipHooks: false
   skipTests: false
-  valuesFile: values.yaml
   valuesInline:
     operator:
       replicas: 1
