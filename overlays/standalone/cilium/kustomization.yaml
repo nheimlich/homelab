@@ -11,28 +11,11 @@ helmCharts:
   includeCRDs: true
   skipHooks: false
   skipTests: false
-  valuesFile: values.yaml
   valuesInline:
     operator:
       replicas: 1
     k8sServiceHost: localhost
     k8sServicePort: 7445
-    debug:
-      verbose: ""
-    cgroup:
-      hostRoot: /sys/fs/cgroup
-      autoMount:
-        enabled: false
-    ipam:
-      mode: kubernetes
-    l2announcements:
-      enabled: true
-      leaseDuration: 3s
-      leaseRenewDeadline: 1s
-      leaseRetryPeriod: 200ms
-    k8sClientRateLimit:
-      qps: 100
-      burst: 200
     gatewayAPI:
       enabled: true
     kubeProxyReplacement: true
@@ -56,6 +39,3 @@ helmCharts:
         - NET_ADMIN
         - SYS_ADMIN
         - SYS_RESOURCE
-resources:
-  - ippool.yaml
-  - policy.yaml
