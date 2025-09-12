@@ -1,0 +1,51 @@
+---
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: applications
+  namespace: argocd
+spec:
+  goTemplate: true
+  goTemplateOptions: ["missingkey=error"]
+  generators:
+    - git:
+        repoURL: https://github.com/nheimlich/homelab
+        revision: HEAD
+        directories:
+          - path: overlays/standalone/*
+  ignoreApplicationDifferences:
+    - jsonPointers:
+        - /spec/syncPolicy
+        - /metadata/annotations/argocd.argoproj.io~1refresh
+        - /operation
+  template:
+    metadata:
+      name: '{{.path.basename}}'
+    spec:
+      project: "default"
+      source:
+        repoURL: https://github.com/nheimlich/homelab
+        targetRevision: HEAD
+        path: '{{.path.path}}'
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: argocd
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+          allowEmpty: true
+        syncOptions:
+        - ServerSideApply=true
+      ignoreDifferences:
+        - group: ""
+          kind: "ConfigMap"
+          namespace: "kube-system"
+          jsonPointers:
+            - /data/ipam-multi-pool-pre-allocation
+        - group: "*"
+          kind: "*"
+          namespace: "*"
+          jsonPointers:
+            - /metadata/labels/app.kubernetes.io/instance
+            - /metadata/labels/app.kubernetes.io~1instance
