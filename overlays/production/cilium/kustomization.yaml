@@ -22,6 +22,9 @@ helmCharts:
       hostRoot: /sys/fs/cgroup
       autoMount:
         enabled: false
+    bandwidthManager:
+      enabled: true
+      bbr: true
     ipam:
       mode: kubernetes
     l2announcements:
