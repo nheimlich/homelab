@@ -2,16 +2,16 @@ apiVersion: ceph.rook.io/v1
 kind: CephFilesystem
 metadata:
   name: ceph-filesystem
-  namespace: rook-ceph # namespace:cluster
+  namespace: rook-ceph
 spec:
   dataPools:
   - failureDomain: host
     name: data0
     replicated:
-      size: 3
+      size: 2
   metadataPool:
     replicated:
-      size: 3
+      size: 2
   metadataServer:
     activeCount: 1
     activeStandby: true
