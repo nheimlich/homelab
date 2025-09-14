@@ -1,0 +1,22 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ../../../manifests/multus/base
+  - networkattachmentdefinition-macvlan-conf.yaml
+patches:
+  - target:
+      kind: DaemonSet
+      name: kube-multus-ds
+      namespace: kube-system
+    patch: |-
+      - op: replace
+        path: /spec/template/spec/initContainers/0/command
+        value:
+          - "/usr/src/multus-cni/bin/install_multus"
+          - "-d"
+          - "/host/opt/cni/bin"
+          - "-t"
+          - "thick"
+      - op: replace
+        path: /spec/template/spec/volumes/8/hostPath/path
+        value: /var/run/netns/

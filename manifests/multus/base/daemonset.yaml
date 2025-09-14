@@ -68,30 +68,20 @@ spec:
             - name: hostroot
               mountPath: /hostroot
               mountPropagation: HostToContainer
+            - mountPath: /etc/cni/multus/net.d
+              name: multus-conf-dir
           env:
             - name: MULTUS_NODE_NAME
               valueFrom:
                 fieldRef:
                   fieldPath: spec.nodeName
       initContainers:
-        - command:
-          - /install-cni.sh
-          image: ghcr.io/siderolabs/install-cni:v1.9.0
-          name: install-cni
-          securityContext:
-            privileged: true
-          volumeMounts:
-          - mountPath: /host/opt/cni/bin
-            mountPropagation: Bidirectional
-            name: cnibin
         - name: install-multus-binary
           image: ghcr.io/k8snetworkplumbingwg/multus-cni:snapshot-thick
           command:
-            - /usr/src/multus-cni/bin/install_multus
-            - -d
-            - /host/opt/cni/bin
-            - -t
-            - thick
+            - "sh"
+            - "-c"
+            - "cp /usr/src/multus-cni/bin/multus-shim /host/opt/cni/bin/multus-shim && cp /usr/src/multus-cni/bin/passthru /host/opt/cni/bin/passthru"
           resources:
             requests:
               cpu: "10m"
@@ -134,4 +124,7 @@ spec:
             path: /run/k8s.cni.cncf.io
         - name: host-run-netns
           hostPath:
-            path: /var/run/netns/
+            path: /run/netns/
+        - name: multus-conf-dir
+          hostPath:
+            path: /etc/cni/multus/net.d
