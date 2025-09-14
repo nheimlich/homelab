@@ -30,6 +30,7 @@ versions() {
   EXTERNAL_DNS_VERSION=${EXTERNAL_DNS_VERSION:-1.16.1}
   ROOK_VERSION=${ROOK_VERSION:-1.17.5}
   LOCAL_PATH_VERSION=${LOCAL_PATH_VERSION:-v0.0.31}
+  MULTUS_VERSION=${MULTUS_VERSION:-v4.2.2}
 }
 
 print_versions() {
@@ -41,6 +42,7 @@ print_versions() {
   printf "External DNS Version: %s\n" "${EXTERNAL_DNS_VERSION}"
   printf "Rook Version: %s\n" "${ROOK_VERSION}"
   printf "Local Path Version: %s\n" "${LOCAL_PATH_VERSION}"
+  printf "Multus Version: %s\n" "${MULTUS_VERSION}"
 }
 
 generate_versions() {
@@ -241,6 +243,15 @@ local-path() {
   rm -rf manifests/local-path-provisioner/base/*
   curl -sL "https://raw.githubusercontent.com/rancher/local-path-provisioner/refs/tags/${LOCAL_PATH_VERSION}/deploy/local-path-storage.yaml" | kubectl-slice --prune --remove-comments -t "{{ .kind | lower }}.yaml" -o manifests/local-path/base/
   pushd manifests/local-path/base/ && kustomize create --autodetect --recursive && popd
+
+}
+
+multus() {
+  print_helper "${FUNCNAME[@]}"
+
+  rm -rf manifests/multus/base/*
+  curl -sL "https://raw.githubusercontent.com/k8snetworkplumbingwg/multus-cni/refs/tags/${MULTUS_VERSION}/deployments/multus-daemonset-thick.yml" | grep -Ev "^#.*" | kubectl-slice --prune --remove-comments -t "{{ .kind | lower }}.yaml" -o manifests/multus/base/
+  pushd manifests/multus/base/ && kustomize create --autodetect --recursive && popd
 
 }
 
