@@ -39,7 +39,7 @@ helmCharts:
       enabled: true
     kubeProxyReplacement: true
     cni:
-      exclusive: true
+      exclusive: false
     securityContext:
       capabilities:
         ciliumAgent:
