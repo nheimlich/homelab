@@ -60,7 +60,6 @@ spec:
             - --log-level=info
             - --log-format=text
             - --interval=1m
-            - --source=pod
             - --source=service
             - --source=gateway-httproute
             - --policy=sync
