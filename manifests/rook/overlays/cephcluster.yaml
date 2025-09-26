@@ -2,12 +2,8 @@ apiVersion: ceph.rook.io/v1
 kind: CephCluster
 metadata:
   name: rook-ceph
-  namespace: rook-ceph # namespace:cluster
+  namespace: rook-ceph
 spec:
-  annotations:
-    all:
-      kubernetes.io/egress-bandwidth: "20M"
-      kubernetes.io/ingress-bandwidth: "20M"
   monitoring:
     enabled: false
   cephVersion:
