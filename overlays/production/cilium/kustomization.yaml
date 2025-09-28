@@ -40,6 +40,9 @@ helmCharts:
     kubeProxyReplacement: true
     cni:
       exclusive: true
+    encryption:
+      enabled: true
+      type: wireguard
     securityContext:
       capabilities:
         ciliumAgent:
