@@ -27,7 +27,7 @@ versions() {
   CDI_VERSION=${CDI_VERSION:-v1.62.0}
   CONNECT_VERSION=${CONNECT_VERSION:-1.17.0}
   CERT_MANAGER_VERSION=${CERT_MANAGER_VERSION:-v1.17.2}
-  EXTERNAL_DNS_VERSION=${EXTERNAL_DNS_VERSION:-1.16.1}
+  EXTERNAL_DNS_VERSION=${EXTERNAL_DNS_VERSION:-v1.19.0}
   ROOK_VERSION=${ROOK_VERSION:-1.17.5}
   LOCAL_PATH_VERSION=${LOCAL_PATH_VERSION:-v0.0.31}
   MULTUS_VERSION=${MULTUS_VERSION:-v4.2.2}
@@ -205,8 +205,7 @@ EOF
   )
 
   helm template external-dns external-dns/external-dns --version "${EXTERNAL_DNS_VERSION}" --namespace external-dns --no-hooks --include-crds --skip-tests \
-    -f <(echo "${patch}") \
-    | kubectl-slice --prune --remove-comments -t "{{ .kind | lower }}.yaml" -o manifests/external-dns/base/
+    -f <(echo "${patch}") | sed '/helm.sh\/chart:/d; /app.kubernetes.io\/managed-by:/d; /app.kubernetes.io\/version:/d; /app.kubernetes.io\/component:/d; /app.kubernetes.io\/part-of:/d' | kubectl-slice --prune --remove-comments -t "{{ .kind | lower }}.yaml" -o manifests/external-dns/base/
   pushd manifests/external-dns/base/ && kubectl create ns external-dns --dry-run=client -oyaml > 01-namespace.yaml && kustomize create --recursive --autodetect && popd
   unset patch
 }
