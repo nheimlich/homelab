@@ -21,12 +21,6 @@ helmCharts:
     kubeProxyReplacement: true
     cni:
       exclusive: true
-    authentication:
-      mutual:
-        spire:
-          enabled: true
-          install:
-            enabled: true
     securityContext:
       capabilities:
         ciliumAgent:
