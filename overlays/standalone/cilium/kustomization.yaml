@@ -20,7 +20,7 @@ helmCharts:
     gatewayAPI:
       enabled: true
       gatewayClass:
-        create: false
+        create: "false"
     nodePort:
       enabled: true
     kubeProxyReplacement: true
