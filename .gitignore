@@ -1,2 +1,3 @@
 secrets/*
 .*.swp
+manifests/virtualmachines/*

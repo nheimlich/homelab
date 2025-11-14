@@ -16,12 +16,8 @@ helmCharts:
     operator:
       replicas: 1
     k8sServiceHost: localhost
-    k8sServicePort: 7445
+    k8sServicePort: 6443
     gatewayAPI:
-      enabled: true
-      gatewayClass:
-        create: "false"
-    nodePort:
       enabled: true
     kubeProxyReplacement: true
     cni:
@@ -44,7 +40,3 @@ helmCharts:
         - NET_ADMIN
         - SYS_ADMIN
         - SYS_RESOURCE
-
-resources:
-  - ciliumgatewayclassconfigs.yaml
-  - gatwayclass.yaml

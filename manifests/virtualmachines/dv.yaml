@@ -1,15 +1,16 @@
 apiVersion: cdi.kubevirt.io/v1beta1
 kind: DataVolume
 metadata:
-  name: debian-12
+  name: fcos-os-disk-volume
 spec:
   source:
-    http:
-      url: "https://mirrors.lug.mtu.edu/debian-cd/current-live/amd64/iso-hybrid/debian-live-12.10.0-amd64-standard.iso"
+    registry:
+      url:
+       docker://quay.io/fedora/fedora-coreos-kubevirt:stable
   storage:
-    storageClassName: "rook-cephfs"
-    accessModes:
-      - "ReadWriteMany"
+    volumeMode: Filesystem
     resources:
       requests:
-        storage: 2Gi
+        storage: 10Gi
+    accessModes:
+      - ReadWriteOnce
