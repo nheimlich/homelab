@@ -168,6 +168,7 @@ EOF
   )
 
   helm template cert-manager jetstack/cert-manager --namespace cert-manager --version "${CERT_MANAGER_VERSION}" -f <(echo "${patch}") \
+    --set 'extraArgs={--dns01-recursive-nameservers-only,--dns01-recursive-nameservers=1.1.1.1:53}' \
     | kubectl-slice --prune --remove-comments -t "{{ .kind | lower }}.yaml" -o manifests/cert-manager/base/ && pushd manifests/cert-manager/base \
     && kubectl create ns cert-manager --dry-run=client -oyaml > 01-namespace.yaml && kustomize create --recursive --autodetect && popd
 }
