@@ -12,11 +12,14 @@ helmCharts:
   skipHooks: false
   skipTests: false
   valuesInline:
+    l7Proxy: true
     operator:
       replicas: 1
     k8sServiceHost: localhost
     k8sServicePort: 7445
     gatewayAPI:
+      enabled: true
+    nodePort:
       enabled: true
     kubeProxyReplacement: true
     cni:
