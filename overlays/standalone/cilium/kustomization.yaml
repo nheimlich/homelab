@@ -19,6 +19,8 @@ helmCharts:
     k8sServicePort: 7445
     gatewayAPI:
       enabled: true
+      gatewayClass:
+        create: false
     nodePort:
       enabled: true
     kubeProxyReplacement: true
@@ -45,3 +47,4 @@ helmCharts:
 
 resources:
   - ciliumgatewayclassconfigs.yaml
+  - gatwayclass.yaml
