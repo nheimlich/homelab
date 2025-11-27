@@ -1,259 +1,192 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-valid_names=$(find manifests -mindepth 1 -maxdepth 1 -type d | sed 's|manifests/||')
+CONFIG_FILE="$(dirname "$0")/config.sh"
+
+if [[ -f ${CONFIG_FILE} ]]; then
+  source "${CONFIG_FILE}"
+else
+  echo "Error: Missing ${CONFIG_FILE}" >&2
+  exit 1
+fi
+
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+MANIFESTS_DIR="${REPO_ROOT}/manifests"
+
+log() { printf "\033[36m[INFO]\033[0m %s\n" "$*"; }
+warn() { printf "\033[33m[WARN]\033[0m %s\n" "$*"; }
+err() { printf "\033[31m[ERR]\033[0m %s\n" "$*"; }
+
+generate_kustomization() {
+    local target_dir="$1"
+    local namespace="$2"
+    local create_ns="${3:-true}"
+
+    pushd "${target_dir}" >/dev/null
+
+    if [[ -n "${namespace}" && "${create_ns}" == true ]]; then
+         kubectl create ns "${namespace}" --dry-run=client -oyaml | kubectl-neat > 01-namespace.yaml
+    fi
+
+    if [[ ! -f kustomization.yaml ]]; then
+        kustomize create --autodetect --recursive
+    fi
+    popd >/dev/null
+}
+
+slice_manifests() {
+    local output_dir="$1"
+    kubectl-slice --prune --remove-comments --exclude-kind Namespace --template "{{ .kind | lower }}.yaml" --exclude-kind=Secret --output-dir "${output_dir}"
+}
+
+fetch_url() {
+    local app="$1"
+    local ver="$2"
+    local url="$3"
+    local ns="${4:-}"
+    local extra_slice_args="${5:-}"
+    local stream_filter="${6:-}"
+    local create_ns="${7:-true}"
+    local owner="${8:-}"
+    local repo="${9:-}"
+
+    local target_dir="${MANIFESTS_DIR}/${app}/components/${ver}"
+
+    if [[ -d "${target_dir}" && "${FORCE_GENERATE:-false}" != "true" ]]; then
+        log "Skipping ${app} ${ver} (already exists). Use -f to force."
+        return 0
+    fi
+
+    log "Generating ${app} ${ver} from URL..."
+    rm -rf "${target_dir}" && mkdir -p "${target_dir}"
+
+    curl -sL "${url}" | \
+        if [[ -n "${stream_filter}" ]]; then
+            eval "${stream_filter}"
+        else
+            cat
+        fi | \
+    slice_manifests "${target_dir}" ${extra_slice_args}
+
+    generate_kustomization "${target_dir}" "${ns}" "${create_ns}"
+
+    local latest_ver=$(curl -s "https://api.github.com/repos/"${owner}/${repo}"/releases/latest" | jq -r '.tag_name')
+
+    if [[ "${ver}" != "${latest_ver}" ]]; then
+        warn "A newer version (${latest_ver}) of ${app} is available (current: ${ver})"
+    elif [[ -z "${latest_ver}" ]]; then
+        warn "Could not determine the latest version of ${app}"
+    elif [[ "${ver}" == "${latest_ver}" ]]; then
+        log "${app} is up-to-date (version: ${ver}, upstream: ${latest_ver})"
+    fi
+}
+
+# Strategy: Helm Chart
+# Usage: fetch_helm <app> <ver> <repo_name> <repo_url> <chart> <release_name> <namespace> [values_callback_function]
+fetch_helm() {
+    local app="$1"
+    local ver="$2"
+    local repo_name="$3"
+    local repo_url="$4"
+    local chart="$5"
+    local release_name="$6"
+    local namespace="$7"
+    local callback="${8:-}"
+    local extra_slice_args="${9:-}"
+    local stream_filter="${10:-}"
+
+    local target_dir="${MANIFESTS_DIR}/${app}/components/${ver}"
+
+    if [[ -d "${target_dir}" && "${FORCE_GENERATE:-false}" != "true" ]]; then
+        log "Skipping ${app} ${ver} (already exists). Use -f to force."
+        return 0
+    fi
+
+    log "Generating ${app} ${ver} from Helm..."
+    rm -rf "${target_dir}" && mkdir -p "${target_dir}"
+
+    helm repo add "${repo_name}" "${repo_url}" >/dev/null 2>&1
+    helm repo update "${repo_name}" >/dev/null 2>&1
+
+    local values_file=""
+    if [[ -n "${callback}" ]]; then
+        values_file=$(mktemp)
+        ${callback} > "${values_file}"
+    fi
+
+    local cmd=(helm template "${release_name}" "${repo_name}/${chart}" --version "${ver}" --namespace "${namespace}" --include-crds)
+    if [[ -n "${values_file}" ]]; then
+        cmd+=(-f "${values_file}")
+    fi
+
+    "${cmd[@]}" | \
+        if [[ -n "${stream_filter}" ]]; then
+            eval "${stream_filter}"
+        else
+            cat
+        fi | \
+    sed '/helm.sh\/chart:/d; /app.kubernetes.io\/managed-by:/d; /app.kubernetes.io\/created-by:/d' | \
+    slice_manifests "${target_dir}" ${extra_slice_args}
+
+    [[ -n "${values_file}" ]] && rm -f "${values_file}"
+
+    local latest_ver=$(helm search repo "${repo_name}/${chart}" -o json | jq -r '.[].version' | head -n1)
+
+    if [[ "${ver}" != "${latest_ver}" ]]; then
+        warn "A newer version (${latest_ver}) of ${app} is available (current: ${ver})"
+    elif [[ -z "${latest_ver}" ]]; then
+        warn "Could not determine the latest version of ${app}"
+    elif [[ "${ver}" == "${latest_ver}" ]]; then
+        log "${app} is up-to-date (version: ${ver}, upstream: ${latest_ver})"
+    fi
+
+    generate_kustomization "${target_dir}" "${namespace}"
+
+}
+
+valid_apps=$(declare -F | awk '{print $3}' | grep -vE "^(fetch_|slice_|log|warn|err|versions|usage|generate_|main|print_)")
 
 usage() {
-  printf "Generates base manifests; run from the root of homelab repo\n"
-  printf "Usage: %s <app-name> [options]\n" "$0"
-  printf "Options:\n"
-  printf "  -h, --help  Show this help message\n"
-  printf "  -v, --version  Show versions of components\n"
-  printf "  -g, --generate  Generate new versions of components\n"
-  printf "  -i, --interactive  Select an app to generate using fzf\n"
-  printf "  -a, --all  Generate all apps\n"
-  printf "Available Apps:\n"
-  for i in ${valid_names}; do
-    printf " - %s\n" "${i}"
-  done
-}
-
-print_helper() {
-  printf "creating %s base\n" "$1"
-}
-
-versions() {
-  KUBEVIRT_VERSION=${KUBEVIRT_VERSION:-v1.6.1}
-  CDI_VERSION=${CDI_VERSION:-v1.62.0}
-  CONNECT_VERSION=${CONNECT_VERSION:-1.17.0}
-  CERT_MANAGER_VERSION=${CERT_MANAGER_VERSION:-v1.17.2}
-  EXTERNAL_DNS_VERSION=${EXTERNAL_DNS_VERSION:-v1.19.0}
-  ROOK_VERSION=${ROOK_VERSION:-1.17.5}
-  LOCAL_PATH_VERSION=${LOCAL_PATH_VERSION:-v0.0.31}
-  MULTUS_VERSION=${MULTUS_VERSION:-v4.2.2}
-}
-
-print_versions() {
-  versions
-  printf "Kubevirt Version: %s\n" "${KUBEVIRT_VERSION}"
-  printf "CDI Version: %s\n" "${CDI_VERSION}"
-  printf "Connect Version: %s\n" "${CONNECT_VERSION}"
-  printf "Cert-Manager Version: %s\n" "${CERT_MANAGER_VERSION}"
-  printf "External DNS Version: %s\n" "${EXTERNAL_DNS_VERSION}"
-  printf "Rook Version: %s\n" "${ROOK_VERSION}"
-  printf "Local Path Version: %s\n" "${LOCAL_PATH_VERSION}"
-  printf "Multus Version: %s\n" "${MULTUS_VERSION}"
-}
-
-generate_versions() {
-  local CDI_URL_PATH="https://github.com/kubevirt/containerized-data-importer/releases"
-  local KUBEVIRT_URL="https://storage.googleapis.com/kubevirt-prow/release/kubevirt/kubevirt/stable.txt"
-  versions
-  NEW_CDI_VERSION=$(curl -s -w '%{redirect_url}' -o /dev/null "${CDI_URL_PATH}/latest" | awk -F/ '{print $NF}')
-  NEW_KUBEVIRT_VERSION=$(curl -s -w '%{redirect_url}' "${KUBEVIRT_URL}")
-  printf "Generating new versions...\n"
-  printf "CDI: %s -> %s\n" "${CDI_VERSION}" "${NEW_CDI_VERSION}"
-  printf "KUBEVIRT: %s -> %s\n" "${KUBEVIRT_VERSION}" "${NEW_KUBEVIRT_VERSION}"
+    printf "Usage: %s [options] <app>\n" "$0"
+    printf "Options:\n"
+    printf "  -f, --force    Force regeneration of components\n"
+    printf "  -a, --all      Generate all apps\n"
+    printf "  -l, --list     List available apps\n"
 }
 
 main() {
-  if [[ $# -eq 0 ]]; then
-    usage
-  else
+    versions
+    FORCE_GENERATE=false
+    RUN_ALL=false
+
     while [[ $# -gt 0 ]]; do
-      case $1 in
-        -h | --help)
-          usage
-          exit 0
-          ;;
-        -v | --version)
-          print_versions
-          exit 0
-          ;;
-        -g | --generate)
-          generate_versions
-          exit 0
-          ;;
-        -i | --interactive)
-          echo "${valid_names}" | fzf --header "Select an app to generate" | xargs -I {} bash -c "scripts/apps.sh {}"
-          exit 0
-          ;;
-        -a | all)
-          versions
-          for i in ${valid_names}; do
-            if declare -f "${i}" > /dev/null; then
-              "${i}"
-            fi
-          done
-          exit 0
-          ;;
-        *)
-          versions
-          if echo "${valid_names}" | grep -qx "$1"; then
-            if declare -f "$1" > /dev/null; then
-              "$1"
-              shift
-            else
-              echo "Function '$1' not defined"
-              exit 1
-            fi
-          else
-            echo "Unknown option: $1"
-            usage
-            exit 1
-          fi
-          ;;
-      esac
+        case $1 in
+            -f|--force) FORCE_GENERATE=true; shift ;;
+            -a|--all) RUN_ALL=true; shift ;;
+            -l|--list) echo "${valid_apps}"; exit 0 ;;
+            -h|--help) usage; exit 0 ;;
+            *)
+                if echo "${valid_apps}" | grep -qx "$1"; then
+                    "$1"
+                    exit 0
+                else
+                    err "Unknown app or option: $1"
+                    usage
+                    exit 1
+                fi
+                ;;
+        esac
     done
-  fi
+
+    if [[ "${RUN_ALL}" == "true" ]]; then
+        for app in ${valid_apps}; do
+          # Skip internal helpers if present (e.g., functions starting with '_')
+            [[ "${app}" == "_"* ]] && continue
+            "${app}"
+        done
+    else
+        usage
+    fi
 }
 
-## Applications ##
-
-kubevirt() {
-  print_helper "${FUNCNAME[@]}"
-
-  curl -Ls https://github.com/kubevirt/kubevirt/releases/download/"${KUBEVIRT_VERSION}"/kubevirt-operator.yaml | kubectl-slice --prune --remove-comments -t "{{ .kind | lower }}.yaml" -o manifests/kubevirt/base/
-  pushd manifests/kubevirt/base/ && rm -rf kustomization.yaml && kustomize create --autodetect --recursive && popd
-  printf "\n"
-}
-
-cdi() {
-  print_helper "${FUNCNAME[@]}"
-  local URL_PATH="https://github.com/kubevirt/containerized-data-importer/releases"
-
-  mv manifests/cdi/base/customresourcedefinition.yaml /tmp/customresourcedefinition.yaml
-  curl -sL "${URL_PATH}"/download/"${CDI_VERSION}"/cdi-operator.yaml | kubectl-slice --exclude CustomResourceDefinition/cdis.cdi.kubevirt.io --prune --remove-comments -t "{{ .kind | lower }}.yaml" -o manifests/cdi/base/
-  mv /tmp/customresourcedefinition.yaml manifests/cdi/base/customresourcedefinition.yaml
-  pushd manifests/cdi/base/ && kustomize create --autodetect --recursive && popd
-  printf "\n"
-}
-
-connect() {
-  print_helper "${FUNCNAME[@]}"
-
-  cat > manifests/connect/kustomization.yaml << EOF
-apiVersion: kustomize.config.k8s.io/v1beta1
-kind: Kustomization
-resources:
-  - namespace.yaml
-helmCharts:
-- name: connect
-  namespace: connect
-  releaseName: connect
-  version: ${CONNECT_VERSION}
-  repo: https://1password.github.io/connect-helm-charts
-  includeCRDs: true
-  skipHooks: true
-  skipTests: true
-  valuesInline:
-    operator:
-      create: true
-EOF
-  printf "Wrote manifests/connect/kustomization.yaml -- 82 bytes\n\n"
-}
-
-cert-manager() {
-  print_helper "${FUNCNAME[@]}"
-
-  patch=$(
-    cat << EOF
-config:
-  enableGatewayAPI: true
-  apiVersion: "controller.config.cert-manager.io/v1alpha1"
-  kind: "ControllerConfiguration"
-crds:
-  enabled: true
-EOF
-  )
-
-  helm template cert-manager jetstack/cert-manager --namespace cert-manager --version "${CERT_MANAGER_VERSION}" -f <(echo "${patch}") \
-    --set 'extraArgs={--dns01-recursive-nameservers-only,--dns01-recursive-nameservers=1.1.1.1:53}' \
-    | kubectl-slice --prune --remove-comments -t "{{ .kind | lower }}.yaml" -o manifests/cert-manager/base/ && pushd manifests/cert-manager/base \
-    && kubectl create ns cert-manager --dry-run=client -oyaml > 01-namespace.yaml && kustomize create --recursive --autodetect && popd
-}
-
-external-dns() {
-  print_helper "${FUNCNAME[@]}"
-
-  patch=$(
-    cat << EOF
-rbac:
-  create: true
-serviceAccount:
-  create: true
-  automountServiceAccountToken: true
-env:
-  - name: CF_API_TOKEN
-    valueFrom:
-      secretKeyRef:
-        name: cloudflare-secret
-        key: apikey
-  - name: CF_API_EMAIL
-    valueFrom:
-      secretKeyRef:
-        name: cloudflare-secret
-        key: email
-sources:
-  - service
-  - gateway-httproute
-domainFilters:
-  - nhlabs.org
-provider:
-  name: cloudflare
-policy: sync
-EOF
-  )
-
-  helm template external-dns external-dns/external-dns --version "${EXTERNAL_DNS_VERSION}" --namespace external-dns --no-hooks --include-crds --skip-tests \
-    -f <(echo "${patch}") | sed '/helm.sh\/chart:/d; /app.kubernetes.io\/managed-by:/d; /app.kubernetes.io\/version:/d; /app.kubernetes.io\/component:/d; /app.kubernetes.io\/part-of:/d' | kubectl-slice --prune --remove-comments -t "{{ .kind | lower }}.yaml" -o manifests/external-dns/base/
-  pushd manifests/external-dns/base/ && kubectl create ns external-dns --dry-run=client -oyaml > 01-namespace.yaml && kustomize create --recursive --autodetect && popd
-  unset patch
-}
-
-rook() {
-  print_helper "${FUNCNAME[@]}"
-
-  patch=$(
-    cat << EOF
-crds:
-  enabled: true
-rbacEnable: true
-nfs:
-  enabled: true
-
-EOF
-  )
-  helm template --namespace rook-ceph rook-ceph rook-release/rook-ceph --version "${ROOK_VERSION}" -f <(echo "${patch}") | sed -e 's/^#.*//g' | kubectl-slice --prune --remove-comments -t "{{ .kind | lower }}.yaml" -o manifests/rook/base/
-  pushd manifests/rook/base/ && kubectl create ns rook-ceph --dry-run=client -oyaml > 01-namespace.yaml && kustomize create --autodetect --recursive && popd
-
-  patch2=$(
-    cat << EOF
-toolbox:
-  enabled: true
-EOF
-  )
-  helm template --namespace rook-ceph rook-ceph-cluster rook-release/rook-ceph-cluster --version "${ROOK_VERSION}" -f <(echo "${patch2}") | sed -e 's/^#.*//g' | kubectl-slice --prune --remove-comments -t "{{ .kind | lower }}.yaml" -o manifests/rook/overlays/
-  pushd manifests/rook/overlays/ && kustomize create --autodetect --recursive && popd
-}
-
-local-path() {
-  print_helper "${FUNCNAME[@]}"
-
-  rm -rf manifests/local-path-provisioner/base/*
-  curl -sL "https://raw.githubusercontent.com/rancher/local-path-provisioner/refs/tags/${LOCAL_PATH_VERSION}/deploy/local-path-storage.yaml" | kubectl-slice --prune --remove-comments -t "{{ .kind | lower }}.yaml" -o manifests/local-path/base/
-  pushd manifests/local-path/base/ && kustomize create --autodetect --recursive && popd
-
-}
-
-multus() {
-  print_helper "${FUNCNAME[@]}"
-
-  rm -rf manifests/multus/base/*
-  curl -sL "https://raw.githubusercontent.com/k8snetworkplumbingwg/multus-cni/refs/tags/${MULTUS_VERSION}/deployments/multus-daemonset-thick.yml" | grep -Ev "^#.*" | kubectl-slice --prune --remove-comments -t "{{ .kind | lower }}.yaml" -o manifests/multus/base/
-  pushd manifests/multus/base/ && kustomize create --autodetect --recursive && popd
-
-}
-
-# Main execution
 main "$@"

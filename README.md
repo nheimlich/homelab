@@ -4,18 +4,16 @@
 
 **Directory Structure:**
 ```sh
-├── apps
-|   ├── application
-│   └── ...
-├── base
-|   ├── manifests
-│   └── ...
-├── overlay
-|   ├── kustomization
-│   └── ...
-└── clusters
-    ├── standalone (local)
-    └── production (dedicated)
+manifests/<app-name> # application manifests
+├── components
+└── overlays
+overlays # per-cluster patches
+├── production
+└── standalone
+clusters # cluster appset and docs
+├── production
+└── standalone
+scripts
 ```
 **Supporting Applications:**
 ```sh

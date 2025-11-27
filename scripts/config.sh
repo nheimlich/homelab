@@ -16,3 +16,170 @@ cluster_name="k8s.nhlabs.local"
 : "${cluster_name:?Error: cluster_name is not set}"
 : "${suffix:?Error: suffix is not set}"
 : "${dhcp_data:?Error: dhcp_data is not set}"
+
+### Application Definitions
+
+# --- Versions ---
+versions() {
+    KUBEVIRT_VERSION=${KUBEVIRT_VERSION:-v1.6.3}
+    CDI_VERSION=${CDI_VERSION:-v1.63.1}
+    CONNECT_VERSION=${CONNECT_VERSION:-2.0.5}
+    CERT_MANAGER_VERSION=${CERT_MANAGER_VERSION:-v1.19.1}
+    EXTERNAL_DNS_VERSION=${EXTERNAL_DNS_VERSION:-1.19.0}
+    ROOK_VERSION=${ROOK_VERSION:-v1.18.7}
+    LOCAL_PATH_VERSION=${LOCAL_PATH_VERSION:-v0.0.32}
+    MULTUS_VERSION=${MULTUS_VERSION:-v4.2.3}
+    OPENTELEMETRY_VERSION=${OPENTELEMETRY_VERSION:-0.79.0}
+}
+
+# -- URL Based Apps --
+## Usage: fetch_url <app> <ver> <url> [namespace] [extra_slice_args] [stream_filter] [create_ns]
+kubevirt() {
+    local owner="kubevirt"
+    local repo="kubevirt"
+
+    fetch_url "kubevirt" "${KUBEVIRT_VERSION}" \
+        "https://github.com/kubevirt/kubevirt/releases/download/${KUBEVIRT_VERSION}/kubevirt-operator.yaml" \
+        "kubevirt" \
+        "" \
+        "" \
+        "true" \
+        "${owner}" \
+        "${repo}"
+}
+
+cdi() {
+    local owner="kubevirt"
+    local repo="containerized-data-importer"
+
+    fetch_url "cdi" "${CDI_VERSION}" \
+        "https://github.com/kubevirt/containerized-data-importer/releases/download/${CDI_VERSION}/cdi-operator.yaml" \
+        "cdi" \
+        "--exclude CustomResourceDefinition/cdis.cdi.kubevirt.io" \
+        "" \
+        "true" \
+        "${owner}" \
+        "${repo}"
+}
+
+local-path() {
+    local owner="rancher"
+    local repo="local-path-provisioner"
+
+    fetch_url "local-path" "${LOCAL_PATH_VERSION}" \
+        "https://raw.githubusercontent.com/rancher/local-path-provisioner/refs/tags/${LOCAL_PATH_VERSION}/deploy/local-path-storage.yaml" \
+        "local-path-storage" \
+        "" \
+        "" \
+        "true" \
+        "${owner}" \
+        "${repo}"
+}
+
+multus() {
+    local owner="k8snetworkplumbingwg"
+    local repo="multus-cni"
+
+    # Note: This one has 'false' for create_ns (7th arg) and a stream filter (6th arg)
+    fetch_url "multus" "${MULTUS_VERSION}" \
+        "https://raw.githubusercontent.com/k8snetworkplumbingwg/multus-cni/refs/tags/${MULTUS_VERSION}/deployments/multus-daemonset-thick.yml" \
+        "kube-system" \
+        "" \
+        'grep -Ev "^#.*"' \
+        "false" \
+        "${owner}" \
+        "${repo}"
+}
+
+# -- Helm Based Apps --
+## Usage: fetch_helm <app> <ver> <repo_name> <repo_url> <chart> <release_name> <namespace> [values_callback_function]
+connect() {
+    _connect_values() {
+        cat <<EOF
+operator:
+  create: true
+EOF
+    }
+    fetch_helm "connect" "${CONNECT_VERSION}" \
+        "1password" "https://1password.github.io/connect-helm-charts" "connect" \
+        "connect" "connect" "_connect_values"
+}
+
+cert-manager() {
+    _cert_values() {
+        cat <<EOF
+config:
+  enableGatewayAPI: true
+  apiVersion: "controller.config.cert-manager.io/v1alpha1"
+  kind: "ControllerConfiguration"
+crds:
+  enabled: true
+extraArgs:
+  - --dns01-recursive-nameservers-only
+  - --dns01-recursive-nameservers=1.1.1.1:53
+EOF
+    }
+    fetch_helm "cert-manager" "${CERT_MANAGER_VERSION}" \
+        "jetstack" "https://charts.jetstack.io" "cert-manager" \
+        "cert-manager" "cert-manager" "_cert_values"
+}
+
+external-dns() {
+    _ext_dns_values() {
+        cat <<EOF
+rbac:
+  create: true
+serviceAccount:
+  create: true
+  automountServiceAccountToken: true
+env:
+  - name: CF_API_TOKEN
+    valueFrom:
+      secretKeyRef:
+        name: cloudflare-secret
+        key: apikey
+domainFilters:
+  - nhlabs.org
+provider:
+  name: cloudflare
+policy: sync
+sources:
+  - service
+  - gateway-httproute
+EOF
+    }
+    fetch_helm "external-dns" "${EXTERNAL_DNS_VERSION}" \
+        "external-dns" "https://kubernetes-sigs.github.io/external-dns/" "external-dns" \
+        "external-dns" "external-dns" "_ext_dns_values"
+}
+
+rook() {
+    _rook_values() {
+        cat <<EOF
+crds:
+  enabled: true
+rbacEnable: true
+nfs:
+  enabled: true
+EOF
+    }
+    fetch_helm "rook" "${ROOK_VERSION}" \
+        "rook-release" "https://charts.rook.io/release" "rook-ceph" \
+        "rook-ceph" "rook-ceph" "_rook_values" "" 'grep -Ev "^#.*"'
+}
+
+#open-telemetry() {
+#    _otel_values() {
+#        cat <<EOF
+#manager:
+#  collectorImage:
+#    repository: otel/opentelemetry-collector-k8s
+#admissionWebhooks:
+#  certManager:
+#    enabled: false
+#EOF
+#    }
+#    fetch_helm "open-telemetry" "${OPENTELEMETRY_VERSION}" \
+#        "opentelemetry-operator" "https://open-telemetry.github.io/opentelemetry-helm-charts" "opentelemetry-operator" \
+#        "opentelemetry-operator" "open-telemetry" "_otel_values"
+#}
