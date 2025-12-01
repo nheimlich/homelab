@@ -111,10 +111,10 @@ kubelet-serving() {
     local repo="kubelet-serving-cert-approver"
     fetch_url "kubelet-serving" "${KUBELET_SERVING_CERT_VERSION}" \
       "https://raw.githubusercontent.com/alex1989hu/kubelet-serving-cert-approver/${KUBELET_SERVING_CERT_VERSION}/deploy/standalone-install.yaml" \
-      "kube-system" \
+      "kubelet-serving-cert-approver" \
       "" \
       "" \
-      "false" \
+      "true" \
       "${owner}" \
       "${repo}"
 }
