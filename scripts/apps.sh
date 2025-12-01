@@ -40,7 +40,10 @@ generate_kustomization() {
 
 slice_manifests() {
     local output_dir="$1"
-    kubectl-slice --prune --remove-comments --exclude-kind Namespace --template "{{ .kind | lower }}.yaml" --exclude-kind=Secret --output-dir "${output_dir}"
+    kubectl-slice --prune --remove-comments --exclude-kind Namespace \
+      --template "{{ .kind | lower }}.yaml" --exclude-kind=Secret \
+      --output-dir "${output_dir}" \
+      "${@:2}"
 }
 
 fetch_url() {
