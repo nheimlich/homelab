@@ -1,0 +1,10 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+- argocd-auth.yaml
+- argocd-cm.yaml
+- argocd-cmd-params-cm.yaml
+- argocd-rbac-cm.yaml
+- http_redirect.yaml
+- http_route.yaml
+- namespace.yaml
