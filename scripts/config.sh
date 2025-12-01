@@ -30,6 +30,8 @@ versions() {
     LOCAL_PATH_VERSION=${LOCAL_PATH_VERSION:-v0.0.32}
     MULTUS_VERSION=${MULTUS_VERSION:-v4.2.3}
     OPENTELEMETRY_VERSION=${OPENTELEMETRY_VERSION:-0.79.0}
+    METRICS_SERVER_VERSION=${METRICS_SERVER_VERSION:-v0.8.0}
+    KUBELET_SERVING_CERT_VERSION=${KUBELET_SERVING_CERT_VERSION:-v0.10.0}
 }
 
 # -- URL Based Apps --
@@ -80,7 +82,6 @@ multus() {
     local owner="k8snetworkplumbingwg"
     local repo="multus-cni"
 
-    # Note: This one has 'false' for create_ns (7th arg) and a stream filter (6th arg)
     fetch_url "multus" "${MULTUS_VERSION}" \
         "https://raw.githubusercontent.com/k8snetworkplumbingwg/multus-cni/refs/tags/${MULTUS_VERSION}/deployments/multus-daemonset-thick.yml" \
         "kube-system" \
@@ -91,6 +92,32 @@ multus() {
         "${repo}"
 }
 
+metrics-server() {
+    local owner="kubernetes-sigs"
+    local repo="metrics-server"
+
+    fetch_url "metrics-server" "${METRICS_SERVER_VERSION}" \
+      "https://github.com/kubernetes-sigs/metrics-server/releases/download/${METRICS_SERVER_VERSION}/components.yaml" \
+      "kube-system" \
+      "" \
+      "" \
+      "false" \
+      "${owner}" \
+      "${repo}"
+}
+
+kubelet-serving() {
+    local owner="alex1989hu"
+    local repo="kubelet-serving-cert-approver"
+    fetch_url "kubelet-serving" "${KUBELET_SERVING_CERT_VERSION}" \
+      "https://raw.githubusercontent.com/alex1989hu/kubelet-serving-cert-approver/${KUBELET_SERVING_CERT_VERSION}/deploy/standalone-install.yaml" \
+      "kube-system" \
+      "" \
+      "" \
+      "false" \
+      "${owner}" \
+      "${repo}"
+}
 # -- Helm Based Apps --
 ## Usage: fetch_helm <app> <ver> <repo_name> <repo_url> <chart> <release_name> <namespace> [values_callback_function]
 connect() {
