@@ -32,6 +32,7 @@ versions() {
     OPENTELEMETRY_VERSION=${OPENTELEMETRY_VERSION:-0.79.0}
     METRICS_SERVER_VERSION=${METRICS_SERVER_VERSION:-v0.8.0}
     KUBELET_SERVING_CERT_VERSION=${KUBELET_SERVING_CERT_VERSION:-v0.10.0}
+    ARGOCD_VERSION=${ARGOCD_VERSION:-v3.2.1}
 }
 
 # -- URL Based Apps --
@@ -118,6 +119,21 @@ kubelet-serving() {
       "${owner}" \
       "${repo}"
 }
+
+argocd() {
+    local owner="argoproj"
+    local repo="argo-cd"
+
+    fetch_url "argocd" "${ARGOCD_VERSION}" \
+      "https://raw.githubusercontent.com/argoproj/argo-cd/${ARGOCD_VERSION}/manifests/install.yaml" \
+      "argocd" \
+      "" \
+      "" \
+      "true" \
+      "${owner}" \
+      "${repo}"
+}
+
 # -- Helm Based Apps --
 ## Usage: fetch_helm <app> <ver> <repo_name> <repo_url> <chart> <release_name> <namespace> [values_callback_function]
 connect() {

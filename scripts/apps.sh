@@ -17,7 +17,7 @@ log() { printf "\033[36m[INFO]\033[0m %s\n" "$*"; }
 warn() { printf "\033[33m[WARN]\033[0m %s\n" "$*"; }
 err() { printf "\033[31m[ERR]\033[0m %s\n" "$*"; }
 
-excluded_apps=("default-backend")
+excluded_apps=("default-backend" "shared-gateway")
 valid_apps=$(declare -F | awk '{print $3}' | grep -vE "^(fetch_|slice_|log|warn|err|versions|usage|generate_|main|print_)")
 missing_apps=$(comm -13 <(echo "${valid_apps}" | sort) <(ls -1 "${MANIFESTS_DIR}" | tr ' ' '\n' | sort) | grep -v -E "$(IFS="|"; echo "${excluded_apps[*]}")")
 
