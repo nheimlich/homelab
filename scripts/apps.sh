@@ -17,6 +17,10 @@ log() { printf "\033[36m[INFO]\033[0m %s\n" "$*"; }
 warn() { printf "\033[33m[WARN]\033[0m %s\n" "$*"; }
 err() { printf "\033[31m[ERR]\033[0m %s\n" "$*"; }
 
+excluded_apps=("default-backend")
+valid_apps=$(declare -F | awk '{print $3}' | grep -vE "^(fetch_|slice_|log|warn|err|versions|usage|generate_|main|print_)")
+missing_apps=$(comm -13 <(echo "${valid_apps}" | sort) <(ls -1 "${MANIFESTS_DIR}" | tr ' ' '\n' | sort) | grep -v -E "$(IFS="|"; echo "${excluded_apps[*]}")")
+
 generate_kustomization() {
     local target_dir="$1"
     local namespace="$2"
@@ -144,7 +148,12 @@ fetch_helm() {
 
 }
 
-valid_apps=$(declare -F | awk '{print $3}' | grep -vE "^(fetch_|slice_|log|warn|err|versions|usage|generate_|main|print_)")
+missing_applications() {
+  echo "${missing_apps}" | while read -r app; do
+      err "Warning: Function for app '${app}' is missing in apps.sh"
+  done
+}
+
 
 usage() {
     printf "Usage: %s [options] <app>\n" "$0"
@@ -152,6 +161,8 @@ usage() {
     printf "  -f, --force    Force regeneration of components\n"
     printf "  -a, --all      Generate all apps\n"
     printf "  -l, --list     List available apps\n"
+    printf "  -m, --missing  List missing app functions\n"
+    printf "  -h, --help     Show this help message\n"
 }
 
 main() {
@@ -164,6 +175,7 @@ main() {
             -f|--force) FORCE_GENERATE=true; shift ;;
             -a|--all) RUN_ALL=true; shift ;;
             -l|--list) echo "${valid_apps}"; exit 0 ;;
+            -m|--missing) missing_applications; exit 0 ;;
             -h|--help) usage; exit 0 ;;
             *)
                 if echo "${valid_apps}" | grep -qx "$1"; then
