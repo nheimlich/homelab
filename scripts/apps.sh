@@ -46,6 +46,15 @@ slice_manifests() {
       "${@:2}"
 }
 
+run_linting() {
+    local target_dir="$1"
+    log "Linting manifests in ${target_dir}..."
+
+    find "${target_dir}" -type f -name "*.yaml" -print0 | xargs -0 pre-commit run \
+        --config .pre-commit-config.yaml \
+        --files || true
+}
+
 fetch_url() {
     local app="$1"
     local ver="$2"
@@ -76,6 +85,8 @@ fetch_url() {
     slice_manifests "${target_dir}" ${extra_slice_args}
 
     generate_kustomization "${target_dir}" "${ns}" "${create_ns}"
+
+    run_linting "${target_dir}"
 
     local latest_ver=$(curl -s "https://api.github.com/repos/"${owner}/${repo}"/releases/latest" | jq -r '.tag_name')
 
@@ -148,6 +159,8 @@ fetch_helm() {
     fi
 
     generate_kustomization "${target_dir}" "${namespace}"
+
+    run_linting "${target_dir}"
 
 }
 
