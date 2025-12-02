@@ -21,7 +21,9 @@ spec:
     tls:
       mode: Terminate
       certificateRefs:
-      - name: nhlabs-org-tls
+      - group: ''
+        kind: Secret
+        name: nhlabs-org-tls
   - name: http
     hostname: "*.nhlabs.org"
     protocol: HTTP
