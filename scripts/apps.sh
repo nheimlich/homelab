@@ -29,7 +29,14 @@ generate_kustomization() {
     pushd "${target_dir}" >/dev/null
 
     if [[ -n "${namespace}" && "${create_ns}" == true ]]; then
-         kubectl create ns "${namespace}" --dry-run=client -oyaml | kubectl-neat > 01-namespace.yaml
+    cat <<EOF > 01-namespace.yaml
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ${namespace}
+  labels:
+    shared-gateway-access: "true"
+EOF
     fi
 
     if [[ ! -f kustomization.yaml ]]; then
@@ -37,6 +44,7 @@ generate_kustomization() {
     fi
     popd >/dev/null
 }
+
 
 slice_manifests() {
     local output_dir="$1"
