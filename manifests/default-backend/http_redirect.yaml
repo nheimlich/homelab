@@ -5,7 +5,9 @@ metadata:
   name: http-filter-redirect
 spec:
   parentRefs:
-  - name: shared-gateway
+  - group: gateway.networking.k8s.io
+    kind: Gateway
+    name: shared-gateway
     namespace: shared-gateway
     sectionName: http
   hostnames:
@@ -15,4 +17,9 @@ spec:
     - type: RequestRedirect
       requestRedirect:
         scheme: https
+        statusCode: 302
         port: 443
+      matches:
+        - path:
+            type: PathPrefix
+            value: /

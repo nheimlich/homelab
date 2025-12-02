@@ -5,7 +5,9 @@ metadata:
   name: https
 spec:
   parentRefs:
-  - name: shared-gateway
+  - group: gateway.networking.k8s.io
+    kind: Gateway
+    name: shared-gateway
     namespace: shared-gateway
     sectionName: https
   hostnames:
@@ -17,5 +19,7 @@ spec:
             value: "/"
           method: GET
       backendRefs:
-        - name: nginx-service
+        - group: ''
+          kind: Service
+          name: nginx-service
           port: 80
