@@ -10,6 +10,7 @@ resources:
 - networkpolicy.yaml
 - role.yaml
 - rolebinding.yaml
+- secret.yaml
 - service.yaml
 - serviceaccount.yaml
 - statefulset.yaml

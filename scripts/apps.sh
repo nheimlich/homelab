@@ -49,7 +49,7 @@ EOF
 slice_manifests() {
     local output_dir="$1"
     kubectl-slice --prune --remove-comments --exclude-kind Namespace \
-      --template "{{ .kind | lower }}.yaml" --exclude-kind=Secret \
+      --template "{{ .kind | lower }}.yaml" \
       --output-dir "${output_dir}" \
       "${@:2}"
 }
