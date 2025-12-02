@@ -33,6 +33,7 @@ versions() {
     METRICS_SERVER_VERSION=${METRICS_SERVER_VERSION:-v0.8.0}
     KUBELET_SERVING_CERT_VERSION=${KUBELET_SERVING_CERT_VERSION:-v0.10.0}
     ARGOCD_VERSION=${ARGOCD_VERSION:-v3.2.1}
+    GATEWAY_API_VERSION=${GATEWAY_API_VERSION:-v1.4.0}
 }
 
 # -- URL Based Apps --
@@ -129,6 +130,20 @@ argocd() {
       "argocd" \
       "" \
       "" \
+      "true" \
+      "${owner}" \
+      "${repo}"
+}
+
+shared-gateway() {
+    local owner="kubernetes-sigs"
+    local repo="gateway-api"
+
+    fetch_url "shared-gateway" "${GATEWAY_API_VERSION}" \
+      "https://github.com/kubernetes-sigs/gateway-api/releases/download/${GATEWAY_API_VERSION}/standard-install.yaml" \
+      "shared-gateway" \
+      "" \
+      'grep -Ev "^#.*"' \
       "true" \
       "${owner}" \
       "${repo}"
