@@ -19,7 +19,3 @@ spec:
         scheme: https
         statusCode: 302
         port: 443
-      matches:
-        - path:
-            type: PathPrefix
-            value: /
