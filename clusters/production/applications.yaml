@@ -10,7 +10,7 @@ spec:
   generators:
     - git:
         repoURL: https://github.com/nheimlich/homelab
-        revision: test-appset
+        revision: HEAD
         directories:
           - path: manifests/*/overlays/production
   ignoreApplicationDifferences:
