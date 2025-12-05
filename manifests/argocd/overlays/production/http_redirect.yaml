@@ -1,18 +1,24 @@
----
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
 metadata:
   name: http-filter-redirect
 spec:
+  hostnames:
+  - cd.nhlabs.org
   parentRefs:
-  - name: shared-gateway
+  - group: gateway.networking.k8s.io
+    kind: Gateway
+    name: shared-gateway
     namespace: shared-gateway
     sectionName: http
-  hostnames:
-  - "cd.nhlabs.org"
   rules:
   - filters:
-    - type: RequestRedirect
-      requestRedirect:
-        scheme: https
+    - requestRedirect:
         port: 443
+        scheme: https
+        statusCode: 302
+      type: RequestRedirect
+    matches:
+    - path:
+        type: PathPrefix
+        value: /

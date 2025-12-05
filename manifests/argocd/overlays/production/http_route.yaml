@@ -1,4 +1,3 @@
----
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
 metadata:
@@ -6,17 +5,22 @@ metadata:
     external-dns.alpha.kubernetes.io/hostname: cd.nhlabs.org
   name: https
 spec:
+  hostnames:
+  - cd.nhlabs.org
   parentRefs:
-  - name: shared-gateway
+  - group: gateway.networking.k8s.io
+    kind: Gateway
+    name: shared-gateway
     namespace: shared-gateway
     sectionName: https
-  hostnames:
-  - "cd.nhlabs.org"
   rules:
-    - matches:
-        - path:
-            type: PathPrefix
-            value: "/"
-      backendRefs:
-        - name: argocd-server
-          port: 80
+  - backendRefs:
+    - group: ""
+      kind: Service
+      name: argocd-server
+      port: 80
+      weight: 1
+    matches:
+    - path:
+        type: PathPrefix
+        value: /
