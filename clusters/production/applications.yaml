@@ -10,9 +10,9 @@ spec:
   generators:
     - git:
         repoURL: https://github.com/nheimlich/homelab
-        revision: HEAD
+        revision: test-appset
         directories:
-          - path: overlays/production/*
+          - path: manifests/*/overlays/production
   ignoreApplicationDifferences:
     - jsonPointers:
         - /spec/syncPolicy
@@ -20,7 +20,7 @@ spec:
         - /operation
   template:
     metadata:
-      name: '{{.path.basename}}'
+      name: '{{index .path.segments 1 }}'
     spec:
       project: "default"
       source:

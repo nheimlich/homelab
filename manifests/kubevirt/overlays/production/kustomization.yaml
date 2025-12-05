@@ -1,4 +1,5 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
-  - ../../../manifests/cert-manager/components/v1.19.1
+  - ../../../kubevirt/components/v1.7.0
+  - kubevirt-cr.yaml
