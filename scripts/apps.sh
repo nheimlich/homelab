@@ -18,7 +18,7 @@ warn() { printf "\033[33m[WARN]\033[0m %s\n" "$*"; }
 err() { printf "\033[31m[ERR]\033[0m %s\n" "$*"; }
 
 excluded_apps=("default-backend" "shared-gateway")
-valid_apps=$(declare -F | awk '{print $3}' | grep -vE "^(fetch_|slice_|log|warn|err|versions|usage|generate_|main|print_)")
+valid_apps=$(declare -F | awk '{print $3}' | grep -vE "^(fetch_|slice_|lint_|log|warn|err|versions|usage|generate_|main|print_)")
 missing_apps=$(comm -13 <(echo "${valid_apps}" | sort) <(ls -1 "${MANIFESTS_DIR}" | tr ' ' '\n' | sort) | grep -v -E "$(IFS="|"; echo "${excluded_apps[*]}")")
 
 generate_kustomization() {
@@ -54,7 +54,7 @@ slice_manifests() {
       "${@:2}"
 }
 
-run_linting() {
+lint_manifests() {
     local target_dir="$1"
     log "Linting manifests in ${target_dir}..."
 
@@ -94,7 +94,7 @@ fetch_url() {
 
     generate_kustomization "${target_dir}" "${ns}" "${create_ns}"
 
-    run_linting "${target_dir}"
+    lint_manifests "${target_dir}"
 
     local latest_ver=$(curl -s "https://api.github.com/repos/"${owner}/${repo}"/releases/latest" | jq -r '.tag_name')
 
@@ -168,7 +168,7 @@ fetch_helm() {
 
     generate_kustomization "${target_dir}" "${namespace}"
 
-    run_linting "${target_dir}"
+    lint_manifests "${target_dir}"
 
 }
 
