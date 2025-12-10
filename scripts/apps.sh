@@ -22,46 +22,79 @@ valid_apps=$(declare -F | awk '{print $3}' | grep -vE "^(fetch_|slice_|lint_|log
 missing_apps=$(comm -13 <(echo "${valid_apps}" | sort) <(ls -1 "${MANIFESTS_DIR}" | tr ' ' '\n' | sort) | grep -v -E "$(IFS="|"; echo "${excluded_apps[*]}")")
 
 update_overlays() {
-  local app="$1"
-  local env="$2"
+    local app="$1"
+    local env="$2"
 
-  local base_dir="manifests/${app}/components"
-  local ver_list_count=0
-  local all_paths=""
-  local ver_paths=$(find "${base_dir}" -mindepth 1 -maxdepth 1 -type d | sort -V)
-  while IFS= read -r path; do
-      all_paths="${all_paths}${path}\n"
-      ver_list_count=$((ver_list_count + 1))
-  done <<< "${ver_paths}"
+    local manifest_root="manifests"
+    local app_dir="${manifest_root}/${app}"
+    local overlay_dir="${app_dir}/overlays/${env}"
+    local target_file="${overlay_dir}/kustomization.yaml"
+    local base_components_dir="${app_dir}/components"
 
-  if [[ ${ver_list_count} -ge 2 ]]; then
-      local ver1_path=$(echo -e "${ver_paths}" | tail -n2 | head -n1)
-      local ver2_path=$(echo -e "${ver_paths}" | tail -n1)
-  else
-      echo "Error: Found fewer than 2 versions to compare in ${base_dir}" >&2
-      return 1
-  fi
+    local ver2_path=$(find "${base_components_dir}" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -n1)
 
-  local ver1=$(basename "${ver1_path}")
-  local ver2=$(basename "${ver2_path}")
+    if [[ -z "${ver2_path}" ]]; then
+        echo "Error: No component versions found in ${base_components_dir}" >&2
+        return 1
+    fi
+    local ver2=$(basename "${ver2_path}")
 
-  local target_kustomization_file="manifests/${app}/overlays/${env}/kustomization.yaml"
+    echo "Regenerating ${target_file} (Version: ${ver2})..."
 
-  local search_path="../../../${app}/components/${ver1}"
-  local replace_path="../../../${app}/components/${ver2}"
+cat << EOF > "${target_file}"
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
 
-  # Check if the kustomization file exists and if the old path exists inside it
-  if grep -q "${search_path}" "${target_kustomization_file}"; then
+resources:
+  - ../../components/${ver2}
+EOF
 
-      # Execute the update command
-      sed -i "" "s|${search_path}|${replace_path}|g" "${target_kustomization_file}"
+    list_resources() {
+        local search_dir="$1"
+        local prefix="$2"
+        if [[ -d "${search_dir}" ]]; then
+            # Find yaml files, sort them, exclude kustomization.yaml
+            find "${search_dir}" -maxdepth 1 -type f -name "*.yaml" ! -name "kustomization.yaml" | sort | while read -r file; do
+                local filename=$(basename "$file")
+                echo "  - ${prefix}/${filename}" >> "${target_file}"
+            done
+        fi
+    }
 
-      echo ""
-      echo "Successfully updated Kustomize overlay for ${app} in ${env}:"
-      echo " Resource path changed: ${ver1} -> ${ver2}"
-  else
-      echo "Warning: Resource path ${search_path} not found in ${target_kustomization_file}. Skipping automatic update."
-  fi
+    list_resources "${app_dir}/resources" "../../resources"
+
+    list_resources "${overlay_dir}/resources" "resources"
+
+    find "${overlay_dir}" -maxdepth 1 -type f -name "*.yaml" ! -name "kustomization.yaml" | sort | while read -r file; do
+        echo "  - $(basename "$file")" >> "${target_file}"
+    done
+
+    local has_patches=false
+
+    if [[ -d "${app_dir}/patches" ]] && [[ -n "$(ls -A "${app_dir}/patches"/*.yaml 2>/dev/null)" ]]; then has_patches=true; fi
+    if [[ -d "${overlay_dir}/patches" ]] && [[ -n "$(ls -A "${overlay_dir}/patches"/*.yaml 2>/dev/null)" ]]; then has_patches=true; fi
+
+    if [[ "$has_patches" == "true" ]]; then
+        echo "" >> "${target_file}"
+        echo "patches:" >> "${target_file}"
+
+        list_patches() {
+            local search_dir="$1"
+            local prefix="$2"
+            if [[ -d "${search_dir}" ]]; then
+                find "${search_dir}" -maxdepth 1 -type f -name "*.yaml" ! -name "kustomization.yaml" | sort | while read -r file; do
+                    local filename=$(basename "$file")
+                    echo "  - path: ${prefix}/${filename}" >> "${target_file}"
+                done
+            fi
+        }
+
+        list_patches "${app_dir}/patches" "../../patches"
+
+        list_patches "${overlay_dir}/patches" "patches"
+    fi
+
+    echo "Successfully updated ${app}/${env}"
 }
 
 compare_versions() {
