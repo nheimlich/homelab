@@ -21,6 +21,138 @@ excluded_apps=("default-backend" "shared-gateway")
 valid_apps=$(declare -F | awk '{print $3}' | grep -vE "^(fetch_|slice_|lint_|log|warn|err|versions|usage|generate_|main|print_)")
 missing_apps=$(comm -13 <(echo "${valid_apps}" | sort) <(ls -1 "${MANIFESTS_DIR}" | tr ' ' '\n' | sort) | grep -v -E "$(IFS="|"; echo "${excluded_apps[*]}")")
 
+update_overlays() {
+    local app="$1"
+    local env="$2"
+
+    local manifest_root="manifests"
+    local app_dir="${manifest_root}/${app}"
+    local overlay_dir="${app_dir}/overlays/${env}"
+    local target_file="${overlay_dir}/kustomization.yaml"
+    local base_components_dir="${app_dir}/components"
+
+    local ver2_path=$(find "${base_components_dir}" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -n1)
+
+    if [[ -z "${ver2_path}" ]]; then
+        echo "Error: No component versions found in ${base_components_dir}" >&2
+        return 1
+    fi
+    local ver2=$(basename "${ver2_path}")
+
+    echo "Regenerating ${target_file} (Version: ${ver2})..."
+
+cat << EOF > "${target_file}"
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - ../../components/${ver2}
+EOF
+
+    list_resources() {
+        local search_dir="$1"
+        local prefix="$2"
+        if [[ -d "${search_dir}" ]]; then
+            # Find yaml files, sort them, exclude kustomization.yaml
+            find "${search_dir}" -maxdepth 1 -type f -name "*.yaml" ! -name "kustomization.yaml" | sort | while read -r file; do
+                local filename=$(basename "$file")
+                echo "  - ${prefix}/${filename}" >> "${target_file}"
+            done
+        fi
+    }
+
+    list_resources "${app_dir}/resources" "../../resources"
+
+    list_resources "${overlay_dir}/resources" "resources"
+
+    find "${overlay_dir}" -maxdepth 1 -type f -name "*.yaml" ! -name "kustomization.yaml" | sort | while read -r file; do
+        echo "  - $(basename "$file")" >> "${target_file}"
+    done
+
+    local has_patches=false
+
+    if [[ -d "${app_dir}/patches" ]] && [[ -n "$(ls -A "${app_dir}/patches"/*.yaml 2>/dev/null)" ]]; then has_patches=true; fi
+    if [[ -d "${overlay_dir}/patches" ]] && [[ -n "$(ls -A "${overlay_dir}/patches"/*.yaml 2>/dev/null)" ]]; then has_patches=true; fi
+
+    if [[ "$has_patches" == "true" ]]; then
+        echo "" >> "${target_file}"
+        echo "patches:" >> "${target_file}"
+
+        list_patches() {
+            local search_dir="$1"
+            local prefix="$2"
+            if [[ -d "${search_dir}" ]]; then
+                find "${search_dir}" -maxdepth 1 -type f -name "*.yaml" ! -name "kustomization.yaml" | sort | while read -r file; do
+                    local filename=$(basename "$file")
+                    echo "  - path: ${prefix}/${filename}" >> "${target_file}"
+                done
+            fi
+        }
+
+        list_patches "${app_dir}/patches" "../../patches"
+
+        list_patches "${overlay_dir}/patches" "patches"
+    fi
+
+    echo "Successfully updated ${app}/${env}"
+}
+
+compare_versions() {
+    local app="$1"
+    local base_dir="manifests/${app}/components"
+
+    local ver_paths=$(find "${base_dir}" -mindepth 1 -maxdepth 1 -type d | sort -V)
+    local ver_list_count=0
+    local all_paths=""
+
+    while IFS= read -r path; do
+        all_paths="${all_paths}${path}\n"
+        ver_list_count=$((ver_list_count + 1))
+    done <<< "${ver_paths}"
+
+    if [[ ${ver_list_count} -ge 2 ]]; then
+        local ver1_path=$(echo -e "${ver_paths}" | tail -n2 | head -n1)
+        local ver2_path=$(echo -e "${ver_paths}" | tail -n1)
+    else
+        echo "Error: Found fewer than 2 versions to compare in ${base_dir}" >&2
+        return 1
+    fi
+
+    local ver1=$(basename "${ver1_path}")
+    local ver2=$(basename "${ver2_path}")
+
+    local path_prefix="${ver1_path%/*}/"
+
+    echo "Comparing ${app} versions: ${ver1} -> ${ver2}"
+    echo "---"
+    find "${ver1_path}" -type f -name "*.yaml" -print0 | while IFS= read -r -d $'\0' i; do
+        local rel_path="${i#${ver1_path}/}"
+        local file_ver2="${ver2_path}/${rel_path}"
+
+        if [[ ! -f "${file_ver2}" ]]; then
+            log WARN "File ${rel_path} is missing in version ${ver2} (REMOVED)"
+            echo "Command: dyff between ${i} /dev/null"
+            continue
+        fi
+
+        if ! cmp -s "${i}" "${file_ver2}"; then
+            if diff_output=$(dyff -c off between "${i}" "${file_ver2}" -s); then
+              continue
+            else
+                local dyff_status=$?
+
+                if [[ ${dyff_status} -eq 1 ]]; then
+                    log "${rel_path} (Returned differences)"
+                    dyff between ${path_prefix}{${ver1},${ver2}}/${rel_path} --multi-line-context-lines 0 -i -b --ignore-whitespace-changes --exclude-regexp 'description$'
+                elif [[ ${dyff_status} -eq 2 ]]; then
+                    err "dyff failed on ${rel_path}. Status: 2"
+                    echo "Dyff error output: ${diff_output}"
+                fi
+            fi
+        fi
+    done
+}
+
 generate_kustomization() {
     local target_dir="$1"
     local namespace="$2"
@@ -186,6 +318,8 @@ usage() {
     printf "  -a, --all      Generate all apps\n"
     printf "  -l, --list     List available apps\n"
     printf "  -m, --missing  List missing app functions\n"
+    printf "  -c, --compare <app>  Compare latest and n-1 versions for the specified app\n"
+    printf "  -u, --update <app> <env>  Update overlays for the specified app and environment\n"
     printf "  -h, --help     Show this help message\n"
 }
 
@@ -200,6 +334,8 @@ main() {
             -a|--all) RUN_ALL=true; shift ;;
             -l|--list) echo "${valid_apps}"; exit 0 ;;
             -m|--missing) missing_applications; exit 0 ;;
+            -c|--compare) compare_versions "$2"; exit 0 ;;
+            -u|--update) update_overlays "$2" "$3"; exit 0 ;;
             -h|--help) usage; exit 0 ;;
             *)
                 if echo "${valid_apps}" | grep -qx "$1"; then

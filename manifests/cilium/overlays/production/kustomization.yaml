@@ -1,66 +1,8 @@
----
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
-helmCharts:
-- name: cilium
-  namespace: kube-system
-  releaseName: cilium
-  version: 1.18.4
-  repo: https://helm.cilium.io/
-  includeCRDs: true
-  skipHooks: false
-  skipTests: false
-  valuesInline:
-    operator:
-      replicas: 1
-    k8sServiceHost: localhost
-    k8sServicePort: 7445
-    debug:
-      verbose: ""
-    cgroup:
-      hostRoot: /sys/fs/cgroup
-      autoMount:
-        enabled: false
-    bandwidthManager:
-      enabled: true
-      bbr: true
-    ipam:
-      mode: kubernetes
-    l2announcements:
-      enabled: true
-      leaseDuration: 3s
-      leaseRenewDeadline: 1s
-      leaseRetryPeriod: 200ms
-    k8sClientRateLimit:
-      qps: 100
-      burst: 200
-    gatewayAPI:
-      enabled: true
-    kubeProxyReplacement: true
-    cni:
-      exclusive: true
-    encryption:
-      enabled: true
-      type: wireguard
-    securityContext:
-      capabilities:
-        ciliumAgent:
-        - CHOWN
-        - KILL
-        - NET_ADMIN
-        - NET_RAW
-        - IPC_LOCK
-        - SYS_ADMIN
-        - SYS_RESOURCE
-        - DAC_OVERRIDE
-        - FOWNER
-        - SETGID
-        - SETUID
-        cleanCiliumState:
-        - NET_ADMIN
-        - SYS_ADMIN
-        - SYS_RESOURCE
 resources:
-  - ippool.yaml
-  - policy.yaml
+  - ../../components/1.18.4
+  - resources/ca-issuer.yaml
+  - resources/ippool.yaml
+  - resources/policy.yaml

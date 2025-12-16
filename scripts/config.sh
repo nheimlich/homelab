@@ -34,6 +34,7 @@ versions() {
     KUBELET_SERVING_CERT_VERSION=${KUBELET_SERVING_CERT_VERSION:-v0.10.1}
     ARGOCD_VERSION=${ARGOCD_VERSION:-v3.2.1}
     GATEWAY_API_VERSION=${GATEWAY_API_VERSION:-v1.4.1}
+    CILIUM_VERSION=${CILIUM_VERSION:-1.18.4}
 }
 
 # -- URL Based Apps --
@@ -226,18 +227,73 @@ EOF
         "rook-ceph" "rook-ceph" "_rook_values" "" 'grep -Ev "^#.*"'
 }
 
-#open-telemetry() {
-#    _otel_values() {
-#        cat <<EOF
-#manager:
-#  collectorImage:
-#    repository: otel/opentelemetry-collector-k8s
-#admissionWebhooks:
-#  certManager:
-#    enabled: false
-#EOF
-#    }
-#    fetch_helm "open-telemetry" "${OPENTELEMETRY_VERSION}" \
-#        "opentelemetry-operator" "https://open-telemetry.github.io/opentelemetry-helm-charts" "opentelemetry-operator" \
-#        "opentelemetry-operator" "open-telemetry" "_otel_values"
-#}
+cilium() {
+    _cilium_values() {
+        cat <<EOF
+    hubble:
+      relay:
+        enabled: true
+      tls:
+        auto:
+          enabled: true
+          method: certmanager
+          certValidityDuration: 60
+          certManagerIssuerRef:
+            name: "ca-issuer"
+            kind: "ClusterIssuer"
+            group: "cert-manager.io"
+    operator:
+      replicas: 1
+    k8sServiceHost: localhost
+    k8sServicePort: 7445
+    debug:
+      verbose: ""
+    cgroup:
+      hostRoot: /sys/fs/cgroup
+      autoMount:
+        enabled: false
+    bandwidthManager:
+      enabled: true
+      bbr: true
+    ipam:
+      mode: kubernetes
+    l2announcements:
+      enabled: true
+      leaseDuration: 3s
+      leaseRenewDeadline: 1s
+      leaseRetryPeriod: 200ms
+    k8sClientRateLimit:
+      qps: 100
+      burst: 200
+    gatewayAPI:
+      enabled: true
+    kubeProxyReplacement: true
+    cni:
+      exclusive: true
+    encryption:
+      enabled: true
+      type: wireguard
+    securityContext:
+      capabilities:
+        ciliumAgent:
+        - CHOWN
+        - KILL
+        - NET_ADMIN
+        - NET_RAW
+        - IPC_LOCK
+        - SYS_ADMIN
+        - SYS_RESOURCE
+        - DAC_OVERRIDE
+        - FOWNER
+        - SETGID
+        - SETUID
+        cleanCiliumState:
+        - NET_ADMIN
+        - SYS_ADMIN
+        - SYS_RESOURCE
+EOF
+    }
+    fetch_helm "cilium" "${CILIUM_VERSION}" \
+        "cilium" "https://helm.cilium.io/" "cilium" \
+        "cilium" "kube-system" "_cilium_values" "" 'grep -Ev "^#.*"'
+}
