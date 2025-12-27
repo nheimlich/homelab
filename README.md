@@ -47,3 +47,7 @@ Wrote manifests/argocd/components/v3.2.1/resource.yaml -- 1384000 bytes.
 ...
 12 files generated.
 ```
+**Creating Directory Structure for New Applications:**
+```
+ls -1 manifests | xargs -I {} bash -c "mkdir -p manifests/{}/{overlays/{production,standalone}/,}{patches,resources} && touch manifests/{}/{overlays/{production,standalone}/,}{patches,resources}/.gitkeep"
+```
