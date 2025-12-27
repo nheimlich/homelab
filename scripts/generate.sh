@@ -41,7 +41,6 @@ machine:
           - rw
     extraConfig:
       featureGates:
-        UserNamespacesSupport: true
         UserNamespacesPodSecurityStandards: true
     extraArgs:
       rotate-server-certificates: true
