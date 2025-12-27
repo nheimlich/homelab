@@ -1,8 +1,7 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
-
 resources:
-  - ../../components/v3.2.1
+  - ../../components/v3.2.3
   - resources/argocd-auth.yaml
   - resources/http_redirect.yaml
   - resources/http_route.yaml
