@@ -212,36 +212,36 @@ cluster:
 
                     echo "Cloning repository..."
                     git clone -b main --single-branch https://github.com/nheimlich/homelab.git /repo
-                    cd /repo/overlays/production || exit
+                    cd /repo/manifests || exit
 
                     echo "Applying Cilium manifests..."
-                    kubectl apply -f <(kustomize build --enable-helm cilium)
+                    kubectl apply -f <(kustomize build cilium/overlays/production)
 
                     sleep 10
 
                     echo "Applying Connect manifests..."
-                    kubectl apply -f <(kustomize build --enable-helm connect)
+                    kubectl apply -n connect -f <(kustomize build connect/overlays/production)
 
                     sleep 10
 
                     echo "Applying cert-manager manifests..."
-                    kubectl apply -f <(kustomize build --enable-helm cert-manager)
+                    kubectl apply -n cert-manager -f <(kustomize build cert-manager/overlays/production)
 
                     sleep 10
 
                     echo "Applying Shared Gateway manifests..."
-                    kubectl apply -f <(kustomize build --enable-helm shared-gateway)
+                    kubectl apply -n shared-gateway -f <(kustomize build shared-gateway/overlays/production)
 
                     sleep 10
 
                     echo "Applying ArgoCD manifests..."
-                    kubectl apply -f <(kustomize build --enable-helm argocd)
+                    kubectl apply -n argocd -f <(kustomize build argocd/overlays/production)
 
                     sleep 10
 
                     cd /repo || exit
 
-                    until kubectl apply -f clusters/production/applications.yaml; do
+                    until kubectl apply -n argocd -f clusters/production/applications.yaml; do
                       echo "Failed to apply ArgoCD applications, retrying in 5 seconds..."
                       sleep 5
                     done
