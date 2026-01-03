@@ -27,7 +27,7 @@ data:
   nodes-gc-interval: "5m0s"
 
   # If you want to run cilium in debug mode change this value to true
-  debug: "false"
+  debug: "true"
   debug-verbose: ""
   metrics-sampling-interval: "5m"
   # The agent can be put into the following three policy enforcement modes
@@ -46,8 +46,8 @@ data:
   enable-gateway-api: "true"
   enable-gateway-api-secrets-sync: "true"
   enable-gateway-api-proxy-protocol: "false"
-  enable-gateway-api-app-protocol: "false"
-  enable-gateway-api-alpn: "false"
+  enable-gateway-api-app-protocol: "true"
+  enable-gateway-api-alpn: "true"
   gateway-api-xff-num-trusted-hops: "0"
   gateway-api-service-externaltrafficpolicy: "Cluster"
   gateway-api-secrets-namespace: "cilium-secrets"

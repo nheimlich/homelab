@@ -186,6 +186,7 @@ spec:
             - hubble-relay
           args:
             - serve
+            - --debug
           ports:
             - name: grpc
               containerPort: 4245

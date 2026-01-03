@@ -5,5 +5,6 @@ resources:
 - cephcluster.yaml
 - cephfilesystem.yaml
 - cephfilesystemsubvolumegroup.yaml
+- cephobjectstore.yaml
 - deployment.yaml
 - storageclass.yaml

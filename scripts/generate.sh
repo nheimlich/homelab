@@ -28,6 +28,12 @@ generate_configs() {
     IFS=":" read -r n i <<< "${pair}"
     echo "Generating patch for ${n} (IP: ${network}${i})..."
     cat << EOF > configs/patches/"${n}".patch
+---
+apiVersion: v1alpha1
+kind: HostnameConfig
+hostname: "${n}"
+auto: off
+---
 debug: false
 machine:
   kubelet:
@@ -39,9 +45,6 @@ machine:
           - bind
           - rshared
           - rw
-    extraConfig:
-      featureGates:
-        UserNamespacesPodSecurityStandards: true
     extraArgs:
       rotate-server-certificates: true
 
@@ -66,7 +69,6 @@ machine:
     \$patch: delete
 
   network:
-    hostname: "${n}"
     interfaces:
       - deviceSelector:
           physical: true

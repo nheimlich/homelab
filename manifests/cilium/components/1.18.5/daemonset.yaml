@@ -146,7 +146,6 @@ spec:
               - NET_ADMIN
               - NET_RAW
               - IPC_LOCK
-              - SYS_MODULE
               - SYS_ADMIN
               - SYS_RESOURCE
               - DAC_OVERRIDE
@@ -194,9 +193,6 @@ spec:
           readOnly: true
         - name: xtables-lock
           mountPath: /run/xtables.lock
-        - name: hubble-tls
-          mountPath: /var/lib/cilium/tls/hubble
-          readOnly: true
         - name: tmp
           mountPath: /tmp
 
@@ -316,7 +312,6 @@ spec:
           capabilities:
             add:
               - NET_ADMIN
-              - SYS_MODULE
               - SYS_ADMIN
               - SYS_RESOURCE
             drop:
@@ -467,21 +462,6 @@ spec:
         hostPath:
           path: /proc/sys/kernel
           type: Directory
-      - name: hubble-tls
-        projected:
-          # note: the leading zero means this number is in octal representation: do not remove it
-          defaultMode: 0400
-          sources:
-          - secret:
-              name: hubble-server-certs
-              optional: true
-              items:
-              - key: tls.crt
-                path: server.crt
-              - key: tls.key
-                path: server.key
-              - key: ca.crt
-                path: client-ca.crt
 ---
 apiVersion: apps/v1
 kind: DaemonSet
