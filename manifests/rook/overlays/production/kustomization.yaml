@@ -3,3 +3,4 @@ kind: Kustomization
 namespace: rook-ceph
 resources:
   - ../../components/v1.18.8
+  - ../../resources
