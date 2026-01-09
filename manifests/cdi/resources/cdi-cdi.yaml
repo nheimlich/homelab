@@ -5,15 +5,10 @@ metadata:
 spec:
   config:
     scratchSpaceStorageClass: local-path
-    featureGates:
-    - HonorWaitForFirstConsumer
-  imagePullPolicy: IfNotPresent
-  infra:
-    nodeSelector:
-      kubernetes.io/os: linux
-    tolerations:
-    - key: CriticalAddonsOnly
-      operator: Exists
-  workload:
-    nodeSelector:
-      kubernetes.io/os: linux
+    podResourceRequirements:
+      requests:
+        cpu: "100m"
+        memory: "60M"
+      limits:
+        cpu: "750m"
+        memory: "2Gi"

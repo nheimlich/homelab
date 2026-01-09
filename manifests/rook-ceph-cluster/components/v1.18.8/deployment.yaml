@@ -1,5 +1,5 @@
-apiVersion: apps/v1
 kind: Deployment
+apiVersion: apps/v1
 metadata:
   name: rook-ceph-tools
   namespace: rook-ceph # namespace:cluster
@@ -18,7 +18,7 @@ spec:
       dnsPolicy: ClusterFirstWithHostNet
       containers:
         - name: rook-ceph-tools
-          image: quay.io/ceph/ceph:v19.2.2
+          image: quay.io/ceph/ceph:v19.2.3
           command:
             - /bin/bash
             - -c
@@ -120,14 +120,14 @@ spec:
             secretName: rook-ceph-mon
             optional: false
             items:
-            - key: ceph-secret
-              path: secret.keyring
+              - key: ceph-secret
+                path: secret.keyring
         - name: mon-endpoint-volume
           configMap:
             name: rook-ceph-mon-endpoints
             items:
-            - key: data
-              path: mon-endpoints
+              - key: data
+                path: mon-endpoints
         - name: ceph-config
           emptyDir: {}
       tolerations:

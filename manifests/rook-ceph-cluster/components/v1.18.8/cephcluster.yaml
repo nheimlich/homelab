@@ -1,14 +1,14 @@
 apiVersion: ceph.rook.io/v1
 kind: CephCluster
 metadata:
-  name: rook-ceph
-  namespace: rook-ceph
+  name: "rook-ceph"
+  namespace: "rook-ceph" # namespace:cluster
 spec:
   monitoring:
     enabled: false
   cephVersion:
     allowUnsupported: false
-    image: quay.io/ceph/ceph:v19.2.2
+    image: quay.io/ceph/ceph:v19.2.3
   cleanupPolicy:
     allowUninstallWithVolumes: false
     confirmation: ""

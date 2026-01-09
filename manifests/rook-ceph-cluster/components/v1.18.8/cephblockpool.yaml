@@ -1,8 +1,8 @@
-apiVersion: ceph.rook.io/v1
 kind: CephBlockPool
+apiVersion: ceph.rook.io/v1
 metadata:
   name: ceph-blockpool
-  namespace: rook-ceph
+  namespace: rook-ceph # namespace:cluster
 spec:
   failureDomain: host
   replicated:

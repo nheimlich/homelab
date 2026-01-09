@@ -4,10 +4,16 @@ metadata:
   name: kubevirt
   namespace: kubevirt
 spec:
-  certificateRotateStrategy: {}
   configuration:
     developerConfiguration:
-      featureGates: []
-  customizeComponents: {}
-  imagePullPolicy: IfNotPresent
-  workloadUpdateStrategy: {}
+      featureGates:
+        - LiveMigration
+    smbios:
+      sku: "TalosCloud"
+      version: "v0.1.0"
+      manufacturer: "Talos Virtualization"
+      product: "talosvm"
+      family: "ccio"
+  workloadUpdateStrategy:
+    workloadUpdateMethods:
+    - LiveMigrate
