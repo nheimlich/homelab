@@ -159,12 +159,16 @@ rook-ceph-cluster() {
 cephObjectStores: []
 toolbox:
   enabled: true
+cephBlockPoolsVolumeSnapshotClass:
+  enabled: true
+cephFileSystemVolumeSnapshotClass:
+  enabled: true
 cephBlockPools:
 - name: ceph-blockpool
   spec:
     failureDomain: host
     replicated:
-      size: 2
+      size: 1
   storageClass:
     enabled: true
     name: ceph-block
