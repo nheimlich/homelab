@@ -7,3 +7,4 @@ resources:
 - cephfilesystemsubvolumegroup.yaml
 - deployment.yaml
 - storageclass.yaml
+- volumesnapshotclass.yaml
