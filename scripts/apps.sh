@@ -36,9 +36,9 @@ process_manifests() {
 
   rm -rf "${dir}" && mkdir -p "${dir}"
   if [[ -n "${filter}" ]]; then
-    eval "${filter}" | slice_manifests "${dir}" ${args}
+    eval "${filter}" | slice_manifests "${dir}" "${args}"
   else
-    slice_manifests "${dir}" ${args}
+    slice_manifests "${dir}" "${args}"
   fi
 
   generate_kustomization "${dir}" "${ns}" "${cns}"
@@ -121,12 +121,12 @@ EOF
     if [[ -d "${sdir}" ]]; then
       local files=$(find "${sdir}" -maxdepth 1 -type f -name "*.yaml" ! -name "kustomization.yaml" | sort)
       if [[ -n ${files} && ${key} == "resources" ]]; then
-        pushd ${sdir} > /dev/null; rm -f kustomization.yaml && kustomize create --autodetect && popd > /dev/null
-        echo "  - ${pref}" >> ${ovl_dir}/kustomization.yaml
+        pushd "${sdir}" > /dev/null; rm -f kustomization.yaml && kustomize create --autodetect && popd > /dev/null
+        echo "  - ${pref}" >> "${ovl_dir}"/kustomization.yaml
       fi
       if [[ -n ${files} && ${key} == "patches" ]]; then
-        echo "patches:" >> ${ovl_dir}/kustomization.yaml
-        for i in $(ls "${sdir}"/* | xargs -n 1 basename); do echo "  - path: ${pref}/${i}" >> ${ovl_dir}/kustomization.yaml; done
+        echo "patches:" >> "${ovl_dir}"/kustomization.yaml
+        for i in $(ls "${sdir}"/* | xargs -n 1 basename); do echo "  - path: ${pref}/${i}" >> "${ovl_dir}"/kustomization.yaml; done
       fi
     fi
   }
@@ -144,11 +144,11 @@ diff_app() {
   [[ ${#vers[@]} -lt 2 ]] && { log_err "Need 2+ versions for diff: ${app}"; return 1; }
 
   local v1="${vers[1]}" v2="${vers[0]}"
-  local n1=$(basename "$v1") n2=$(basename "$v2")
+  local n1=$(basename "${v1}") n2=$(basename "${v2}")
   log_info "Diffing ${app}: ${n1} -> ${n2}"
 
   find "${v1}" -type f -name "*.yaml" | while read -r f; do
-    rel="${f#${v1}/}" f2="${v2}/${rel}"
+    rel="${f#"${v1}"/}" f2="${v2}/${rel}"
     if [[ ! -f "${f2}" ]]; then log_warn "Removed: ${rel}"; continue; fi
     if ! cmp -s "${f}" "${f2}"; then
       dyff between "${f}" "${f2}" -s || true
@@ -220,7 +220,7 @@ main() {
   done
 
   if [[ "${run_mode}" == "all" || "${CHECK_ONLY}" == "true" ]]; then
-    for app in ${valid_apps}; do "$app"; done
+    for app in ${valid_apps}; do "${app}"; done
   else
     usage
   fi
