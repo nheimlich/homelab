@@ -140,15 +140,15 @@ diff_app() {
   [[ -z "${app}" ]] && { log_err "Usage: -d <app>"; return 1; }
 
   local base="${MANIFESTS_DIR}/${app}/components"
-  local vers=($(find "${base}" -mindepth 1 -maxdepth 1 -type d | sort -V))
+  local vers=($(find "${base}" -mindepth 1 -maxdepth 1 -type d | sort -rV))
   [[ ${#vers[@]} -lt 2 ]] && { log_err "Need 2+ versions for diff: ${app}"; return 1; }
 
-  local v1="${vers[-2]}" v2="${vers[-1]}"
+  local v1="${vers[1]}" v2="${vers[0]}"
   local n1=$(basename "$v1") n2=$(basename "$v2")
   log_info "Diffing ${app}: ${n1} -> ${n2}"
 
   find "${v1}" -type f -name "*.yaml" | while read -r f; do
-    local rel="${f#${v1}/}" f2="${v2}/${rel}"
+    rel="${f#${v1}/}" f2="${v2}/${rel}"
     if [[ ! -f "${f2}" ]]; then log_warn "Removed: ${rel}"; continue; fi
     if ! cmp -s "${f}" "${f2}"; then
       dyff between "${f}" "${f2}" -s || true
