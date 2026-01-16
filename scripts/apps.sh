@@ -26,9 +26,17 @@ check_version() {
     log_warn "Version check failed (rate-limited?): ${app}"
   elif [[ "${current}" != "${latest}" ]]; then
     log_warn "Update available: ${app} (${current} -> ${latest})"
+    local app_upper=$(echo "${app}" | tr '[:lower:]' '[:upper:]')
+    local var_name="${app_upper}_VERSION"
+
+    if grep -q "${var_name}=" "${CONFIG_FILE}"; then
+      sed -i '' "s|${var_name}=.*|${var_name}=\${${var_name}:-${latest}}|" "${CONFIG_FILE}"
+      log_info "Updated ${var_name} in config.sh"
+    fi
   else
     log_info "Up-to-date: ${app} (${current})"
   fi
+
 }
 
 process_manifests() {
