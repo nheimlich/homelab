@@ -9,3 +9,4 @@ resources:
 - pod.yaml
 - service.yaml
 - serviceaccount.yaml
+namespace: connect

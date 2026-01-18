@@ -9,3 +9,4 @@ resources:
 - role.yaml
 - rolebinding.yaml
 - serviceaccount.yaml
+namespace: cdi

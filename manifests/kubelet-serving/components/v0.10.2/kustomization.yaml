@@ -4,10 +4,8 @@ resources:
 - 01-namespace.yaml
 - clusterrole.yaml
 - clusterrolebinding.yaml
-- configmap.yaml
-- customresourcedefinition.yaml
 - deployment.yaml
-- role.yaml
 - rolebinding.yaml
+- service.yaml
 - serviceaccount.yaml
-namespace: rook-ceph
+namespace: kubelet-serving-cert-approver

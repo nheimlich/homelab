@@ -10,3 +10,4 @@ resources:
 - rolebinding.yaml
 - serviceaccount.yaml
 - storageclass.yaml
+namespace: local-path-storage
