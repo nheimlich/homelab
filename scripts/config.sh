@@ -28,68 +28,141 @@ versions() {
   CONNECT_VERSION=${CONNECT_VERSION:-2.2.0}
   CERT_MANAGER_VERSION=${CERT_MANAGER_VERSION:-v1.19.2}
   EXTERNAL_DNS_VERSION=${EXTERNAL_DNS_VERSION:-1.20.0}
-  ROOK_VERSION=${ROOK_VERSION:-v1.18.9}
+  ROOK_CEPH_VERSION=${ROOK_CEPH_VERSION:-v1.18.9}
   LOCAL_PATH_VERSION=${LOCAL_PATH_VERSION:-v0.0.34}
-  MULTUS_VERSION=${MULTUS_VERSION:-v4.2.3}
-  OPENTELEMETRY_VERSION=${OPENTELEMETRY_VERSION:-0.79.0}
+  OPENTELEMETRY_VERSION=${OPENTELEMETRY_VERSION:-0.143.0}
   METRICS_SERVER_VERSION=${METRICS_SERVER_VERSION:-v0.8.0}
-  KUBELET_SERVING_CERT_VERSION=${KUBELET_SERVING_CERT_VERSION:-v0.10.1}
+  KUBELET_SERVING_VERSION=${KUBELET_SERVING_VERSION:-v0.10.2}
   ARGOCD_VERSION=${ARGOCD_VERSION:-v3.2.5}
   GATEWAY_API_VERSION=${GATEWAY_API_VERSION:-v1.4.1}
   CILIUM_VERSION=${CILIUM_VERSION:-1.18.6}
 }
 
 # --- App Definitions (URL Based) ---
+# fetch_url()
+#  1: app    - Folder name in manifests/
+#  2: ver    - Version tag (e.g., v1.0.0)
+#  3: url    - Source manifest URL
+#  4: ns     - K8s namespace
+#  5: cns    - Create 01-namespace.yaml manifest? (true/false)
+#  6: uns    - Set 'namespace:' in kustomization.yaml? (true/false)
+#  7: args   - Extra kubectl-slice flags
+#  8: filter - Pipe filter (e.g. 'grep -v')
+#  9: owner  - GitHub Owner for version check
+# 10: repo   - GitHub Repo for version check
 
 kubevirt() {
-  fetch_url "kubevirt" "${KUBEVIRT_VERSION}" \
+  fetch_url \
+    "kubevirt" \
+    "${KUBEVIRT_VERSION}" \
     "https://github.com/kubevirt/kubevirt/releases/download/${KUBEVIRT_VERSION}/kubevirt-operator.yaml" \
-    "kubevirt" "true" "" "" "kubevirt" "kubevirt"
+    "kubevirt" \
+    "true" \
+    "true" \
+    "" \
+    "" \
+    "kubevirt" \
+    "kubevirt"
 }
 
 cdi() {
-  fetch_url "cdi" "${CDI_VERSION}" \
+  fetch_url \
+    "cdi" \
+    "${CDI_VERSION}" \
     "https://github.com/kubevirt/containerized-data-importer/releases/download/${CDI_VERSION}/cdi-operator.yaml" \
-    "cdi" "true" "" "" "kubevirt" "containerized-data-importer"
+    "cdi" \
+    "true" \
+    "true" \
+    "" \
+    "" \
+    "kubevirt" \
+    "containerized-data-importer"
 }
 
 local-path() {
-  fetch_url "local-path" "${LOCAL_PATH_VERSION}" \
+  fetch_url \
+    "local-path" \
+    "${LOCAL_PATH_VERSION}" \
     "https://raw.githubusercontent.com/rancher/local-path-provisioner/refs/tags/${LOCAL_PATH_VERSION}/deploy/local-path-storage.yaml" \
-    "local-path-storage" "true" "" "" "rancher" "local-path-provisioner"
-}
-
-multus() {
-  fetch_url "multus" "${MULTUS_VERSION}" \
-    "https://raw.githubusercontent.com/k8snetworkplumbingwg/multus-cni/refs/tags/${MULTUS_VERSION}/deployments/multus-daemonset-thick.yml" \
-    "kube-system" "false" "" 'grep -Ev "^#.*"' "k8snetworkplumbingwg" "multus-cni"
+    "local-path-storage" \
+    "true" \
+    "true" \
+    "" \
+    "" \
+    "rancher" \
+    "local-path-provisioner"
 }
 
 metrics-server() {
-  fetch_url "metrics-server" "${METRICS_SERVER_VERSION}" \
+  fetch_url \
+    "metrics-server" \
+    "${METRICS_SERVER_VERSION}" \
     "https://github.com/kubernetes-sigs/metrics-server/releases/download/${METRICS_SERVER_VERSION}/components.yaml" \
-    "kube-system" "false" "" "" "kubernetes-sigs" "metrics-server"
+    "kube-system" \
+    "false" \
+    "false" \
+    "" \
+    "" \
+    "kubernetes-sigs" \
+    "metrics-server"
 }
 
 kubelet-serving() {
-  fetch_url "kubelet-serving" "${KUBELET_SERVING_CERT_VERSION}" \
-    "https://raw.githubusercontent.com/alex1989hu/kubelet-serving-cert-approver/${KUBELET_SERVING_CERT_VERSION}/deploy/standalone-install.yaml" \
-    "kubelet-serving-cert-approver" "true" "" "" "alex1989hu" "kubelet-serving-cert-approver"
+  fetch_url \
+    "kubelet-serving" \
+    "${KUBELET_SERVING_VERSION}" \
+    "https://raw.githubusercontent.com/alex1989hu/kubelet-serving-cert-approver/${KUBELET_SERVING_VERSION}/deploy/standalone-install.yaml" \
+    "kubelet-serving-cert-approver" \
+    "true" \
+    "true" \
+    "" \
+    "" \
+    "alex1989hu" \
+    "kubelet-serving-cert-approver"
 }
 
 argocd() {
-  fetch_url "argocd" "${ARGOCD_VERSION}" \
+  fetch_url \
+    "argocd" \
+    "${ARGOCD_VERSION}" \
     "https://raw.githubusercontent.com/argoproj/argo-cd/${ARGOCD_VERSION}/manifests/install.yaml" \
-    "argocd" "true" "" "" "argoproj" "argo-cd"
+    "argocd" \
+    "true" \
+    "true" \
+    "" \
+    "" \
+    "argoproj" \
+    "argo-cd"
 }
 
 shared-gateway() {
-  fetch_url "shared-gateway" "${GATEWAY_API_VERSION}" \
+  fetch_url \
+    "shared-gateway" \
+    "${GATEWAY_API_VERSION}" \
     "https://github.com/kubernetes-sigs/gateway-api/releases/download/${GATEWAY_API_VERSION}/standard-install.yaml" \
-    "shared-gateway" "true" "" 'grep -Ev "^#.*"' "kubernetes-sigs" "gateway-api"
+    "shared-gateway" \
+    "true" \
+    "true" \
+    "" \
+    'grep -Ev "^#.*"' \
+    "kubernetes-sigs" \
+    "gateway-api"
 }
 
 # --- App Definitions (Helm Based) ---
+# fetch_helm()
+#  1: app    - Folder name in manifests/
+#  2: ver    - Version tag
+#  3: rname  - Helm repo alias
+#  4: rurl   - Helm repo URL
+#  5: chart  - Chart name (defaults to app name if empty)
+#  6: rel    - Release name (defaults to app name if empty)
+#  7: ns     - K8s namespace
+#  8: cns    - Create namespace manifest? (true/false)
+#  9: uns    - Set 'namespace:' in kustomization.yaml? (true/false)
+# 10: cb     - Values generator function (_vals)
+# 11: args   - Extra kubectl-slice flags
+# 12: filter - Pipe filter (e.g. 'grep -v')
 
 connect() {
   _vals() {
@@ -98,7 +171,19 @@ operator:
   create: true
 EOF
   }
-  fetch_helm "connect" "${CONNECT_VERSION}" "1password" "https://1password.github.io/connect-helm-charts" "connect" "connect" "connect" "true" "_vals"
+  fetch_helm \
+    "connect" \
+    "${CONNECT_VERSION}" \
+    "1password" \
+    "https://1password.github.io/connect-helm-charts" \
+    "connect" \
+    "connect" \
+    "connect" \
+    "true" \
+    "true" \
+    "_vals" \
+    "" \
+    ""
 }
 
 cert-manager() {
@@ -115,7 +200,19 @@ extraArgs:
   - --dns01-recursive-nameservers=1.1.1.1:53
 EOF
   }
-  fetch_helm "cert-manager" "${CERT_MANAGER_VERSION}" "jetstack" "https://charts.jetstack.io" "cert-manager" "cert-manager" "cert-manager" "true" "_vals"
+  fetch_helm \
+    "cert-manager" \
+    "${CERT_MANAGER_VERSION}" \
+    "jetstack" \
+    "https://charts.jetstack.io" \
+    "cert-manager" \
+    "cert-manager" \
+    "cert-manager" \
+    "true" \
+    "true" \
+    "_vals" \
+    "" \
+    ""
 }
 
 external-dns() {
@@ -142,17 +239,40 @@ sources:
   - gateway-httproute
 EOF
   }
-  fetch_helm "external-dns" "${EXTERNAL_DNS_VERSION}" "external-dns" "https://kubernetes-sigs.github.io/external-dns/" "external-dns" "external-dns" "external-dns" "true" "_vals"
+  fetch_helm \
+    "external-dns" \
+    "${EXTERNAL_DNS_VERSION}" \
+    "external-dns" \
+    "https://kubernetes-sigs.github.io/external-dns/" \
+    "external-dns" \
+    "external-dns" \
+    "external-dns" \
+    "true" \
+    "true" \
+    "_vals" \
+    "" \
+    ""
 }
 
-#app="$1" ver="$2" rname="$3" rurl="$4" chart="$5" rel="$6" ns="${7:-}" cns="${8:-true}" cb="${9:-}" args="${10:-}" filter="${11:-}"
-rook() {
-  _vals() {
-    cat <<EOF
+rook-ceph() {
+  _vals() { cat <<EOF
 EOF
   }
-  fetch_helm "rook" "${ROOK_VERSION}" "rook-release" "https://charts.rook.io/release" "rook-ceph" "rook-ceph" "rook-ceph" "true" "_vals" "" 'grep -Ev "^#.*"'
+  fetch_helm \
+    "rook-ceph" \
+    "${ROOK_CEPH_VERSION}" \
+    "rook-release" \
+    "https://charts.rook.io/release" \
+    "rook-ceph" \
+    "rook-ceph" \
+    "rook-ceph" \
+    "true" \
+    "true" \
+    "_vals" \
+    "" \
+    'grep -Ev "^#.*"'
 }
+
 rook-ceph-cluster() {
   _vals() {
     cat <<EOF
@@ -191,7 +311,19 @@ cephBlockPools:
       imageFormat: "2"
 EOF
   }
-  fetch_helm "rook-ceph-cluster" "${ROOK_VERSION}" "rook-release" "https://charts.rook.io/release" "rook-ceph-cluster" "rook-ceph-cluster" "rook-ceph" "false" "_vals" "" 'grep -Ev "^#.*"'
+  fetch_helm \
+    "rook-ceph-cluster" \
+    "${ROOK_CEPH_VERSION}" \
+    "rook-release" \
+    "https://charts.rook.io/release" \
+    "rook-ceph-cluster" \
+    "rook-ceph-cluster" \
+    "rook-ceph" \
+    "false" \
+    "true" \
+    "_vals" \
+    "" \
+    'grep -Ev "^#.*"'
 }
 
 cilium() {
@@ -250,8 +382,19 @@ securityContext:
       - NET_ADMIN
       - SYS_ADMIN
       - SYS_RESOURCE
-
 EOF
   }
-  fetch_helm "cilium" "${CILIUM_VERSION}" "cilium" "https://helm.cilium.io/" "cilium" "cilium" "kube-system" "false" "_vals" "" 'grep -Ev "^#.*"'
+  fetch_helm \
+    "cilium" \
+    "${CILIUM_VERSION}" \
+    "cilium" \
+    "https://helm.cilium.io/" \
+    "cilium" \
+    "cilium" \
+    "kube-system" \
+    "false" \
+    "false" \
+    "_vals" \
+    "" \
+    'grep -Ev "^#.*"'
 }
