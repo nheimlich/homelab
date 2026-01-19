@@ -8,3 +8,4 @@ resources:
 - deployment.yaml
 - storageclass.yaml
 - volumesnapshotclass.yaml
+namespace: rook-ceph
