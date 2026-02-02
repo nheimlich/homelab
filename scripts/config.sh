@@ -25,15 +25,15 @@ cluster_name="k8s.nhlabs.local"
 versions() {
   KUBEVIRT_VERSION=${KUBEVIRT_VERSION:-v1.7.0}
   CDI_VERSION=${CDI_VERSION:-v1.64.0}
-  CONNECT_VERSION=${CONNECT_VERSION:-2.2.0}
-  CERT_MANAGER_VERSION=${CERT_MANAGER_VERSION:-v1.19.2}
+  CONNECT_VERSION=${CONNECT_VERSION:-2.2.1}
+  CERT_MANAGER_VERSION=${CERT_MANAGER_VERSION:-v1.19.3}
   EXTERNAL_DNS_VERSION=${EXTERNAL_DNS_VERSION:-1.20.0}
-  ROOK_CEPH_VERSION=${ROOK_CEPH_VERSION:-v1.18.9}
+  ROOK_CEPH_VERSION=${ROOK_CEPH_VERSION:-v1.19.0}
   LOCAL_PATH_VERSION=${LOCAL_PATH_VERSION:-v0.0.34}
-  OPENTELEMETRY_VERSION=${OPENTELEMETRY_VERSION:-0.143.0}
+  OPENTELEMETRY_OPERATOR_VERSION=${OPENTELEMETRY_OPERATOR_VERSION:-0.105.0}
   METRICS_SERVER_VERSION=${METRICS_SERVER_VERSION:-v0.8.1}
   KUBELET_SERVING_VERSION=${KUBELET_SERVING_VERSION:-v0.10.2}
-  ARGOCD_VERSION=${ARGOCD_VERSION:-v3.2.6}
+  ARGOCD_VERSION=${ARGOCD_VERSION:-v3.3.0}
   GATEWAY_API_VERSION=${GATEWAY_API_VERSION:-v1.4.1}
   CILIUM_VERSION=${CILIUM_VERSION:-1.18.6}
 }
@@ -169,6 +169,10 @@ connect() {
     cat <<EOF
 operator:
   create: true
+acceptanceTests:
+  enabled: false
+  healthCheck:
+    enabled: false
 EOF
   }
   fetch_helm \
@@ -397,4 +401,31 @@ EOF
     "_vals" \
     "" \
     'grep -Ev "^#.*"'
+}
+opentelemetry-operator() {
+  _vals() {
+    cat <<EOF
+manager:
+  collectorImage:
+    repository: "otel/opentelemetry-collector-k8s"
+admissionWebhooks:
+  certManager:
+    enabled: true
+  autoGenerateCert:
+    enabled: true
+EOF
+}
+  fetch_helm \
+    "opentelemetry-operator" \
+    "${OPENTELEMETRY_OPERATOR_VERSION}" \
+    "opentelemetry" \
+    "https://open-telemetry.github.io/opentelemetry-helm-charts" \
+    "" \
+    "" \
+    "opentelemetry-operator" \
+    "true" \
+    "false" \
+    "_vals" \
+    "" \
+    ""
 }
