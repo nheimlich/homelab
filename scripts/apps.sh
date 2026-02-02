@@ -126,6 +126,10 @@ update_overlay() {
   local ovl_dir="${app_dir}/overlays/${env}"
   local target="${ovl_dir}/kustomization.yaml"
   local ver=$(find "${app_dir}/components" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -n1 | xargs basename)
+  local component_num=$(find "${app_dir}/components" -type d -maxdepth 1 -mindepth 1  | wc -l)
+  if (( ${component_num} > 2 )); then
+    find "${app_dir}/components" -type d -mindepth 1 -maxdepth 1 | sort -V | ghead -n -2 | xargs rm -r;
+  fi
   mkdir -p "${ovl_dir}"
   cat << EOF > "${target}"
 apiVersion: kustomize.config.k8s.io/v1beta1
