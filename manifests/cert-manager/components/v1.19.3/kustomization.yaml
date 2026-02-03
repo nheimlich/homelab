@@ -14,4 +14,3 @@ resources:
 - service.yaml
 - serviceaccount.yaml
 - validatingwebhookconfiguration.yaml
-namespace: cert-manager
