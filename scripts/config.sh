@@ -213,7 +213,7 @@ EOF
     "cert-manager" \
     "cert-manager" \
     "true" \
-    "true" \
+    "false" \
     "_vals" \
     "" \
     ""
@@ -412,7 +412,7 @@ admissionWebhooks:
   certManager:
     enabled: true
   autoGenerateCert:
-    enabled: true
+    enabled: false
 EOF
 }
   fetch_helm \
