@@ -2,11 +2,12 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: ceph-csi-controller-manager
+  namespace: rook-ceph
   labels:
     control-plane: controller-manager
     app.kubernetes.io/name: ceph-csi
     app.kubernetes.io/instance: rook-ceph
-    app.kubernetes.io/version: "v0.4.1"
+    app.kubernetes.io/version: "v0.5.0"
 spec:
   replicas: 1
   selector:
@@ -39,7 +40,7 @@ spec:
           value: ""
         - name: KUBERNETES_CLUSTER_DOMAIN
           value: "cluster.local"
-        image: quay.io/cephcsi/ceph-csi-operator:v0.4.1
+        image: quay.io/cephcsi/ceph-csi-operator:v0.5.0
         livenessProbe:
           httpGet:
             path: /healthz
@@ -82,7 +83,7 @@ metadata:
     storage-backend: ceph
     app.kubernetes.io/name: rook-ceph
     app.kubernetes.io/instance: rook-ceph
-    app.kubernetes.io/version: v1.18.9
+    app.kubernetes.io/version: v1.19.1
     app.kubernetes.io/part-of: rook-ceph-operator
 spec:
   replicas: 1
@@ -103,7 +104,7 @@ spec:
           tolerationSeconds: 5
       containers:
         - name: rook-ceph-operator
-          image: "docker.io/rook/ceph:v1.18.9"
+          image: "docker.io/rook/ceph:v1.19.1"
           imagePullPolicy: IfNotPresent
           args: ["ceph", "operator"]
           securityContext:
@@ -121,6 +122,8 @@ spec:
           env:
             - name: ROOK_CURRENT_NAMESPACE_ONLY
               value: "false"
+            - name: ROOK_RECONCILE_CONCURRENT_CLUSTERS
+              value: "1"
             - name: ROOK_HOSTPATH_REQUIRES_PRIVILEGED
               value: "false"
             - name: ROOK_DISABLE_DEVICE_HOTPLUG

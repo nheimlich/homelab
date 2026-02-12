@@ -2,10 +2,11 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
   name: ceph-csi-cephfs-ctrlplugin-r
+  namespace: rook-ceph
   labels:
     app.kubernetes.io/name: ceph-csi
     app.kubernetes.io/instance: rook-ceph
-    app.kubernetes.io/version: "v0.4.1"
+    app.kubernetes.io/version: "v0.5.0"
 rules:
 - apiGroups:
   - coordination.k8s.io
@@ -53,10 +54,11 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
   name: ceph-csi-cephfs-nodeplugin-r
+  namespace: rook-ceph
   labels:
     app.kubernetes.io/name: ceph-csi
     app.kubernetes.io/instance: rook-ceph
-    app.kubernetes.io/version: "v0.4.1"
+    app.kubernetes.io/version: "v0.5.0"
 rules:
 - apiGroups:
   - csiaddons.openshift.io
@@ -93,10 +95,11 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
   name: ceph-csi-leader-election-role
+  namespace: rook-ceph
   labels:
     app.kubernetes.io/name: ceph-csi
     app.kubernetes.io/instance: rook-ceph
-    app.kubernetes.io/version: "v0.4.1"
+    app.kubernetes.io/version: "v0.5.0"
 rules:
 - apiGroups:
   - ""
@@ -134,10 +137,11 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
   name: ceph-csi-rbd-ctrlplugin-r
+  namespace: rook-ceph
   labels:
     app.kubernetes.io/name: ceph-csi
     app.kubernetes.io/instance: rook-ceph
-    app.kubernetes.io/version: "v0.4.1"
+    app.kubernetes.io/version: "v0.5.0"
 rules:
 - apiGroups:
   - coordination.k8s.io
@@ -185,10 +189,11 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
   name: ceph-csi-rbd-nodeplugin-r
+  namespace: rook-ceph
   labels:
     app.kubernetes.io/name: ceph-csi
     app.kubernetes.io/instance: rook-ceph
-    app.kubernetes.io/version: "v0.4.1"
+    app.kubernetes.io/version: "v0.5.0"
 rules:
 - apiGroups:
   - csiaddons.openshift.io
@@ -231,7 +236,7 @@ metadata:
     storage-backend: ceph
     app.kubernetes.io/name: rook-ceph
     app.kubernetes.io/instance: rook-ceph
-    app.kubernetes.io/version: v1.18.9
+    app.kubernetes.io/version: v1.19.1
     app.kubernetes.io/part-of: rook-ceph-operator
 rules:
   # this is needed for rook's "key-management" CLI to fetch the vault token from the secret when
@@ -256,7 +261,7 @@ metadata:
     storage-backend: ceph
     app.kubernetes.io/name: rook-ceph
     app.kubernetes.io/instance: rook-ceph
-    app.kubernetes.io/version: v1.18.9
+    app.kubernetes.io/version: v1.19.1
     app.kubernetes.io/part-of: rook-ceph-operator
 rules:
   - apiGroups:
@@ -292,6 +297,7 @@ rules:
       - cephblockpools
       - cephfilesystems
       - cephnfses
+      - cephnvmeofgateways
       - cephobjectstores
       - cephobjectstoreusers
       - cephobjectrealms
@@ -337,7 +343,7 @@ metadata:
     storage-backend: ceph
     app.kubernetes.io/name: rook-ceph
     app.kubernetes.io/instance: rook-ceph
-    app.kubernetes.io/version: v1.18.9
+    app.kubernetes.io/version: v1.19.1
     app.kubernetes.io/part-of: rook-ceph-operator
 rules:
   - apiGroups:
@@ -363,7 +369,7 @@ metadata:
     storage-backend: ceph
     app.kubernetes.io/name: rook-ceph
     app.kubernetes.io/instance: rook-ceph
-    app.kubernetes.io/version: v1.18.9
+    app.kubernetes.io/version: v1.19.1
     app.kubernetes.io/part-of: rook-ceph-operator
 rules:
   - apiGroups: [""]
@@ -389,7 +395,7 @@ metadata:
     storage-backend: ceph
     app.kubernetes.io/name: rook-ceph
     app.kubernetes.io/instance: rook-ceph
-    app.kubernetes.io/version: v1.18.9
+    app.kubernetes.io/version: v1.19.1
     app.kubernetes.io/part-of: rook-ceph-operator
 rules:
   - apiGroups:
@@ -454,7 +460,7 @@ metadata:
     storage-backend: ceph
     app.kubernetes.io/name: rook-ceph
     app.kubernetes.io/instance: rook-ceph
-    app.kubernetes.io/version: v1.18.9
+    app.kubernetes.io/version: v1.19.1
     app.kubernetes.io/part-of: rook-ceph-operator
 rules:
   - apiGroups: ["coordination.k8s.io"]
@@ -471,7 +477,7 @@ metadata:
     storage-backend: ceph
     app.kubernetes.io/name: rook-ceph
     app.kubernetes.io/instance: rook-ceph
-    app.kubernetes.io/version: v1.18.9
+    app.kubernetes.io/version: v1.19.1
     app.kubernetes.io/part-of: rook-ceph-operator
 rules:
   - apiGroups: ["coordination.k8s.io"]

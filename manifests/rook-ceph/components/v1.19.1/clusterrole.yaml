@@ -5,7 +5,7 @@ metadata:
   labels:
     app.kubernetes.io/name: ceph-csi
     app.kubernetes.io/instance: rook-ceph
-    app.kubernetes.io/version: "v0.4.1"
+    app.kubernetes.io/version: "v0.5.0"
 rules:
 - apiGroups:
   - csi.ceph.io
@@ -29,7 +29,7 @@ metadata:
   labels:
     app.kubernetes.io/name: ceph-csi
     app.kubernetes.io/instance: rook-ceph
-    app.kubernetes.io/version: "v0.4.1"
+    app.kubernetes.io/version: "v0.5.0"
 rules:
 - apiGroups:
   - csi.ceph.io
@@ -57,7 +57,7 @@ metadata:
   labels:
     app.kubernetes.io/name: ceph-csi
     app.kubernetes.io/instance: rook-ceph
-    app.kubernetes.io/version: "v0.4.1"
+    app.kubernetes.io/version: "v0.5.0"
 rules:
 - apiGroups:
   - ""
@@ -250,6 +250,14 @@ rules:
   - tokenreviews
   verbs:
   - create
+- apiGroups:
+  - storage.k8s.io
+  resources:
+  - volumeattributesclasses
+  verbs:
+  - get
+  - list
+  - watch
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
@@ -258,7 +266,7 @@ metadata:
   labels:
     app.kubernetes.io/name: ceph-csi
     app.kubernetes.io/instance: rook-ceph
-    app.kubernetes.io/version: "v0.4.1"
+    app.kubernetes.io/version: "v0.5.0"
 rules:
 - apiGroups:
   - ""
@@ -272,6 +280,8 @@ rules:
   - secrets
   verbs:
   - get
+  - list
+  - watch
 - apiGroups:
   - ""
   resources:
@@ -307,6 +317,12 @@ rules:
   - persistentvolumeclaims
   verbs:
   - get
+- apiGroups:
+  - authentication.k8s.io
+  resources:
+  - tokenreviews
+  verbs:
+  - create
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
@@ -315,7 +331,7 @@ metadata:
   labels:
     app.kubernetes.io/name: ceph-csi
     app.kubernetes.io/instance: rook-ceph
-    app.kubernetes.io/version: "v0.4.1"
+    app.kubernetes.io/version: "v0.5.0"
 rules:
 - apiGroups:
   - csi.ceph.io
@@ -339,7 +355,7 @@ metadata:
   labels:
     app.kubernetes.io/name: ceph-csi
     app.kubernetes.io/instance: rook-ceph
-    app.kubernetes.io/version: "v0.4.1"
+    app.kubernetes.io/version: "v0.5.0"
 rules:
 - apiGroups:
   - csi.ceph.io
@@ -367,7 +383,7 @@ metadata:
   labels:
     app.kubernetes.io/name: ceph-csi
     app.kubernetes.io/instance: rook-ceph
-    app.kubernetes.io/version: "v0.4.1"
+    app.kubernetes.io/version: "v0.5.0"
 rules:
 - apiGroups:
   - csi.ceph.io
@@ -391,7 +407,7 @@ metadata:
   labels:
     app.kubernetes.io/name: ceph-csi
     app.kubernetes.io/instance: rook-ceph
-    app.kubernetes.io/version: "v0.4.1"
+    app.kubernetes.io/version: "v0.5.0"
 rules:
 - apiGroups:
   - csi.ceph.io
@@ -419,7 +435,7 @@ metadata:
   labels:
     app.kubernetes.io/name: ceph-csi
     app.kubernetes.io/instance: rook-ceph
-    app.kubernetes.io/version: "v0.4.1"
+    app.kubernetes.io/version: "v0.5.0"
 rules:
 - apiGroups:
   - csi.ceph.io
@@ -447,7 +463,7 @@ metadata:
   labels:
     app.kubernetes.io/name: ceph-csi
     app.kubernetes.io/instance: rook-ceph
-    app.kubernetes.io/version: "v0.4.1"
+    app.kubernetes.io/version: "v0.5.0"
 rules:
 - apiGroups:
   - csi.ceph.io
@@ -471,7 +487,7 @@ metadata:
   labels:
     app.kubernetes.io/name: ceph-csi
     app.kubernetes.io/instance: rook-ceph
-    app.kubernetes.io/version: "v0.4.1"
+    app.kubernetes.io/version: "v0.5.0"
 rules:
 - apiGroups:
   - ""
@@ -577,7 +593,7 @@ metadata:
   labels:
     app.kubernetes.io/name: ceph-csi
     app.kubernetes.io/instance: rook-ceph
-    app.kubernetes.io/version: "v0.4.1"
+    app.kubernetes.io/version: "v0.5.0"
 rules:
 - apiGroups:
   - authentication.k8s.io
@@ -599,7 +615,7 @@ metadata:
   labels:
     app.kubernetes.io/name: ceph-csi
     app.kubernetes.io/instance: rook-ceph
-    app.kubernetes.io/version: "v0.4.1"
+    app.kubernetes.io/version: "v0.5.0"
 rules:
 - nonResourceURLs:
   - /metrics
@@ -613,7 +629,7 @@ metadata:
   labels:
     app.kubernetes.io/name: ceph-csi
     app.kubernetes.io/instance: rook-ceph
-    app.kubernetes.io/version: "v0.4.1"
+    app.kubernetes.io/version: "v0.5.0"
 rules:
 - apiGroups:
   - ""
@@ -742,6 +758,14 @@ rules:
   - volumeattachments/status
   verbs:
   - patch
+- apiGroups:
+  - storage.k8s.io
+  resources:
+  - volumeattributesclasses
+  verbs:
+  - get
+  - list
+  - watch
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
@@ -750,7 +774,7 @@ metadata:
   labels:
     app.kubernetes.io/name: ceph-csi
     app.kubernetes.io/instance: rook-ceph
-    app.kubernetes.io/version: "v0.4.1"
+    app.kubernetes.io/version: "v0.5.0"
 rules:
 - apiGroups:
   - ""
@@ -766,7 +790,7 @@ metadata:
   labels:
     app.kubernetes.io/name: ceph-csi
     app.kubernetes.io/instance: rook-ceph
-    app.kubernetes.io/version: "v0.4.1"
+    app.kubernetes.io/version: "v0.5.0"
 rules:
 - apiGroups:
   - csi.ceph.io
@@ -794,7 +818,7 @@ metadata:
   labels:
     app.kubernetes.io/name: ceph-csi
     app.kubernetes.io/instance: rook-ceph
-    app.kubernetes.io/version: "v0.4.1"
+    app.kubernetes.io/version: "v0.5.0"
 rules:
 - apiGroups:
   - csi.ceph.io
@@ -818,7 +842,7 @@ metadata:
   labels:
     app.kubernetes.io/name: ceph-csi
     app.kubernetes.io/instance: rook-ceph
-    app.kubernetes.io/version: "v0.4.1"
+    app.kubernetes.io/version: "v0.5.0"
 rules:
 - apiGroups:
   - ""
@@ -1040,6 +1064,14 @@ rules:
   verbs:
   - get
   - list
+- apiGroups:
+  - storage.k8s.io
+  resources:
+  - volumeattributesclasses
+  verbs:
+  - get
+  - list
+  - watch
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
@@ -1048,7 +1080,7 @@ metadata:
   labels:
     app.kubernetes.io/name: ceph-csi
     app.kubernetes.io/instance: rook-ceph
-    app.kubernetes.io/version: "v0.4.1"
+    app.kubernetes.io/version: "v0.5.0"
 rules:
 - apiGroups:
   - ""
@@ -1057,6 +1089,7 @@ rules:
   verbs:
   - get
   - list
+  - watch
 - apiGroups:
   - ""
   resources:
@@ -1127,7 +1160,7 @@ metadata:
     storage-backend: ceph
     app.kubernetes.io/name: rook-ceph
     app.kubernetes.io/instance: rook-ceph
-    app.kubernetes.io/version: v1.18.9
+    app.kubernetes.io/version: v1.19.1
     app.kubernetes.io/part-of: rook-ceph-operator
 rules:
   # Most resources are represented by a string representation of their name, such as "pods", just as it appears in the URL for the relevant API endpoint.
@@ -1168,7 +1201,7 @@ metadata:
     storage-backend: ceph
     app.kubernetes.io/name: rook-ceph
     app.kubernetes.io/instance: rook-ceph
-    app.kubernetes.io/version: v1.18.9
+    app.kubernetes.io/version: v1.19.1
     app.kubernetes.io/part-of: rook-ceph-operator
 rules:
   - apiGroups:
@@ -1201,7 +1234,7 @@ metadata:
     storage-backend: ceph
     app.kubernetes.io/name: rook-ceph
     app.kubernetes.io/instance: rook-ceph
-    app.kubernetes.io/version: v1.18.9
+    app.kubernetes.io/version: v1.19.1
     app.kubernetes.io/part-of: rook-ceph-operator
 rules:
   - apiGroups:
@@ -1211,7 +1244,6 @@ rules:
       - pods
       # Node access is needed for determining nodes where mons should run
       - nodes
-      - nodes/proxy
       # Rook watches secrets which it uses to configure access to external resources.
       # e.g., external Ceph cluster or object store
       - secrets
@@ -1272,6 +1304,7 @@ rules:
       - cephblockpools
       - cephfilesystems
       - cephnfses
+      - cephnvmeofgateways
       - cephobjectstores
       - cephobjectstoreusers
       - cephobjectrealms
@@ -1298,6 +1331,7 @@ rules:
       - cephblockpools/status
       - cephfilesystems/status
       - cephnfses/status
+      - cephnvmeofgateways/status
       - cephobjectstores/status
       - cephobjectstoreusers/status
       - cephobjectrealms/status
@@ -1321,6 +1355,7 @@ rules:
       - cephblockpools/finalizers
       - cephfilesystems/finalizers
       - cephnfses/finalizers
+      - cephnvmeofgateways/finalizers
       - cephobjectstores/finalizers
       - cephobjectstoreusers/finalizers
       - cephobjectrealms/finalizers
@@ -1406,7 +1441,7 @@ metadata:
     storage-backend: ceph
     app.kubernetes.io/name: rook-ceph
     app.kubernetes.io/instance: rook-ceph
-    app.kubernetes.io/version: v1.18.9
+    app.kubernetes.io/version: v1.19.1
     app.kubernetes.io/part-of: rook-ceph-operator
 rules:
   - apiGroups:
@@ -1414,7 +1449,6 @@ rules:
     resources:
       - configmaps
       - nodes
-      - nodes/proxy
       - persistentvolumes
     verbs:
       - get
@@ -1448,7 +1482,7 @@ metadata:
     storage-backend: ceph
     app.kubernetes.io/name: rook-ceph
     app.kubernetes.io/instance: rook-ceph
-    app.kubernetes.io/version: v1.18.9
+    app.kubernetes.io/version: v1.19.1
     app.kubernetes.io/part-of: rook-ceph-operator
 rules:
   - apiGroups:
@@ -1469,7 +1503,7 @@ metadata:
     storage-backend: ceph
     app.kubernetes.io/name: rook-ceph
     app.kubernetes.io/instance: rook-ceph
-    app.kubernetes.io/version: v1.18.9
+    app.kubernetes.io/version: v1.19.1
     app.kubernetes.io/part-of: rook-ceph-operator
 rules:
   - apiGroups: [""]
@@ -1532,7 +1566,7 @@ metadata:
     storage-backend: ceph
     app.kubernetes.io/name: rook-ceph
     app.kubernetes.io/instance: rook-ceph
-    app.kubernetes.io/version: v1.18.9
+    app.kubernetes.io/version: v1.19.1
     app.kubernetes.io/part-of: rook-ceph-operator
 rules:
 - apiGroups:
@@ -1552,7 +1586,7 @@ metadata:
     storage-backend: ceph
     app.kubernetes.io/name: rook-ceph
     app.kubernetes.io/instance: rook-ceph
-    app.kubernetes.io/version: v1.18.9
+    app.kubernetes.io/version: v1.19.1
     app.kubernetes.io/part-of: rook-ceph-operator
 rules:
   - apiGroups: [""]
@@ -1580,7 +1614,7 @@ metadata:
     storage-backend: ceph
     app.kubernetes.io/name: rook-ceph
     app.kubernetes.io/instance: rook-ceph
-    app.kubernetes.io/version: v1.18.9
+    app.kubernetes.io/version: v1.19.1
     app.kubernetes.io/part-of: rook-ceph-operator
 rules:
   - apiGroups: [""]
@@ -1656,7 +1690,7 @@ metadata:
     storage-backend: ceph
     app.kubernetes.io/name: rook-ceph
     app.kubernetes.io/instance: rook-ceph
-    app.kubernetes.io/version: v1.18.9
+    app.kubernetes.io/version: v1.19.1
     app.kubernetes.io/part-of: rook-ceph-operator
 rules:
   - apiGroups: [""]
@@ -1693,7 +1727,7 @@ metadata:
     storage-backend: ceph
     app.kubernetes.io/name: rook-ceph
     app.kubernetes.io/instance: rook-ceph
-    app.kubernetes.io/version: v1.18.9
+    app.kubernetes.io/version: v1.19.1
     app.kubernetes.io/part-of: rook-ceph-operator
 rules:
   - apiGroups: [""]
