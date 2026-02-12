@@ -125,7 +125,7 @@ data:
 
   # Name of the cluster. Only relevant when building a mesh of clusters.
   cluster-name: "default"
-  # Unique ID of the cluster. Must be unique across all conneted clusters and
+  # Unique ID of the cluster. Must be unique across all connected clusters and
   # in the range of 1 and 255. Only relevant when building a mesh of clusters.
   cluster-id: "0"
 
@@ -139,6 +139,7 @@ data:
   tunnel-protocol: "vxlan"
   tunnel-source-port-range: "0-0"
   service-no-backend-response: "reject"
+  policy-deny-response: "none"
 
 
   # Enables L7 proxy for L7 policy enforcement and visibility
@@ -147,6 +148,7 @@ data:
   enable-ipv4-big-tcp: "false"
   enable-ipv6-big-tcp: "false"
   enable-ipv6-masquerade: "true"
+  enable-tunnel-big-tcp: "false"
   enable-tcx: "true"
   datapath-mode: "veth"
   enable-masquerade-to-route-source: "false"
@@ -167,6 +169,7 @@ data:
 
   kube-proxy-replacement: "true"
   kube-proxy-replacement-healthz-bind-address: ""
+  enable-no-service-endpoints-routable: "true"
   bpf-lb-sock: "false"
   nodeport-addresses: ""
   enable-health-check-nodeport: "true"
@@ -174,7 +177,6 @@ data:
   node-port-bind-protection: "true"
   enable-auto-protect-node-port-range: "true"
   bpf-lb-acceleration: "disabled"
-  enable-svc-source-range-check: "true"
   enable-l2-neigh-discovery: "false"
   k8s-require-ipv4-pod-cidr: "false"
   k8s-require-ipv6-pod-cidr: "false"
@@ -208,6 +210,8 @@ data:
   l2-announcements-lease-duration: "3s"
   l2-announcements-renew-deadline: "1s"
   l2-announcements-retry-period: "200ms"
+
+  packetization-layer-pmtud-mode: "blackhole"
   procfs: "/host/proc"
   bpf-root: "/sys/fs/bpf"
   cgroup-root: "/sys/fs/cgroup"
@@ -219,7 +223,7 @@ data:
   remove-cilium-node-taints: "true"
   set-cilium-node-taints: "true"
   set-cilium-is-up-condition: "true"
-  unmanaged-pod-watcher-interval: "15"
+  unmanaged-pod-watcher-interval: "15s"
   # default DNS proxy to transparent mode in non-chaining modes
   dnsproxy-enable-transparent-mode: "true"
   dnsproxy-socket-linger-timeout: "10"
@@ -232,7 +236,7 @@ data:
   tofqdns-preallocate-identities:  "true"
   agent-not-ready-taint-key: "node.cilium.io/agent-not-ready"
 
-  mesh-auth-enabled: "true"
+  mesh-auth-enabled: "false"
   mesh-auth-queue-size: "1024"
   mesh-auth-rotated-identities-queue-size: "1024"
   mesh-auth-gc-interval: "5m0s"
@@ -241,10 +245,14 @@ data:
   proxy-xff-num-trusted-hops-egress: "0"
   proxy-connect-timeout: "2"
   proxy-initial-fetch-timeout: "30"
+  proxy-max-active-downstream-connections: "50000"
   proxy-max-requests-per-connection: "0"
   proxy-max-connection-duration-seconds: "0"
   proxy-idle-timeout-seconds: "60"
   proxy-max-concurrent-retries: "128"
+  proxy-use-original-source-address: "true"
+  proxy-cluster-max-connections: "1024"
+  proxy-cluster-max-requests: "1024"
   http-retry-count: "3"
   http-stream-idle-timeout: "300"
 
@@ -253,13 +261,14 @@ data:
   envoy-access-log-buffer-size: "4096"
   envoy-keep-cap-netbindservice: "false"
   max-connected-clusters: "255"
+  clustermesh-cache-ttl: "0s"
   clustermesh-enable-endpoint-sync: "false"
   clustermesh-enable-mcs-api: "false"
-  policy-default-local-cluster: "false"
+  clustermesh-mcs-api-install-crds: "true"
+  policy-default-local-cluster: "true"
 
   nat-map-stats-entries: "32"
   nat-map-stats-interval: "30s"
-  enable-internal-traffic-policy: "true"
   enable-lb-ipam: "true"
   enable-non-default-deny-policies: "true"
   enable-source-ip-verification: "true"
