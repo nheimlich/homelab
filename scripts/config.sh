@@ -292,7 +292,7 @@ cephBlockPools:
   spec:
     failureDomain: host
     replicated:
-      size: 1
+      size: 2
   storageClass:
     enabled: true
     name: ceph-block
