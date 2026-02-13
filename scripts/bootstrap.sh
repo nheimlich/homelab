@@ -38,6 +38,11 @@ bootstrap() {
       echo "Retrying..."
       sleep 5
     done
+    printf "wiping disk for ceph installation on %s\n" "${n}"
+    until talosctl wipe disk sda -n "${network}${i}" -e "${network}${i}"; do
+      echo "Retrying..."
+      sleep 5
+    done
   done
 
   IFS=":" read -r first_n first_i <<< "${stat_data[0]}"
@@ -51,5 +56,22 @@ bootstrap() {
     sleep 5
   done
   echo "Bootstrapping complete!"
+  echo ""
+  echo "Waiting for manifest bootstrap job to complete (~3 mins wait...)"
+  sleep 180
+  until kubectl -n kube-system wait --for condition=Complete job/bootstrap-install; do
+    echo "Retrying..."
+    sleep 10
+  done
+  echo "Bootstrap Job Completed"
+  echo ""
+  for pair in "${stat_data[@]}"; do
+    IFS=":" read -r n i <<< "${pair}"
+    printf "Removing InlineManifests Config\n"
+    until talosctl patch mc -n "${network}${i}" -e "${network}${i}" --patch 'cluster: {inlineManifests: {$patch: delete}}'; do
+      echo "Retrying..."
+      sleep 5
+    done
+  done
 }
 bootstrap

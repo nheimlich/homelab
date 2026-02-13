@@ -35,3 +35,6 @@ reset:
 
 shutdown:
 	@talosctl shutdown -n 10.0.0.111,10.0.0.112,10.0.0.113 -e 10.0.0.115 --context k8s.nhlabs.local --wait=false
+
+upgrade:
+	@./scripts/upgrade.sh

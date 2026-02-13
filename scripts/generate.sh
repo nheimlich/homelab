@@ -47,6 +47,7 @@ machine:
           - rw
     extraArgs:
       rotate-server-certificates: true
+      feature-gates: "InPlacePodVerticalScaling=true"
 
   systemDiskEncryption:
     ephemeral:

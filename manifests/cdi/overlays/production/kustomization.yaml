@@ -4,3 +4,5 @@ resources:
   - ../../components/v1.64.0
   - ../../resources
   - resources
+patches:
+  - path: patches/crd-annotation.yaml

@@ -1,7 +1,7 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
-  - ../../components/v0.0.33
+  - ../../components/v0.0.34
 patches:
   - path: patches/patch-configmap.yaml
   - path: patches/patch-namespace.yaml

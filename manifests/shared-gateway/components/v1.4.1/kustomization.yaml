@@ -3,3 +3,4 @@ kind: Kustomization
 resources:
 - 01-namespace.yaml
 - customresourcedefinition.yaml
+namespace: shared-gateway
