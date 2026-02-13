@@ -402,6 +402,7 @@ EOF
     "" \
     'grep -Ev "^#.*"'
 }
+
 opentelemetry-operator() {
   _vals() {
     cat <<EOF
@@ -424,6 +425,29 @@ EOF
     "" \
     "opentelemetry-operator" \
     "true" \
+    "false" \
+    "_vals" \
+    "" \
+    ""
+}
+
+opentelemetry-collector() {
+  _vals() {
+    cat <<EOF
+image:
+  repository: "otel/opentelemetry-collector-k8s"
+mode: daemonset
+EOF
+}
+  fetch_helm \
+    "opentelemetry-collector" \
+    "${OPENTELEMETRY_OPERATOR_VERSION}" \
+    "opentelemetry" \
+    "https://open-telemetry.github.io/opentelemetry-helm-charts" \
+    "" \
+    "" \
+    "opentelemetry-operator" \
+    "false" \
     "false" \
     "_vals" \
     "" \
