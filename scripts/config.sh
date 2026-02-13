@@ -8,7 +8,7 @@ suffix=".nhlabs.org"
 network="10.0.0."
 lbvip="115"
 install_disk="/dev/nvme0n1"
-image="factory.talos.dev/installer-secureboot/376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba:v1.12.1"
+image="factory.talos.dev/installer-secureboot/376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba:v1.12.4"
 cluster_name="k8s.nhlabs.local"
 
 # --- Validation ---
