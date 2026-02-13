@@ -6,7 +6,6 @@ resources:
 - clusterrolebinding.yaml
 - customresourcedefinition.yaml
 - deployment.yaml
-- pod.yaml
 - service.yaml
 - serviceaccount.yaml
 namespace: connect
