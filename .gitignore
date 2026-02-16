@@ -1,3 +1,5 @@
 secrets/*
 .*.swp
 manifests/virtualmachines/*
+.terraform*
+terraform.tfstate*

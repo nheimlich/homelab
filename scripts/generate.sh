@@ -221,22 +221,22 @@ cluster:
                     sleep 10
 
                     echo "Applying Connect manifests..."
-                    kubectl apply -n connect -f <(kustomize build connect/overlays/production)
+                    kubectl apply --server-side --force-conflicts -n connect -f <(kustomize build connect/overlays/production)
 
                     sleep 10
 
                     echo "Applying cert-manager manifests..."
-                    kubectl apply -n cert-manager -f <(kustomize build cert-manager/overlays/production)
+                    kubectl apply --server-side --force-conflicts -n cert-manager -f <(kustomize build cert-manager/overlays/production)
 
                     sleep 10
 
                     echo "Applying Shared Gateway manifests..."
-                    kubectl apply -n shared-gateway -f <(kustomize build shared-gateway/overlays/production)
+                    kubectl apply --server-side --force-conflicts -n shared-gateway -f <(kustomize build shared-gateway/overlays/production)
 
                     sleep 10
 
                     echo "Applying ArgoCD manifests..."
-                    kubectl apply -n argocd -f <(kustomize build argocd/overlays/production)
+                    kubectl apply --server-side --force-conflicts -n argocd -f <(kustomize build argocd/overlays/production)
 
                     sleep 10
 
