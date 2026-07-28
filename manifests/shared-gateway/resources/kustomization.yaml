@@ -5,3 +5,4 @@ resources:
 - gateway.yaml
 - issuer-le-prod.yaml
 - issuer-le-stage.yaml
+namespace: shared-gateway

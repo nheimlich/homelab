@@ -1,0 +1,121 @@
+apps:
+
+  # --- URL Based ---
+  kubevirt:
+    type: url
+    url: "https://github.com/kubevirt/kubevirt/releases/download/${VERSION}/kubevirt-operator.yaml"
+    namespace: kubevirt
+    create_namespace: true
+    github_repo: "kubevirt/kubevirt"
+
+  cdi:
+    type: url
+    url: "https://github.com/kubevirt/containerized-data-importer/releases/download/${VERSION}/cdi-operator.yaml"
+    namespace: cdi
+    create_namespace: true
+    github_repo: "kubevirt/containerized-data-importer"
+
+  local-path:
+    type: url
+    url: "https://raw.githubusercontent.com/rancher/local-path-provisioner/refs/tags/${VERSION}/deploy/local-path-storage.yaml"
+    namespace: local-path-storage
+    create_namespace: true
+    github_repo: "rancher/local-path-provisioner"
+
+  metrics-server:
+    type: url
+    url: "https://github.com/kubernetes-sigs/metrics-server/releases/download/${VERSION}/components.yaml"
+    namespace: kube-system
+    github_repo: "kubernetes-sigs/metrics-server"
+
+  kubelet-serving:
+    type: url
+    url: "https://raw.githubusercontent.com/alex1989hu/kubelet-serving-cert-approver/${VERSION}/deploy/standalone-install.yaml"
+    namespace: kubelet-serving-cert-approver
+    create_namespace: true
+    github_repo: "alex1989hu/kubelet-serving-cert-approver"
+
+  argocd:
+    type: url
+    url: "https://raw.githubusercontent.com/argoproj/argo-cd/${VERSION}/manifests/install.yaml"
+    namespace: argocd
+    create_namespace: true
+    github_repo: "argoproj/argo-cd"
+
+  shared-gateway:
+    type: url
+    url: "https://github.com/kubernetes-sigs/gateway-api/releases/download/${VERSION}/experimental-install.yaml"
+    namespace: shared-gateway
+    create_namespace: true
+    github_repo: "kubernetes-sigs/gateway-api"
+
+  pipelines-as-code:
+    type: url
+    url: "https://github.com/openshift-pipelines/pipelines-as-code/releases/download/${VERSION}/release.k8s.yaml"
+    namespace: pipelines-as-code
+    github_repo: "openshift-pipelines/pipelines-as-code"
+
+  # --- Helm Based ---
+  cert-manager:
+    type: helm
+    repo_name: jetstack
+    repo_url: "https://charts.jetstack.io"
+    chart: cert-manager
+    namespace: cert-manager
+    create_namespace: true
+    kustomize_namespace: false
+
+  external-dns:
+    type: helm
+    repo_name: external-dns
+    repo_url: "https://kubernetes-sigs.github.io/external-dns/"
+    chart: external-dns
+    namespace: external-dns
+    create_namespace: true
+
+  rook-ceph:
+    type: helm
+    repo_name: rook-release
+    repo_url: "https://charts.rook.io/release"
+    chart: rook-ceph
+    namespace: rook-ceph
+    create_namespace: true
+
+  rook-ceph-cluster:
+    type: helm
+    repo_name: rook-release
+    repo_url: "https://charts.rook.io/release"
+    chart: rook-ceph-cluster
+    namespace: rook-ceph
+
+  cilium:
+    type: helm
+    repo_name: cilium
+    repo_url: "https://helm.cilium.io/"
+    chart: cilium
+    namespace: kube-system
+    kustomize_namespace: false
+    create_namespace: false
+
+  opentelemetry-operator:
+    type: helm
+    repo_name: opentelemetry
+    repo_url: "https://open-telemetry.github.io/opentelemetry-helm-charts"
+    chart: opentelemetry-operator
+    namespace: opentelemetry-operator
+    create_namespace: true
+
+  opentelemetry-collector:
+    type: helm
+    repo_name: opentelemetry
+    repo_url: "https://open-telemetry.github.io/opentelemetry-helm-charts"
+    chart: opentelemetry-collector
+    namespace: opentelemetry-operator
+
+  external-secrets:
+    type: helm
+    repo_name: external-secrets
+    repo_url: "https://charts.external-secrets.io"
+    chart: external-secrets
+    namespace: external-secrets
+    create_namespace: true

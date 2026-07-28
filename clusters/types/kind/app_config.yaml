@@ -1,0 +1,8 @@
+install_list:
+    - cilium
+    - external-secrets
+    - argocd
+versions:
+    argocd: v3.4.5
+    cilium: 1.19.6
+    external-secrets: 2.8.0

@@ -1,5 +1,9 @@
 secrets/*
 .*.swp
 manifests/virtualmachines/*
-.terraform*
-terraform.tfstate*
+tofu/.terraform*
+tofu/terraform.tfstate*
+
+tofu/.ic_state/*
+
+!tofu/.ic_state

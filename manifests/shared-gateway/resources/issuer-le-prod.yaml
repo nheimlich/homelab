@@ -16,7 +16,7 @@ spec:
           email: nolan.heimlich@gmail.com
           apiTokenSecretRef:
             name: cloudflare-secret
-            key: apikey
+            key: api-key
       selector:
         dnsZones:
         - '*.nhlabs.org'

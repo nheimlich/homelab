@@ -3,51 +3,64 @@
 **Directory Structure:**
 ```sh
 ├── clusters/
-│   └── {environment}/        # Argo ApplicationSets
-├── Makefile                  # Build/deployment automation
+│   ├── default_app_config.yaml   # App source definitions (URL/helm repos)
+│   ├── types/
+│   │   └── {type}/               # Cluster types: talos, kind, openshift, etc.
+│   │       ├── config.yaml       # Type metadata
+│   │       ├── app_config.yaml   # Install list + version pins per app
+│   │       └── provision/        # Bootstrap scripts for this type
+│   └── envs/
+│       └── {env}/                # Environments: homelab, local, etc.
+│           ├── config.yaml       # Links to a type (type: talos)
+│           ├── applications.yaml # ArgoCD ApplicationSet
+│           └── docs.md
 ├── manifests/
-│   └── {app_name}/           # argocd, cdi, kubevirt, etc
+│   └── {app_name}/
+│       ├── values/
+│       │   ├── default.yaml      # Helm values for all types
+│       │   └── {type}.yaml       # Type-specific Helm values
 │       ├── components/
-│       │   └── {version}/    # Versioned components (v3.0.5, v3.2.1, etc.)
-│       │       └── *.yaml
-│       ├── overlays/         # Environment-specific customization layer
-│       │   └── {environment}/
-│       │       └── kustomization.yaml  # Points to components (Optionally, patches and resources)
-│       ├── patches/          # Patches applied to components/resources (used in overlays)
-│       └── resources/        # Additional, non-component, non-versioned resource files
-└── scripts/                  # Automation scripts (apps.sh, setup.sh, etc.)
+│       │   ├── {version}/        # URL-sourced app components (shared across types)
+│       │   └── {type}/{version}/ # Helm-rendered components (type-specific)
+│       ├── overlays/
+│       │   └── {env}/
+│       │       ├── kustomization.yaml  # Generated, points to components
+│       │       ├── patches/           # Environment-specific patches
+│       │       └── resources/         # Additional overlay resources
+│       ├── patches/             # Shared patches
+│       └── resources/           # Shared non-versioned resources
+├── scripts/
+│   ├── generate-manifests       # Wrapper for the Go tool
+│   └── tool/
+│       ├── main.go              # Manifest generator (Go)
+│       ├── go.mod
+│       └── go.sum
+└── Makefile
 ```
+
+**Cluster Types:**
+- `talos` — Production 3-node Talos cluster
+- `kind` — Local development on laptop
 
 **Environments:**
-- `production`: Production environment (3-node + talos)
-  - [reference-docs](clusters/production/docs.md)
-- `standalone`: Standalone environment (laptop + kind)
-  - [reference-docs](clusters/standalone/docs.md)
+- `homelab` — type: talos, [docs](clusters/envs/homelab/docs.md)
+- `local` — type: kind, [docs](clusters/envs/local/docs.md)
 
-**Application Management:**
-- Applications are managed using ArgoCD and Kustomize.
-- Each application has its own directory under `manifests/` with versioned components and environment-specific overlays.`
-```
-❯ ./scripts/apps.sh
-Usage: ./scripts/apps.sh [options] <app>
-Options:
-  -f, --force    Force regeneration of components
-  -a, --all      Generate all apps
-  -l, --list     List available apps
-  -m, --missing  List missing app functions
-  -c, --compare  Compare versions for the specified app
-  -u, --update   Update overlays for the specified app
-  -h, --help     Show this help message
+**Manifest Generation:**
+```sh
+./scripts/generate-manifests --type talos --app cilium
+./scripts/generate-manifests --all-types                    # All apps for all types
+./scripts/generate-manifests --type talos -u                # Update versions to latest
+./scripts/generate-manifests --check --type talos           # Version check only
+./scripts/generate-manifests --type talos --app cilium -f   # Force regenerate
+./scripts/generate-manifests --type talos --app cilium --diff  # Diff last two versions
+./scripts/generate-manifests -l                             # List available apps
 ```
 
-```
-❯ ./scripts/apps.sh argocd
-[INFO] Generating argocd v3.2.1 from URL...
-Wrote manifests/argocd/components/v3.2.1/resource.yaml -- 1384000 bytes.
-...
-12 files generated.
-```
-**Creating Directory Structure for New Applications:**
-```
-ls -1 manifests | xargs -I {} bash -c "mkdir -p manifests/{}/{overlays/{production,standalone}/,}{patches,resources} && touch manifests/{}/{overlays/{production,standalone}/,}{patches,resources}/.gitkeep"
-```
+Generated components are committed to git for GitOps simplicity — ArgoCD scans `manifests/*/overlays/{env}/` and applies them via Kustomize.
+
+**Creating a New App:**
+1. Add source definition to `clusters/default_app_config.yaml`
+2. Add to `install_list` + set version in `clusters/types/{type}/app_config.yaml`
+3. Create Helm values at `manifests/{app}/values/default.yaml` (and `{type}.yaml` if needed)
+4. Run the generator

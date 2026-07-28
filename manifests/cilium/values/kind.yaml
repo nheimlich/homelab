@@ -1,0 +1,13 @@
+hubble:
+  enabled: false
+operator:
+  replicas: 1
+cgroup:
+  hostRoot: /sys/fs/cgroup
+  autoMount:
+    enabled: false
+ipam:
+  mode: kubernetes
+kubeProxyReplacement: true
+cni:
+  exclusive: true

@@ -1,0 +1,24 @@
+rbac:
+  create: true
+serviceAccount:
+  create: true
+  automountServiceAccountToken: true
+env:
+  - name: CF_API_TOKEN
+    valueFrom:
+      secretKeyRef:
+        name: cloudflare-secret
+        key: api-key
+  - name: CF_API_EMAIL
+    valueFrom:
+      secretKeyRef:
+        name: cloudflare-secret
+        key: email
+domainFilters:
+  - nhlabs.org
+provider:
+  name: cloudflare
+policy: sync
+sources:
+  - service
+  - gateway-httproute
