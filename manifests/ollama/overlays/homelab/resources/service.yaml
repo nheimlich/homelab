@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: litellm-service
+  namespace: ollama
+spec:
+  type: LoadBalancer
+  ports:
+    - port: 4000
+      targetPort: 4000
+      protocol: TCP
+  selector:
+    app: litellm-proxy

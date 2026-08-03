@@ -59,7 +59,18 @@ bootstrap() {
   echo ""
   echo "Waiting for manifest bootstrap job to complete (~3 mins wait...)"
   sleep 180
-  until kubectl -n kube-system wait --for condition=Complete job/bootstrap-install; do
+  until kubectl -n kube-system wait --for condition=complete job/bootstrap-install --timeout=10m; do
+    if ! kubectl -n kube-system get job bootstrap-install -o jsonpath='{.status.failed}' 2>/dev/null | grep -qx '0'; then
+      echo "bootstrap-install job failed; node logs:"
+      for pair in "${stat_data[@]}"; do
+        IFS=":" read -r n i <<< "${pair}"
+        if talosctl -n "${network}${i}" -e "${network}${i}" read /var/log/bootstrap/bootstrap-install.log > "/tmp/bootstrap-${n}.log" 2>/dev/null; then
+          echo "--- ${n} ---"
+          cat "/tmp/bootstrap-${n}.log"
+        fi
+      done
+      exit 1
+    fi
     echo "Retrying..."
     sleep 10
   done

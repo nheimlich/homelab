@@ -1,1 +1,4 @@
-{}
+csi:
+  installCsiOperator: false
+ceph-csi-operator:
+  enabled: true

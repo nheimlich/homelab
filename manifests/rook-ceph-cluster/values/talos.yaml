@@ -1,3 +1,4 @@
+operatorNamespace: rook-ceph
 cephObjectStores: []
 toolbox:
   enabled: true
@@ -5,34 +6,8 @@ cephBlockPoolsVolumeSnapshotClass:
   enabled: true
 cephFileSystemVolumeSnapshotClass:
   enabled: true
-cephClusterSpec:
-  annotations:
-    all:
-      kubernetes.io/egress-bandwidth: "60M"
-      kubernetes.io/ingress-bandwidth: "60M"
-cephBlockPools:
-- name: ceph-blockpool
-  spec:
-    failureDomain: host
-    replicated:
-      size: 2
-  storageClass:
-    enabled: true
-    name: ceph-block
-    isDefault: true
-    reclaimPolicy: Delete
-    allowVolumeExpansion: true
-    volumeBindingMode: "Immediate"
-    allowedTopologies: []
-    parameters:
-      csi.storage.k8s.io/controller-expand-secret-name: rook-csi-rbd-provisioner
-      csi.storage.k8s.io/controller-expand-secret-namespace: rook-ceph
-      csi.storage.k8s.io/controller-publish-secret-name: rook-csi-rbd-provisioner
-      csi.storage.k8s.io/controller-publish-secret-namespace: rook-ceph
-      csi.storage.k8s.io/fstype: ext4
-      csi.storage.k8s.io/node-stage-secret-name: rook-csi-rbd-node
-      csi.storage.k8s.io/node-stage-secret-namespace: rook-ceph
-      csi.storage.k8s.io/provisioner-secret-name: rook-csi-rbd-provisioner
-      csi.storage.k8s.io/provisioner-secret-namespace: rook-ceph
-      imageFeatures: layering
-      imageFormat: "2"
+#cephClusterSpec:
+#  annotations:
+#    all:
+#      kubernetes.io/egress-bandwidth: "60M"
+#      kubernetes.io/ingress-bandwidth: "60M"

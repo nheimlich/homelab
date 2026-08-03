@@ -2,6 +2,7 @@ install_list:
     - cilium
     - external-secrets
     - cert-manager
+    - ceph-csi-drivers
     - external-dns
     - argocd
     - rook-ceph
@@ -14,19 +15,28 @@ install_list:
     - local-path
     - metrics-server
     - kubelet-serving
+    - ollama
+    - spegel
+    - multus
+    - perses
 versions:
-    argocd: v3.4.5
+    argocd: v3.4.6
     cdi: v1.65.0
+    ceph-csi-drivers: 1.0.4
     cert-manager: v1.21.0
-    cilium: 1.19.6
+    cilium: 1.20.0
     external-dns: 1.21.1
     external-secrets: 2.8.0
     kubelet-serving: v0.11.0
-    kubevirt: v1.8.4
+    kubevirt: v1.9.0
     local-path: v0.0.36
     metrics-server: v0.9.0
+    ollama: 1.71.0
     opentelemetry-collector: 0.165.0
     opentelemetry-operator: 0.120.0
     rook-ceph: v1.20.2
     rook-ceph-cluster: v1.20.2
     shared-gateway: v1.6.1
+    spegel: 0.7.4
+    multus: v4.3.0
+    perses: 0.22.0

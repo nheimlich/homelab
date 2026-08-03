@@ -13,9 +13,22 @@ fi
 : "${install_disk:?Error: install_disk is not set}"
 : "${image:?Error: image is not set}"
 : "${lbvip:?Error: lbvip is not set}"
-OP_TOKEN=$(op item get "Service Account Auth Token: Homelab" --fields credential --reveal)
-op document get "Talos Secrets" -o secrets.yaml --force > /dev/null 2>&1
-: "${OP_TOKEN:?Error: OP_TOKEN is not set}"
+: "${gcp_project_id:?Error: gcp_project_id is not set}"
+: "${oidc_issuer:?Error: oidc_issuer is not set}"
+: "${wif_audience:?Error: wif_audience is not set}"
+
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../../../" && pwd)"
+
+gcloud secrets versions access latest --secret=talos-secrets --project="${gcp_project_id}" > secrets.yaml
+
+JWKS_TMP="$(mktemp)"
+"${REPO_ROOT}/scripts/gen-oidc-jwk" secrets.yaml "${JWKS_TMP}" > /dev/null
+if ! cmp -s "${JWKS_TMP}" "${REPO_ROOT}/oidc/openid/v1/jwks"; then
+  echo "Error: OIDC JWKS is out of date. Regenerate and sync to the site repo: scripts/gen-oidc-jwk <secrets.yaml> oidc/openid/v1/jwks" >&2
+  rm -f "${JWKS_TMP}"
+  exit 1
+fi
+rm -f "${JWKS_TMP}"
 
 generate_configs() {
   mkdir -p configs/patches
@@ -34,6 +47,12 @@ auto: off
 ---
 debug: false
 machine:
+  files:
+    - path: /etc/cri/conf.d/20-customization.part
+      op: create
+      content: |
+        [plugins."io.containerd.cri.v1.images"]
+          discard_unpacked_layers = false
   kubelet:
     extraMounts:
       - destination: /var/local-path-provisioner
@@ -89,6 +108,9 @@ cluster:
     disabled: true
 
   apiServer:
+    extraArgs:
+      service-account-issuer: "${oidc_issuer}"
+      api-audiences: "https://${network}${lbvip}:6443,${wif_audience}"
     admissionControl:
       - name: PodSecurity
         configuration:
@@ -105,15 +127,6 @@ cluster:
         kind: Namespace
         metadata:
           name: external-secrets
-        ---
-        apiVersion: v1
-        kind: Secret
-        metadata:
-          name: onepassword-connect-token
-          namespace: external-secrets
-        type: Opaque
-        stringData:
-          token: ${OP_TOKEN}
         ---
         apiVersion: rbac.authorization.k8s.io/v1
         kind: ClusterRoleBinding
@@ -134,7 +147,8 @@ cluster:
           name: bootstrap-install
           namespace: kube-system
         spec:
-          backoffLimit: 2
+          backoffLimit: 6
+          activeDeadlineSeconds: 900
           ttlSecondsAfterFinished: 1000
           template:
             metadata:
@@ -168,9 +182,17 @@ cluster:
               serviceAccount: default
               serviceAccountName: default
               hostNetwork: true
+              volumes:
+              - name: bootstrap-log
+                hostPath:
+                  path: /var/log/bootstrap
+                  type: DirectoryOrCreate
               containers:
               - name: bootstrap-install
                 image: alpine/curl
+                volumeMounts:
+                - name: bootstrap-log
+                  mountPath: /var/log/bootstrap
                 env:
                 - name: KUBERNETES_SERVICE_HOST
                   value: "localhost"
@@ -180,48 +202,50 @@ cluster:
                   - "/bin/sh"
                   - "-c"
                   - |
+                    set -uo pipefail
+                    LOG=/var/log/bootstrap/bootstrap-install.log
+                    : > "\${LOG}"
+                    exec >> "\${LOG}" 2>&1
+
                     TOKEN=\$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)
-                    NAMESPACE="kube-system"
-                    API_SERVER="https://\${KUBERNETES_SERVICE_HOST}:\${KUBERNETES_SERVICE_PORT}"
+                    API_SERVER="https://localhost:7445"
                     AUTH_HEADER="Authorization: Bearer \${TOKEN}"
-                    ACCEPT_HEADER="Accept: application/json"
-                    DEPLOYMENT_URL="\${API_SERVER}/apis/apps/v1/namespaces/\${NAMESPACE}/deployments/cilium-operators"
-                    CRB_URL="\${API_SERVER}/apis/rbac.authorization.k8s.io/v1/clusterrolebindings/bootstrap-admin"
 
-                    status=\$(curl -sSk -o /dev/null -w "%{http_code}" -H "\${AUTH_HEADER}" -H "\${ACCEPT_HEADER}" "\${DEPLOYMENT_URL}")
+                    retry() {
+                      until "\$@"; do
+                        echo "retrying: \$*"
+                        sleep 5
+                      done
+                    }
 
-                    if [ "\${status}" -eq 200 ]; then
-                        echo "cilium-operator deployment exists. Deleting ClusterRoleBinding."
-                        curl -sSk -X DELETE -H "\${AUTH_HEADER}" -H "\${ACCEPT_HEADER}" "\${CRB_URL}" -o /dev/null -w "%{http_code}\n"
-                        exit 0
-                    fi
+                    until curl -sfk -H "\${AUTH_HEADER}" "\${API_SERVER}/readyz" > /dev/null 2>&1; do
+                      sleep 2
+                    done
 
-                    echo "Updating APK and installing dependencies..."
-                    apk update && apk add --no-cache kubectl kustomize helm git
+                    apk update && apk add --no-cache git kubectl kustomize helm
 
-                    echo "Cloning repository..."
-                    git clone -b dev --single-branch https://github.com/nheimlich/homelab.git /repo
-                    cd /repo/manifests || exit
+                    rm -rf /repo
+                    retry git clone -b dev --single-branch https://github.com/nheimlich/homelab.git /repo
 
-                    echo "Applying Cilium manifests..."
-                    kubectl apply -f <(kustomize build cilium/overlays/homelab)
+                    cd /repo/manifests || exit 1
 
+                    kustomize build cilium/overlays/homelab | kubectl apply --server-side --force-conflicts -f -
                     sleep 5
 
-                    echo "Applying ArgoCD manifests..."
-                    kubectl apply --server-side --force-conflicts -n argocd -f <(kustomize build argocd/overlays/homelab)
+                    kustomize build argocd/overlays/homelab | kubectl apply --server-side --force-conflicts -n argocd -f -
 
-                    sleep 5
+                    cd /repo || exit 1
 
-                    cd /repo || exit
+                    retry sh -c 'kubectl apply --server-side --force-conflicts -f clusters/envs/homelab/applications.yaml'
 
-                    until kubectl apply --server-side --force-conflicts -n argocd -f clusters/envs/homelab/applications.yaml; do
-                      echo "Failed to apply ArgoCD applications, retrying in 5 seconds..."
+                    until kubectl get deployment -n argocd argocd-server > /dev/null 2>&1; do
                       sleep 5
                     done
 
-                    echo "Deleting bootstrap-admin ClusterRoleBinding..."
-                    kubectl delete clusterrolebinding bootstrap-admin || true
+                    until ! kubectl get clusterrolebinding bootstrap-admin > /dev/null 2>&1; do
+                      kubectl delete clusterrolebinding bootstrap-admin --wait=false > /dev/null 2>&1 || true
+                      sleep 10
+                    done
 
                     echo "Bootstrap complete!"
 EOF

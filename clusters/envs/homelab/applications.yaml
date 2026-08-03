@@ -10,7 +10,7 @@ spec:
   generators:
     - git:
         repoURL: https://github.com/nheimlich/homelab
-        revision: main
+        revision: dev
         directories:
           - path: manifests/*/overlays/homelab
   ignoreApplicationDifferences:
@@ -25,7 +25,7 @@ spec:
       project: "default"
       source:
         repoURL: https://github.com/nheimlich/homelab
-        targetRevision: main
+        targetRevision: dev
         path: '{{.path.path}}'
       destination:
         server: https://kubernetes.default.svc

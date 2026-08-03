@@ -7,3 +7,8 @@ tofu/terraform.tfstate*
 tofu/.ic_state/*
 
 !tofu/.ic_state
+
+clusters/types/talos/provision/configs/*
+clusters/types/talos/provision/secrets.yaml
+clusters/types/talos/provision/dhcp_data.sh
+scripts/seed-secrets.sh

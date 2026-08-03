@@ -3,11 +3,20 @@ package main
 import (
 	"bufio"
 	"bytes"
+	"crypto"
+	"crypto/ecdsa"
+	"crypto/elliptic"
+	"crypto/rsa"
+	"crypto/sha256"
+	"crypto/x509"
+	"encoding/base64"
 	"encoding/json"
+	"encoding/pem"
 	"flag"
 	"fmt"
 	"io"
 	"log"
+	"math/big"
 	"net/http"
 	"os"
 	"os/exec"
@@ -17,11 +26,14 @@ import (
 
 	"github.com/Masterminds/semver/v3"
 	"gopkg.in/yaml.v3"
+	"helm.sh/helm/v3/pkg/action"
+	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/chart/loader"
 	"helm.sh/helm/v3/pkg/chartutil"
 	"helm.sh/helm/v3/pkg/cli"
 	"helm.sh/helm/v3/pkg/engine"
 	"helm.sh/helm/v3/pkg/getter"
+	"helm.sh/helm/v3/pkg/registry"
 	"helm.sh/helm/v3/pkg/repo"
 )
 
@@ -30,20 +42,20 @@ type BaseConfig struct {
 }
 
 type AppDef struct {
-	Type              string `yaml:"type"`
-	URL               string `yaml:"url"`
-	RepoName          string `yaml:"repo_name"`
-	RepoURL           string `yaml:"repo_url"`
-	Chart             string `yaml:"chart"`
-	Namespace         string `yaml:"namespace"`
-	CreateNamespace   bool   `yaml:"create_namespace"`
-	KustomizeNamespace *bool `yaml:"kustomize_namespace"`
-	GitHubRepo        string `yaml:"github_repo"`
+	Type               string `yaml:"type"`
+	URL                string `yaml:"url"`
+	RepoName           string `yaml:"repo_name"`
+	RepoURL            string `yaml:"repo_url"`
+	Chart              string `yaml:"chart"`
+	Namespace          string `yaml:"namespace"`
+	CreateNamespace    bool   `yaml:"create_namespace"`
+	KustomizeNamespace *bool  `yaml:"kustomize_namespace"`
+	GitHubRepo         string `yaml:"github_repo"`
 }
 
 type TypeConfig struct {
-	InstallList []string          `yaml:"install_list"`
-	Versions    map[string]string `yaml:"versions"`
+	InstallList []string          `yaml:"install_list,omitempty"`
+	Versions    map[string]string `yaml:"versions,omitempty"`
 }
 
 type EnvConfig struct {
@@ -62,20 +74,28 @@ var (
 	diffFlag     bool
 	allTypes     bool
 	updateFlag   bool
+	envFlag      string
+	ingestApp    string
+	syncFlag     bool
 	listFlag     bool
+	oidcJWKFlag  bool
 	keepVersions int
 )
 
 func main() {
 	flag.StringVar(&targetType, "type", "", "Cluster type (talos, kind, etc.)")
 	flag.BoolVar(&allTypes, "all-types", false, "Generate for all types")
+	flag.StringVar(&envFlag, "env", "", "Environment (implies its type, e.g. homelab)")
 	flag.StringVar(&targetApp, "app", "", "Specific app")
+	flag.StringVar(&ingestApp, "ingest", "", "Ingest YAML from stdin/files into an app's resources dir (add --env for overlay resources)")
+	flag.BoolVar(&syncFlag, "sync", false, "Regenerate all kustomization files without rendering (optional --app)")
 	flag.BoolVar(&forceFlag, "f", false, "Force regeneration")
 	flag.BoolVar(&checkFlag, "check", false, "Version check only")
 	flag.BoolVar(&diffFlag, "diff", false, "Diff last two versions of an app")
 	flag.BoolVar(&updateFlag, "u", false, "Update versions to latest upstream")
 	flag.BoolVar(&listFlag, "l", false, "List apps")
 	flag.IntVar(&keepVersions, "keep", 2, "Number of versions to keep per app per type")
+	flag.BoolVar(&oidcJWKFlag, "oidc-jwk", false, "Generate OIDC JWKS from Talos secrets.yaml")
 	flag.Parse()
 
 	repoRoot, err := exec.Command("git", "rev-parse", "--show-toplevel").Output()
@@ -84,6 +104,11 @@ func main() {
 	}
 	baseDir = strings.TrimSpace(string(repoRoot))
 	manifestsDir = filepath.Join(baseDir, "manifests")
+
+	if oidcJWKFlag {
+		handleOIDCJWK()
+		return
+	}
 
 	loadYAML(filepath.Join(baseDir, "clusters", "default_app_config.yaml"), &baseConfig)
 	loadClusterScoped(filepath.Join(baseDir, "clusters", "cluster-scoped.yaml"))
@@ -110,23 +135,158 @@ func main() {
 		return
 	}
 
+	if syncFlag {
+		if targetType != "" || allTypes || envFlag != "" {
+			log.Fatal("--sync takes no --type/--env (optional --app filter)")
+		}
+		handleSync()
+		return
+	}
+
+	if ingestApp != "" {
+		if targetApp != "" || targetType != "" || allTypes {
+			log.Fatal("--ingest takes the app name; do not combine with --app/--type/--all-types")
+		}
+		handleIngest()
+		return
+	}
+
 	var types []string
-	if allTypes {
+	switch {
+	case envFlag != "":
+		if targetType != "" {
+			log.Fatal("--type and --env are mutually exclusive")
+		}
+		var ec EnvConfig
+		envCfgPath := filepath.Join(baseDir, "clusters", "envs", envFlag, "config.yaml")
+		if _, err := os.Stat(envCfgPath); os.IsNotExist(err) {
+			log.Fatalf("no config for env %s (expected %s)", envFlag, envCfgPath)
+		}
+		loadYAML(envCfgPath, &ec)
+		if ec.Type == "" {
+			log.Fatalf("env %s has no type in %s", envFlag, envCfgPath)
+		}
+		types = append(types, ec.Type)
+	case allTypes:
 		entries, _ := os.ReadDir(filepath.Join(baseDir, "clusters", "types"))
 		for _, e := range entries {
 			if e.IsDir() {
 				types = append(types, e.Name())
 			}
 		}
-	} else if targetType != "" {
+	case targetType != "":
 		types = append(types, targetType)
-	} else {
-		log.Fatal("--type or --all-types required")
+	default:
+		log.Fatal("--type, --env or --all-types required")
 	}
 
 	for _, t := range types {
-		processType(t)
+		processType(t, envFlag)
 	}
+}
+
+func handleOIDCJWK() {
+	args := flag.Args()
+	if len(args) != 2 {
+		log.Fatal("usage: -oidc-jwk <secrets.yaml> <output.json>")
+	}
+	secretsPath, outPath := args[0], args[1]
+	if !filepath.IsAbs(secretsPath) {
+		secretsPath = filepath.Join(baseDir, secretsPath)
+	}
+	if !filepath.IsAbs(outPath) {
+		outPath = filepath.Join(baseDir, outPath)
+	}
+
+	var secrets struct {
+		Certs struct {
+			K8sServiceAccount struct {
+				Key string `yaml:"key"`
+			} `yaml:"k8sserviceaccount"`
+		} `yaml:"certs"`
+	}
+	loadYAML(secretsPath, &secrets)
+
+	keyPEM, err := base64.StdEncoding.DecodeString(secrets.Certs.K8sServiceAccount.Key)
+	if err != nil {
+		log.Fatalf("decode service account key: %v", err)
+	}
+	block, _ := pem.Decode(keyPEM)
+	if block == nil {
+		log.Fatal("service account key is not a PEM block")
+	}
+
+	var priv crypto.PrivateKey
+	switch block.Type {
+	case "RSA PRIVATE KEY":
+		priv, err = x509.ParsePKCS1PrivateKey(block.Bytes)
+	case "EC PRIVATE KEY":
+		priv, err = x509.ParseECPrivateKey(block.Bytes)
+	case "PRIVATE KEY":
+		priv, err = x509.ParsePKCS8PrivateKey(block.Bytes)
+	default:
+		log.Fatalf("unsupported PEM block type %q", block.Type)
+	}
+	if err != nil {
+		log.Fatalf("parse service account key: %v", err)
+	}
+
+	pub := priv.(crypto.Signer).Public()
+	pubDER, err := x509.MarshalPKIXPublicKey(pub)
+	if err != nil {
+		log.Fatalf("marshal public key: %v", err)
+	}
+	hash := sha256.Sum256(pubDER)
+	jwk := oidcJWK{Kid: base64.RawURLEncoding.EncodeToString(hash[:])}
+
+	switch k := pub.(type) {
+	case *rsa.PublicKey:
+		jwk.Use = "sig"
+		jwk.Kty = "RSA"
+		jwk.Alg = "RS256"
+		jwk.N = base64.RawURLEncoding.EncodeToString(k.N.Bytes())
+		jwk.E = base64.RawURLEncoding.EncodeToString(big.NewInt(int64(k.E)).Bytes())
+	case *ecdsa.PublicKey:
+		if k.Curve != elliptic.P256() {
+			log.Fatal("unsupported EC curve, only P-256 is supported")
+		}
+		x := make([]byte, 32)
+		y := make([]byte, 32)
+		k.X.FillBytes(x)
+		k.Y.FillBytes(y)
+		jwk.Use = "sig"
+		jwk.Kty = "EC"
+		jwk.Alg = "ES256"
+		jwk.Crv = "P-256"
+		jwk.X = base64.RawURLEncoding.EncodeToString(x)
+		jwk.Y = base64.RawURLEncoding.EncodeToString(y)
+	default:
+		log.Fatalf("unsupported service account key type %T", pub)
+	}
+
+	out, err := json.MarshalIndent(struct {
+		Keys []oidcJWK `json:"keys"`
+	}{[]oidcJWK{jwk}}, "", "  ")
+	if err != nil {
+		log.Fatalf("marshal jwks: %v", err)
+	}
+	out = append(out, '\n')
+	if err := os.WriteFile(outPath, out, 0644); err != nil {
+		log.Fatalf("write jwks: %v", err)
+	}
+	log.Printf("wrote %s", outPath)
+}
+
+type oidcJWK struct {
+	Use string `json:"use"`
+	Kty string `json:"kty"`
+	Kid string `json:"kid"`
+	Alg string `json:"alg"`
+	N   string `json:"n,omitempty"`
+	E   string `json:"e,omitempty"`
+	Crv string `json:"crv,omitempty"`
+	X   string `json:"x,omitempty"`
+	Y   string `json:"y,omitempty"`
 }
 
 func handleDiff() {
@@ -243,7 +403,7 @@ func checkType(typeName string) {
 	}
 }
 
-func processType(typeName string) {
+func processType(typeName, envOverride string) {
 	var cfg TypeConfig
 	path := filepath.Join(baseDir, "clusters", "types", typeName, "app_config.yaml")
 	if _, err := os.Stat(path); os.IsNotExist(err) {
@@ -253,22 +413,40 @@ func processType(typeName string) {
 	loadYAML(path, &cfg)
 
 	apps := cfg.InstallList
+	if envOverride != "" {
+		var envCfg TypeConfig
+		envPath := filepath.Join(baseDir, "clusters", "envs", envOverride, "app_config.yaml")
+		if _, err := os.Stat(envPath); err == nil {
+			loadYAML(envPath, &envCfg)
+			if len(envCfg.InstallList) > 0 {
+				apps = envCfg.InstallList
+			}
+			for k, v := range envCfg.Versions {
+				cfg.Versions[k] = v
+			}
+		}
+	}
 	if targetApp != "" {
 		found := false
 		for _, a := range apps {
 			if a == targetApp {
 				found = true
-				apps = []string{targetApp}
 				break
 			}
 		}
 		if !found {
-			log.Printf("[SKIP] %s not in %s install list", targetApp, typeName)
-			return
+			if !scaffoldApp(typeName, envOverride, targetApp) {
+				return
+			}
+			loadYAML(path, &cfg)
 		}
+		apps = []string{targetApp}
 	}
 
 	envs := matchingEnvs(typeName)
+	if envOverride != "" {
+		envs = []string{envOverride}
+	}
 
 	for _, appName := range apps {
 		app, ok := baseConfig.Apps[appName]
@@ -278,6 +456,18 @@ func processType(typeName string) {
 		}
 
 		version := cfg.Versions[appName]
+		if version == "" {
+			latest := fetchLatestVersion(app)
+			if latest != "" {
+				log.Printf("[ADD] %s: no pinned version for %s, using latest %s", appName, typeName, latest)
+				if cfg.Versions == nil {
+					cfg.Versions = map[string]string{}
+				}
+				cfg.Versions[appName] = latest
+				saveYAML(path, cfg)
+				version = latest
+			}
+		}
 		if version == "" {
 			log.Printf("[SKIP] %s has no version for %s", appName, typeName)
 			continue
@@ -444,62 +634,14 @@ func renderHelm(appName, version, typeName string, app AppDef) (string, error) {
 	settings.RepositoryCache = filepath.Join(tmpDir, "cache")
 	os.MkdirAll(settings.RepositoryCache, 0755)
 
-	providers := getter.All(settings)
-
-	repoEntry := &repo.Entry{
-		Name: app.RepoName,
-		URL:  app.RepoURL,
+	var chart *chart.Chart
+	if strings.HasPrefix(app.RepoURL, "oci://") {
+		chart, err = pullOCIChart(app, pullVer, settings, tmpDir)
+	} else {
+		chart, err = pullRepoChart(app, pullVer, settings, tmpDir)
 	}
-
-	chartRepo, err := repo.NewChartRepository(repoEntry, providers)
 	if err != nil {
-		return "", fmt.Errorf("new chart repo: %w", err)
-	}
-
-	idxFile, err := chartRepo.DownloadIndexFile()
-	if err != nil {
-		return "", fmt.Errorf("download index: %w", err)
-	}
-	defer os.Remove(idxFile)
-
-	idx, err := repo.LoadIndexFile(idxFile)
-	if err != nil {
-		return "", fmt.Errorf("load index: %w", err)
-	}
-
-	cv, err := idx.Get(app.Chart, pullVer)
-	if err != nil {
-		return "", fmt.Errorf("chart version %s: %w", pullVer, err)
-	}
-
-	if len(cv.URLs) == 0 {
-		return "", fmt.Errorf("no URLs for chart %s %s", app.Chart, pullVer)
-	}
-
-	chartURL := cv.URLs[0]
-	if !strings.Contains(chartURL, "://") {
-		baseURL := strings.TrimRight(app.RepoURL, "/")
-		chartURL = baseURL + "/" + strings.TrimLeft(chartURL, "/")
-	}
-
-	g, err := providers.ByScheme(strings.SplitN(chartURL, "://", 2)[0])
-	if err != nil {
-		return "", fmt.Errorf("no getter for %s: %w", chartURL, err)
-	}
-
-	buf, err := g.Get(chartURL)
-	if err != nil {
-		return "", fmt.Errorf("download chart: %w", err)
-	}
-
-	chartTmp := filepath.Join(tmpDir, "chart.tgz")
-	if err := os.WriteFile(chartTmp, buf.Bytes(), 0644); err != nil {
 		return "", err
-	}
-
-	chart, err := loader.Load(chartTmp)
-	if err != nil {
-		return "", fmt.Errorf("load chart: %w", err)
 	}
 
 	vals := chartutil.Values{}
@@ -565,6 +707,99 @@ func renderHelm(appName, version, typeName string, app AppDef) (string, error) {
 	}
 
 	return out.String(), nil
+}
+
+func pullRepoChart(app AppDef, pullVer string, settings *cli.EnvSettings, tmpDir string) (*chart.Chart, error) {
+	providers := getter.All(settings)
+
+	repoEntry := &repo.Entry{
+		Name: app.RepoName,
+		URL:  app.RepoURL,
+	}
+
+	chartRepo, err := repo.NewChartRepository(repoEntry, providers)
+	if err != nil {
+		return nil, fmt.Errorf("new chart repo: %w", err)
+	}
+
+	idxFile, err := chartRepo.DownloadIndexFile()
+	if err != nil {
+		return nil, fmt.Errorf("download index: %w", err)
+	}
+	defer os.Remove(idxFile)
+
+	idx, err := repo.LoadIndexFile(idxFile)
+	if err != nil {
+		return nil, fmt.Errorf("load index: %w", err)
+	}
+
+	cv, err := idx.Get(app.Chart, pullVer)
+	if err != nil {
+		return nil, fmt.Errorf("chart version %s: %w", pullVer, err)
+	}
+
+	if len(cv.URLs) == 0 {
+		return nil, fmt.Errorf("no URLs for chart %s %s", app.Chart, pullVer)
+	}
+
+	chartURL := cv.URLs[0]
+	if !strings.Contains(chartURL, "://") {
+		baseURL := strings.TrimRight(app.RepoURL, "/")
+		chartURL = baseURL + "/" + strings.TrimLeft(chartURL, "/")
+	}
+
+	g, err := providers.ByScheme(strings.SplitN(chartURL, "://", 2)[0])
+	if err != nil {
+		return nil, fmt.Errorf("no getter for %s: %w", chartURL, err)
+	}
+
+	buf, err := g.Get(chartURL)
+	if err != nil {
+		return nil, fmt.Errorf("download chart: %w", err)
+	}
+
+	chartTmp := filepath.Join(tmpDir, "chart.tgz")
+	if err := os.WriteFile(chartTmp, buf.Bytes(), 0644); err != nil {
+		return nil, err
+	}
+
+	return loader.Load(chartTmp)
+}
+
+func pullOCIChart(app AppDef, pullVer string, settings *cli.EnvSettings, tmpDir string) (*chart.Chart, error) {
+	regClient, err := registry.NewClient(
+		registry.ClientOptWriter(io.Discard),
+		registry.ClientOptCredentialsFile(settings.RegistryConfig),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("registry client: %w", err)
+	}
+
+	ref := strings.TrimRight(app.RepoURL, "/")
+	if !strings.HasSuffix(ref, "/"+app.Chart) {
+		ref = ref + "/" + app.Chart
+	}
+
+	pull := action.NewPullWithOpts(action.WithConfig(&action.Configuration{}))
+	pull.Settings = settings
+	pull.Version = pullVer
+	pull.DestDir = tmpDir
+	pull.SetRegistryClient(regClient)
+
+	_, err = pull.Run(ref)
+	if err != nil {
+		return nil, fmt.Errorf("oci pull %s: %w", ref, err)
+	}
+
+	matches, err := filepath.Glob(filepath.Join(tmpDir, "*.tgz"))
+	if err != nil {
+		return nil, err
+	}
+	if len(matches) != 1 {
+		return nil, fmt.Errorf("oci pull %s: expected one chart tarball in %s, found %d", ref, tmpDir, len(matches))
+	}
+
+	return loader.Load(matches[0])
 }
 
 func mergeMaps(a, b map[string]interface{}) map[string]interface{} {
@@ -884,35 +1119,83 @@ func updateOverlays(appName, version, typeName string, app AppDef, envs []string
 			compPath = fmt.Sprintf("../../components/%s/%s", typeName, version)
 		}
 
-		var buf bytes.Buffer
-		buf.WriteString("apiVersion: kustomize.config.k8s.io/v1beta1\nkind: Kustomization\nresources:\n")
-		buf.WriteString(fmt.Sprintf("  - %s\n", compPath))
+		writeOverlayKustomization(ovlDir, compPath, appDir)
+		ensureGitkeep(filepath.Join(ovlDir, "resources"))
+		ensureGitkeep(filepath.Join(ovlDir, "patches"))
+		log.Printf("[OVL] %s/overlays/%s", appName, env)
+	}
+}
 
-		resPath := filepath.Join(appDir, "resources")
-		if hasYAMLFiles(resPath) {
-			genBaseKustomization(resPath)
-			buf.WriteString("  - ../../resources\n")
-		}
+func writeOverlayKustomization(ovlDir, compPath, appDir string) {
+	var buf bytes.Buffer
+	buf.WriteString("apiVersion: kustomize.config.k8s.io/v1beta1\nkind: Kustomization\nresources:\n")
+	buf.WriteString(fmt.Sprintf("  - %s\n", compPath))
 
-		ovlResPath := filepath.Join(ovlDir, "resources")
-		if hasYAMLFiles(ovlResPath) {
-			genBaseKustomization(ovlResPath)
-			buf.WriteString("  - resources\n")
-		}
+	resPath := filepath.Join(appDir, "resources")
+	if hasYAMLFiles(resPath) {
+		genBaseKustomization(resPath)
+		buf.WriteString("  - ../../resources\n")
+	}
 
-		patchesDir := filepath.Join(ovlDir, "patches")
-		if hasYAMLFiles(patchesDir) {
-			buf.WriteString("patches:\n")
-			entries, _ := os.ReadDir(patchesDir)
-			for _, e := range entries {
-				if !e.IsDir() && strings.HasSuffix(e.Name(), ".yaml") {
-					buf.WriteString(fmt.Sprintf("  - path: patches/%s\n", e.Name()))
-				}
+	ovlResPath := filepath.Join(ovlDir, "resources")
+	if hasYAMLFiles(ovlResPath) {
+		genBaseKustomization(ovlResPath)
+		buf.WriteString("  - resources\n")
+	}
+
+	var patchPaths []string
+	patchesDir := filepath.Join(ovlDir, "patches")
+	if hasYAMLFiles(patchesDir) {
+		entries, _ := os.ReadDir(patchesDir)
+		for _, e := range entries {
+			if !e.IsDir() && strings.HasSuffix(e.Name(), ".yaml") {
+				patchPaths = append(patchPaths, "patches/"+e.Name())
 			}
 		}
+	}
+	appPatchesDir := filepath.Join(appDir, "patches")
+	if hasYAMLFiles(appPatchesDir) {
+		entries, _ := os.ReadDir(appPatchesDir)
+		for _, e := range entries {
+			if !e.IsDir() && strings.HasSuffix(e.Name(), ".yaml") {
+				patchPaths = append(patchPaths, "../../patches/"+e.Name())
+			}
+		}
+	}
+	if len(patchPaths) > 0 {
+		sort.Strings(patchPaths)
+		buf.WriteString("patches:\n")
+		for _, p := range patchPaths {
+			buf.WriteString(fmt.Sprintf("  - path: %s\n", p))
+		}
+	}
 
-		os.WriteFile(filepath.Join(ovlDir, "kustomization.yaml"), buf.Bytes(), 0644)
-		log.Printf("[OVL] %s/overlays/%s", appName, env)
+	kPath := filepath.Join(ovlDir, "kustomization.yaml")
+	if data, err := os.ReadFile(kPath); err == nil && bytes.Equal(data, buf.Bytes()) {
+		return
+	}
+	os.WriteFile(kPath, buf.Bytes(), 0644)
+}
+
+// ensureGitkeep creates .gitkeep in dir if it has no YAML resources, and
+// removes it once real YAML files land in the dir.
+func ensureGitkeep(dir string) {
+	os.MkdirAll(dir, 0755)
+	has := false
+	entries, err := os.ReadDir(dir)
+	if err == nil {
+		for _, e := range entries {
+			if !e.IsDir() && strings.HasSuffix(e.Name(), ".yaml") && e.Name() != "kustomization.yaml" {
+				has = true
+				break
+			}
+		}
+	}
+	kPath := filepath.Join(dir, ".gitkeep")
+	if has {
+		os.Remove(kPath)
+	} else {
+		os.WriteFile(kPath, nil, 0644)
 	}
 }
 
@@ -930,26 +1213,354 @@ func hasYAMLFiles(dir string) bool {
 }
 
 func genBaseKustomization(dir string) {
+	var files []string
+	entries, _ := os.ReadDir(dir)
+	for _, e := range entries {
+		if !e.IsDir() && strings.HasSuffix(e.Name(), ".yaml") && e.Name() != "kustomization.yaml" {
+			files = append(files, e.Name())
+		}
+	}
+	if len(files) == 0 {
+		return
+	}
+	sort.Strings(files)
+
 	kPath := filepath.Join(dir, "kustomization.yaml")
-	if _, err := os.Stat(kPath); os.IsNotExist(err) {
-		var files []string
-		entries, _ := os.ReadDir(dir)
-		for _, e := range entries {
-			if !e.IsDir() && strings.HasSuffix(e.Name(), ".yaml") && e.Name() != "kustomization.yaml" {
-				files = append(files, e.Name())
-			}
-		}
-		if len(files) == 0 {
-			return
-		}
-		sort.Strings(files)
+	data, err := os.ReadFile(kPath)
+	if err != nil {
 		var buf bytes.Buffer
 		buf.WriteString("apiVersion: kustomize.config.k8s.io/v1beta1\nkind: Kustomization\nresources:\n")
 		for _, f := range files {
 			buf.WriteString(fmt.Sprintf("  - %s\n", f))
 		}
 		os.WriteFile(kPath, buf.Bytes(), 0644)
+		return
 	}
+
+	var doc yaml.Node
+	if err := yaml.Unmarshal(data, &doc); err != nil {
+		return
+	}
+	root := &doc
+	if doc.Kind == yaml.DocumentNode && len(doc.Content) > 0 {
+		root = doc.Content[0]
+	}
+	if root.Kind == yaml.MappingNode {
+		for i := 0; i+1 < len(root.Content); i += 2 {
+			if root.Content[i].Value == "resources" {
+				resNode := &yaml.Node{Kind: yaml.SequenceNode, Tag: "!!seq"}
+				for _, f := range files {
+					resNode.Content = append(resNode.Content, &yaml.Node{Kind: yaml.ScalarNode, Tag: "!!str", Value: f})
+				}
+				root.Content[i+1] = resNode
+				break
+			}
+		}
+	}
+	var buf bytes.Buffer
+	enc := yaml.NewEncoder(&buf)
+	enc.SetIndent(2)
+	if err := enc.Encode(&doc); err != nil {
+		return
+	}
+	enc.Close()
+	if bytes.Equal(buf.Bytes(), data) {
+		return
+	}
+	os.WriteFile(kPath, buf.Bytes(), 0644)
+}
+
+func handleSync() {
+	entries, err := os.ReadDir(manifestsDir)
+	if err != nil {
+		return
+	}
+	apps := make([]string, 0, len(entries))
+	for _, e := range entries {
+		if e.IsDir() {
+			apps = append(apps, e.Name())
+		}
+	}
+	sort.Strings(apps)
+	if targetApp != "" {
+		found := false
+		for _, a := range apps {
+			if a == targetApp {
+				apps = []string{targetApp}
+				found = true
+				break
+			}
+		}
+		if !found {
+			log.Printf("[SYNC] %s not found under manifests/", targetApp)
+			return
+		}
+	}
+	for _, appName := range apps {
+		syncApp(appName)
+	}
+}
+
+func syncApp(appName string) {
+	appDir := filepath.Join(manifestsDir, appName)
+	if _, err := os.Stat(appDir); os.IsNotExist(err) {
+		return
+	}
+
+	resPath := filepath.Join(appDir, "resources")
+	if hasYAMLFiles(resPath) {
+		genBaseKustomization(resPath)
+	}
+	ensureGitkeep(resPath)
+	ensureGitkeep(filepath.Join(appDir, "patches"))
+
+	ovlRoot := filepath.Join(appDir, "overlays")
+	ovls, err := os.ReadDir(ovlRoot)
+	if err != nil {
+		return
+	}
+	for _, o := range ovls {
+		if !o.IsDir() {
+			continue
+		}
+		ovlDir := filepath.Join(ovlRoot, o.Name())
+		compRef := extractCompRef(filepath.Join(ovlDir, "kustomization.yaml"))
+		if compRef == "" {
+			log.Printf("[SYNC] %s/overlays/%s: no components ref found, skipping", appName, o.Name())
+			continue
+		}
+		writeOverlayKustomization(ovlDir, compRef, appDir)
+		ensureGitkeep(filepath.Join(ovlDir, "resources"))
+		ensureGitkeep(filepath.Join(ovlDir, "patches"))
+	}
+	log.Printf("[SYNC] %s", appName)
+}
+
+func extractCompRef(kPath string) string {
+	data, err := os.ReadFile(kPath)
+	if err != nil {
+		return ""
+	}
+	scanner := bufio.NewScanner(bytes.NewReader(data))
+	for scanner.Scan() {
+		line := strings.TrimSpace(scanner.Text())
+		if strings.HasPrefix(line, "- ../../components/") {
+			return strings.TrimPrefix(line, "- ")
+		}
+	}
+	return ""
+}
+
+func handleIngest() {
+	if _, ok := baseConfig.Apps[ingestApp]; !ok {
+		log.Fatalf("[SKIP] %s not in default_app_config.yaml; add its source definition there first", ingestApp)
+	}
+	appDir := filepath.Join(manifestsDir, ingestApp)
+	os.MkdirAll(appDir, 0755)
+
+	var dir string
+	if envFlag != "" {
+		var ec EnvConfig
+		envCfgPath := filepath.Join(baseDir, "clusters", "envs", envFlag, "config.yaml")
+		if _, err := os.Stat(envCfgPath); os.IsNotExist(err) {
+			log.Fatalf("no config for env %s (expected %s)", envFlag, envCfgPath)
+		}
+		loadYAML(envCfgPath, &ec)
+		if ec.Type == "" {
+			log.Fatalf("env %s has no type in %s", envFlag, envCfgPath)
+		}
+		dir = filepath.Join(appDir, "overlays", envFlag, "resources")
+	} else {
+		dir = filepath.Join(appDir, "resources")
+	}
+	os.MkdirAll(dir, 0755)
+
+	var input []byte
+	if flag.NArg() > 0 {
+		for _, f := range flag.Args() {
+			data, err := os.ReadFile(f)
+			if err != nil {
+				log.Fatalf("read %s: %v", f, err)
+			}
+			input = append(input, data...)
+		}
+	} else {
+		var err error
+		input, err = io.ReadAll(os.Stdin)
+		if err != nil {
+			log.Fatalf("read stdin: %v", err)
+		}
+	}
+	if len(strings.TrimSpace(string(input))) == 0 {
+		log.Fatal("no input: pipe YAML to stdin or pass file arguments")
+	}
+
+	ingestYAML(input, dir)
+	ensureGitkeep(dir)
+	syncApp(ingestApp)
+}
+
+// ingestYAML splits multi-doc YAML, strips comments (block-scalar aware),
+// drops Namespace resources, and appends each doc to {kind}.yaml in dir.
+func ingestYAML(data []byte, dir string) {
+	scanner := bufio.NewScanner(bytes.NewReader(data))
+	scanner.Buffer(make([]byte, 0, 64*1024), 1024*1024)
+
+	var currentDoc []string
+	var kind string
+
+	flush := func() {
+		if len(currentDoc) == 0 || kind == "" || kind == "Namespace" {
+			currentDoc, kind = nil, ""
+			return
+		}
+		cleaned := cleanDocBlanks(stripCommentLines(currentDoc))
+		content := strings.TrimSpace(strings.Join(cleaned, "\n"))
+		if content == "" {
+			currentDoc, kind = nil, ""
+			return
+		}
+		fpath := filepath.Join(dir, strings.ToLower(kind)+".yaml")
+		f, err := os.OpenFile(fpath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+		if err != nil {
+			log.Printf("[INGEST] %s: %v", fpath, err)
+			currentDoc, kind = nil, ""
+			return
+		}
+		f.WriteString("---\n" + content + "\n")
+		f.Close()
+		log.Printf("[INGEST] %s", fpath)
+		currentDoc, kind = nil, ""
+	}
+
+	for scanner.Scan() {
+		line := scanner.Text()
+		if strings.HasPrefix(line, "---") {
+			flush()
+			continue
+		}
+		trimmed := strings.TrimSpace(line)
+		if strings.HasPrefix(line, "kind:") && kind == "" {
+			kind = strings.Trim(strings.TrimSpace(strings.TrimPrefix(trimmed, "kind:")), `"'`)
+		}
+		currentDoc = append(currentDoc, strings.TrimRight(line, " \t"))
+	}
+	flush()
+}
+
+func stripCommentLines(lines []string) []string {
+	var out []string
+	inBlock := false
+	blockIndent := 0
+	for _, line := range lines {
+		if inBlock {
+			if strings.TrimSpace(line) == "" || indentOf(line) > blockIndent {
+				out = append(out, line)
+				continue
+			}
+			inBlock = false
+		}
+		trimmed := strings.TrimSpace(line)
+		if strings.HasPrefix(trimmed, "#") {
+			continue
+		}
+		if isBlockScalarHeader(line) {
+			inBlock = true
+			blockIndent = indentOf(line)
+		}
+		out = append(out, line)
+	}
+	return out
+}
+
+func indentOf(line string) int {
+	return len(line) - len(strings.TrimLeft(line, " \t"))
+}
+
+func scaffoldApp(typeName, envOverride, appName string) bool {
+	app, ok := baseConfig.Apps[appName]
+	if !ok {
+		log.Printf("[SKIP] %s not in default_app_config.yaml; add its source definition there first", appName)
+		return false
+	}
+
+	typePath := filepath.Join(baseDir, "clusters", "types", typeName, "app_config.yaml")
+	var typeCfg TypeConfig
+	loadYAML(typePath, &typeCfg)
+	if typeCfg.Versions == nil {
+		typeCfg.Versions = map[string]string{}
+	}
+
+	modified := false
+	if typeCfg.Versions[appName] == "" {
+		latest := fetchLatestVersion(app)
+		if latest == "" {
+			log.Printf("[SKIP] %s: could not determine latest version; pin it manually in %s", appName, typePath)
+			return false
+		}
+		typeCfg.Versions[appName] = latest
+		log.Printf("[ADD] %s: pinned version %s for %s", appName, latest, typeName)
+		modified = true
+	}
+
+	if envOverride != "" {
+		envPath := filepath.Join(baseDir, "clusters", "envs", envOverride, "app_config.yaml")
+		var envCfg TypeConfig
+		if _, err := os.Stat(envPath); err != nil {
+			envCfg = TypeConfig{InstallList: []string{appName}}
+		} else {
+			loadYAML(envPath, &envCfg)
+			envCfg.InstallList = append(envCfg.InstallList, appName)
+		}
+		sort.Strings(envCfg.InstallList)
+		saveYAML(envPath, envCfg)
+		log.Printf("[ADD] %s added to env %s install list", appName, envOverride)
+	} else {
+		typeCfg.InstallList = append(typeCfg.InstallList, appName)
+		sort.Strings(typeCfg.InstallList)
+		log.Printf("[ADD] %s added to type %s install list", appName, typeName)
+		modified = true
+	}
+
+	if modified {
+		saveYAML(typePath, typeCfg)
+	}
+	createAppSkeleton(appName, typeName, envOverride, app)
+	return true
+}
+
+// createAppSkeleton creates the directory layout, values placeholders (helm
+// apps only), and .gitkeep files for a brand new app. Existing apps are
+// left untouched.
+func createAppSkeleton(appName, typeName, envOverride string, app AppDef) {
+	appDir := filepath.Join(manifestsDir, appName)
+	if _, err := os.Stat(appDir); err == nil {
+		return
+	}
+
+	if app.Type == "helm" {
+		valsDir := filepath.Join(appDir, "values")
+		os.MkdirAll(valsDir, 0755)
+		os.WriteFile(filepath.Join(valsDir, "default.yaml"), []byte("# Helm values for "+appName+", shared across types\n"), 0644)
+		os.WriteFile(filepath.Join(valsDir, typeName+".yaml"), []byte("# Helm values for "+appName+" on "+typeName+"\n"), 0644)
+	}
+
+	var envs []string
+	if envOverride != "" {
+		envs = []string{envOverride}
+	} else {
+		envs = matchingEnvs(typeName)
+	}
+	overlays := make([]string, 0, len(envs))
+	for _, env := range envs {
+		ovlDir := filepath.Join(appDir, "overlays", env)
+		ensureGitkeep(filepath.Join(ovlDir, "patches"))
+		ensureGitkeep(filepath.Join(ovlDir, "resources"))
+		overlays = append(overlays, env)
+	}
+	ensureGitkeep(filepath.Join(appDir, "resources"))
+	ensureGitkeep(filepath.Join(appDir, "patches"))
+	log.Printf("[ADD] %s: created skeleton (overlays: %s, resources/, patches/)", appName, strings.Join(overlays, ","))
 }
 
 func matchingEnvs(typeName string) []string {
@@ -977,12 +1588,17 @@ func fetchLatestVersion(app AppDef) string {
 		resp, err := http.Get(fmt.Sprintf("https://api.github.com/repos/%s/releases/latest", app.GitHubRepo))
 		if err == nil {
 			defer resp.Body.Close()
-			var result struct{ TagName string `json:"tag_name"` }
+			var result struct {
+				TagName string `json:"tag_name"`
+			}
 			json.NewDecoder(resp.Body).Decode(&result)
 			return result.TagName
 		}
 	}
 	if app.Type == "helm" {
+		if strings.HasPrefix(app.RepoURL, "oci://") {
+			return fetchOCILatestVersion(app)
+		}
 		settings := cli.New()
 		providers := getter.All(settings)
 
@@ -1023,6 +1639,43 @@ func fetchLatestVersion(app AppDef) string {
 			return latest.Original()
 		}
 		return ""
+	}
+	return ""
+}
+
+func fetchOCILatestVersion(app AppDef) string {
+	settings := cli.New()
+	regClient, err := registry.NewClient(
+		registry.ClientOptWriter(io.Discard),
+		registry.ClientOptCredentialsFile(settings.RegistryConfig),
+	)
+	if err != nil {
+		return ""
+	}
+
+	ref := strings.TrimPrefix(app.RepoURL, "oci://")
+	ref = strings.TrimRight(ref, "/")
+	if !strings.HasSuffix(ref, "/"+app.Chart) {
+		ref = ref + "/" + app.Chart
+	}
+
+	tags, err := regClient.Tags(ref)
+	if err != nil {
+		return ""
+	}
+
+	var latest *semver.Version
+	for _, tag := range tags {
+		v, err := semver.StrictNewVersion(tag)
+		if err != nil || v.Prerelease() != "" {
+			continue
+		}
+		if latest == nil || v.GreaterThan(latest) {
+			latest = v
+		}
+	}
+	if latest != nil {
+		return latest.Original()
 	}
 	return ""
 }

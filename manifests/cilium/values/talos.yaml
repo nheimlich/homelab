@@ -1,5 +1,3 @@
-hubble:
-  enabled: false
 operator:
   replicas: 1
 k8sServiceHost: localhost
@@ -29,7 +27,7 @@ gatewayAPI:
     create: "true"
 kubeProxyReplacement: true
 cni:
-  exclusive: true
+  exclusive: false
 encryption:
   enabled: true
   type: wireguard
@@ -51,3 +49,17 @@ securityContext:
       - NET_ADMIN
       - SYS_ADMIN
       - SYS_RESOURCE
+hubble:
+  enabled: true
+  tls:
+    enabled: true
+    auto:
+      enabled: true
+      method: certmanager
+      certValidityDuration: 1095
+      certManagerIssuerRef:
+        group: cert-manager.io
+        kind: Issuer
+        name: hubble-ca-issuer
+  relay:
+    enabled: true

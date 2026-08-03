@@ -1,6 +1,13 @@
 apps:
 
   # --- URL Based ---
+  multus:
+    type: url
+    url: "https://raw.githubusercontent.com/k8snetworkplumbingwg/multus-cni/${VERSION}/deployments/multus-daemonset-thick.yml"
+    namespace: kube-system
+    create_namespace: false
+    github_repo: "k8snetworkplumbingwg/multus-cni"
+
   kubevirt:
     type: url
     url: "https://github.com/kubevirt/kubevirt/releases/download/${VERSION}/kubevirt-operator.yaml"
@@ -56,6 +63,22 @@ apps:
     github_repo: "openshift-pipelines/pipelines-as-code"
 
   # --- Helm Based ---
+  spegel:
+    type: helm
+    repo_name: spegel
+    repo_url: oci://ghcr.io/spegel-org/helm-charts/spegel
+    chart: spegel
+    namespace: spegel
+    create_namespace: true
+
+  ollama:
+    type: helm
+    repo_name: otwld
+    repo_url: https://helm.otwld.com/
+    chart: ollama
+    namespace: ollama
+    create_namespace: true
+
   cert-manager:
     type: helm
     repo_name: jetstack
@@ -79,6 +102,7 @@ apps:
     repo_url: "https://charts.rook.io/release"
     chart: rook-ceph
     namespace: rook-ceph
+    kustomize_namespace: false
     create_namespace: true
 
   rook-ceph-cluster:
@@ -87,6 +111,17 @@ apps:
     repo_url: "https://charts.rook.io/release"
     chart: rook-ceph-cluster
     namespace: rook-ceph
+    kustomize_namespace: false
+    create_namespace: false
+
+  ceph-csi-drivers:
+    type: helm
+    repo_name: ceph-csi-operator
+    repo_url: "https://ceph.github.io/ceph-csi-operator"
+    chart: ceph-csi-drivers
+    namespace: rook-ceph
+    kustomize_namespace: false
+    create_namespace: false
 
   cilium:
     type: helm
@@ -118,4 +153,12 @@ apps:
     repo_url: "https://charts.external-secrets.io"
     chart: external-secrets
     namespace: external-secrets
+    create_namespace: true
+
+  perses:
+    type: helm
+    repo_name: perses
+    repo_url: https://perses.github.io/helm-charts
+    chart: perses
+    namespace: perses
     create_namespace: true

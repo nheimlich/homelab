@@ -1,0 +1,37 @@
+# Hubble mTLS CA chain. The Cilium chart's hubble.tls.auto (certmanager method)
+# only renders leaf certificates and requires certManagerIssuerRef, so the CA
+# must be provided out-of-band. Certs issued by this CA are referenced by
+# hubble-server-certs and hubble-relay-client-certs (see components).
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: hubble-bootstrap-issuer
+  namespace: kube-system
+spec:
+  selfSigned: {}
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: hubble-ca-cert
+  namespace: kube-system
+spec:
+  isCA: true
+  commonName: "hubble-ca.cilium.io"
+  secretName: hubble-ca-secret
+  issuerRef:
+    name: hubble-bootstrap-issuer
+    kind: Issuer
+  # Ensure the Subject DN is populated to prevent empty issuer DN issues
+  subject:
+    organizations:
+      - Cilium
+---
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: hubble-ca-issuer
+  namespace: kube-system
+spec:
+  ca:
+    secretName: hubble-ca-secret

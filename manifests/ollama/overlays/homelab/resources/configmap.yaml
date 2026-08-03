@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: litellm-config
+  namespace: ollama
+data:
+  config.yaml: |
+    litellm_settings:
+      drop_params: true
+      set_verbose: false
+
+    model_list:
+      - model_name: qwen3:8b
+        litellm_params:
+          model: ollama_chat/qwen3:8b
+          api_base: "http://ollama.ollama.svc.cluster.local:11434"
+          model_info:
+            supports_function_calling: true
+
+    router_settings:
+      routing_strategy: "least-busy"
+      num_retries: 3
+      timeout: 600

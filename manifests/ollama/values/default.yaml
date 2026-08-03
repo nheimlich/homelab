@@ -1,0 +1,38 @@
+tests:
+  enabled: false
+
+replicaCount: 1
+
+updateStrategy:
+  type: "RollingUpdate"
+  rollingUpdate:
+    maxSurge: 0
+    maxUnavailable: 1
+
+extraEnv:
+  - name: OLLAMA_KEEP_ALIVE
+    value: "-1"
+
+ollama:
+  models:
+    run:
+      - qwen3:8b
+
+persistentVolume:
+  enabled: true
+  size: 15Gi
+  accessModes:
+    - ReadWriteOnce
+  storageClass: "local-path"
+  volumeMode: Filesystem
+
+affinity:
+  podAntiAffinity:
+    requiredDuringSchedulingIgnoredDuringExecution:
+      - labelSelector:
+          matchExpressions:
+            - key: app.kubernetes.io/name
+              operator: In
+              values:
+                - ollama
+        topologyKey: "kubernetes.io/hostname"

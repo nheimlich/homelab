@@ -23,6 +23,15 @@ resource "github_repository" "homelab" {
   web_commit_signoff_required = true
   squash_merge_commit_title   = "COMMIT_OR_PR_TITLE"
   squash_merge_commit_message = "COMMIT_MESSAGES"
+
+  security_and_analysis {
+    secret_scanning {
+      status = "enabled"
+    }
+    secret_scanning_push_protection {
+      status = "enabled"
+    }
+  }
 }
 
 resource "github_repository_ruleset" "main_protection" {

@@ -1,0 +1,14 @@
+gateway:
+  enabled: true
+  createGateway: false
+  httpRoute:
+    annotations:
+      external-dns.alpha.kubernetes.io/hostname: monitoring.nhlabs.org
+    parentRefs:
+      - name: shared-gateway
+        namespace: shared-gateway
+        sectionName: https
+    hostnames:
+      - monitoring.nhlabs.org
+testFramework:
+  enabled: false
