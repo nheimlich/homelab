@@ -1,0 +1,9 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - 00-namespace.yaml
+  - 10-perses.yaml
+  - 25-provisioning.yaml
+  - 30-externalsecret.yaml
+  - 40-httproute.yaml
+  - 50-server-rbac.yaml

@@ -1,0 +1,95 @@
+apiVersion: perses.dev/v1alpha2
+kind: Perses
+metadata:
+  name: perses
+  namespace: perses
+  labels:
+    app.kubernetes.io/name: perses
+    app.kubernetes.io/instance: perses
+    app.kubernetes.io/component: server
+spec:
+  metadata:
+    labels:
+      app.kubernetes.io/name: perses
+      app.kubernetes.io/instance: perses
+      app.kubernetes.io/component: server
+  image: docker.io/persesdev/perses:v0.54.0
+  containerPort: 8080
+  logLevel: info
+  logMethodTrace: true
+  storage:
+    emptyDir: {}
+  serviceAccountName: perses-server
+  config:
+    database:
+      file:
+        extension: json
+        folder: /perses
+    ephemeral_dashboard:
+      enable: false
+      cleanup_interval: 1h
+    provisioning:
+      folders:
+        - /etc/perses/provisioning
+    security:
+      enable_auth: true
+      readonly: false
+      cookie:
+        secure: false
+      authentication:
+        disable_sign_up: false
+        providers:
+          enable_native: false
+          oauth:
+            - slug_id: github
+              name: "GitHub"
+              client_id: Ov23lieVqdwTX9x8t01W
+              client_secret_file: /etc/perses/provisioning/secrets/perses-github-oauth-client-secret
+              auth_url: https://github.com/login/oauth/authorize
+              token_url: https://github.com/login/oauth/access_token
+              device_auth_url: https://github.com/login/device/code
+              user_infos_url: https://api.github.com/user
+              http:
+                timeout: 30s
+                tls_config: {}
+              scopes:
+                - user:email
+      authorization:
+        provider:
+          native:
+            enable: true
+            guest_permissions:
+              - actions: [read]
+                scopes: ["*"]
+  provisioning:
+    secretRefs:
+      - name: perses-github-oauth
+        key: client-secret
+      - name: perses-provisioning
+        key: project.yaml
+      - name: perses-provisioning
+        key: globalrole-admin.yaml
+      - name: perses-provisioning
+        key: globalrolebinding-admin.yaml
+      - name: perses-provisioning
+        key: datasource-victoriametrics.yaml
+      - name: perses-provisioning
+        key: datasource-victorialogs.yaml
+  readinessProbe:
+    initialDelaySeconds: 5
+    periodSeconds: 10
+    timeoutSeconds: 5
+    successThreshold: 1
+    failureThreshold: 5
+  livenessProbe:
+    initialDelaySeconds: 10
+    periodSeconds: 60
+    timeoutSeconds: 5
+    successThreshold: 1
+    failureThreshold: 5
+  resources:
+    requests:
+      cpu: 50m
+      memory: 256Mi
+    limits:
+      memory: 512Mi

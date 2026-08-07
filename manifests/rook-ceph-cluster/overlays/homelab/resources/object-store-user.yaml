@@ -1,0 +1,29 @@
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: rook-ceph-object-user-rgw-store
+  namespace: rook-ceph
+spec:
+  data:
+  - remoteRef:
+      conversionStrategy: Default
+      decodingStrategy: None
+      key: homelab-app-secrets
+      property: rgw-access-key
+      metadataPolicy: None
+    secretKey: access-key
+  - remoteRef:
+      conversionStrategy: Default
+      decodingStrategy: None
+      key: homelab-app-secrets
+      property: rgw-secret-key
+      metadataPolicy: None
+    secretKey: secret-key
+  refreshInterval: 1h
+  secretStoreRef:
+    kind: ClusterSecretStore
+    name: gcp
+  target:
+    creationPolicy: Owner
+    deletionPolicy: Retain
+    name: rook-ceph-object-user-rgw-store

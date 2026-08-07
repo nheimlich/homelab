@@ -1,0 +1,14 @@
+server:
+  retentionPeriod: "30d"
+  persistentVolume:
+    enabled: true
+    storageClassName: ceph-block
+    size: 30Gi
+  resources:
+    requests:
+      cpu: 250m
+      memory: 512Mi
+    limits:
+      memory: 1Gi
+  serviceMonitor:
+    enabled: false

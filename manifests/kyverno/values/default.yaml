@@ -1,0 +1,7 @@
+# Helm values for kyverno, shared across types
+kyverno-api:
+  labels:
+    app.kubernetes.io/component: crds
+    app.kubernetes.io/instance: kyverno
+    app.kubernetes.io/part-of: kyverno
+    app.kubernetes.io/version: 3.8.2

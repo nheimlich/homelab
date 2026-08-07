@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: perses
+  labels:
+    shared-gateway-access: "true"
+    app.kubernetes.io/part-of: perses-operator

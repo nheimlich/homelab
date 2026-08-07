@@ -17,7 +17,7 @@ dhcp_setup() {
   sudo nmap -T4 -sP -n "${network}2-100" > /dev/null
   for i in "${!dhcp_data[@]}"; do
     IFS=":" read -r name _ <<< "${dhcp_data[${i}]}"
-    mac_addr=$(gcloud secrets versions access latest --secret="talos-macaddr-${name}" --project="${gcp_project_id}" | tr '[:upper:]' '[:lower:]' | cut -d ':' -f 4,5,6)
+    mac_addr=$(gcloud secrets versions access latest --secret="talos-macaddr" --project="${gcp_project_id}" | jq -r --arg n "${name}" '.[$n]' | tr '[:upper:]' '[:lower:]' | cut -d ':' -f 4,5,6)
     if [[ -n ${mac_addr} ]]; then
       ip=$(arp -an | grep -E "${mac_addr}" | awk '{print $2}' | sed 's/[()]//g' | grep -Eo '[0-9]{1,3}$' | grep -Ev "111$|112$|113$|115$")
       if [[ -z ${ip} ]]; then

@@ -9,7 +9,7 @@ metadata:
     app.kubernetes.io/instance: ollama
     app.kubernetes.io/version: "0.32.5"
 spec:
-  replicas: 1
+  replicas: 0
   strategy:
     rollingUpdate:
       maxSurge: 0

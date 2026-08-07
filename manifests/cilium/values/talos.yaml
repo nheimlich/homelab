@@ -1,5 +1,7 @@
 operator:
   replicas: 1
+  prometheus:
+    enabled: true
 k8sServiceHost: localhost
 k8sServicePort: 7445
 debug:
@@ -28,6 +30,8 @@ gatewayAPI:
 kubeProxyReplacement: true
 cni:
   exclusive: false
+prometheus:
+  enabled: true
 encryption:
   enabled: true
   type: wireguard
@@ -62,4 +66,18 @@ hubble:
         kind: Issuer
         name: hubble-ca-issuer
   relay:
+    enabled: true
+    prometheus:
+      enabled: true
+  metrics:
+    enabled:
+      - dns:query:ignoreAAAA
+      - drop
+      - tcp
+      - flow
+      - port-distribution
+      - icmp
+      - http
+    port: 9965
+  ui:
     enabled: true

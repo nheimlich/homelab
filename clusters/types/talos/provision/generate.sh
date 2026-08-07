@@ -45,6 +45,25 @@ kind: HostnameConfig
 hostname: "${n}"
 auto: off
 ---
+apiVersion: v1alpha1
+kind: VolumeConfig
+name: STATE
+encryption:
+  provider: luks2
+  keys:
+    - slot: 0
+      tpm: {}
+---
+apiVersion: v1alpha1
+kind: VolumeConfig
+name: EPHEMERAL
+encryption:
+  provider: luks2
+  keys:
+    - slot: 0
+      tpm: {}
+      lockToState: true
+---
 debug: false
 machine:
   files:
@@ -65,18 +84,6 @@ machine:
     extraArgs:
       rotate-server-certificates: true
       feature-gates: "InPlacePodVerticalScaling=true"
-
-  systemDiskEncryption:
-    ephemeral:
-      provider: luks2
-      keys:
-        - slot: 0
-          tpm: {}
-    state:
-      provider: luks2
-      keys:
-        - slot: 0
-          tpm: {}
 
   install:
       disk: "${install_disk}"
@@ -111,11 +118,23 @@ cluster:
     extraArgs:
       service-account-issuer: "${oidc_issuer}"
       api-audiences: "https://${network}${lbvip}:6443,${wif_audience}"
+    auditPolicy:
+      apiVersion: audit.k8s.io/v1
+      kind: Policy
+      omitStages:
+        - RequestReceived
+      rules:
+        - level: Metadata
     admissionControl:
       - name: PodSecurity
         configuration:
           defaults:
-            enforce: privileged
+            enforce: baseline
+            audit: restricted
+
+  controllerManager:
+    extraArgs:
+      terminated-pod-gc-threshold: "1000"
 
   allowSchedulingOnControlPlanes: true
 
@@ -230,6 +249,9 @@ cluster:
                     cd /repo/manifests || exit 1
 
                     kustomize build cilium/overlays/homelab | kubectl apply --server-side --force-conflicts -f -
+                    sleep 5
+
+                    kustomize build spegel/overlays/homelab | kubectl apply --server-side --force-conflicts -f -
                     sleep 5
 
                     kustomize build argocd/overlays/homelab | kubectl apply --server-side --force-conflicts -n argocd -f -

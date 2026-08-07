@@ -81,47 +81,7 @@ locals {
   eso_principal = "principal://iam.googleapis.com/projects/${google_project.homelab.number}/locations/global/workloadIdentityPools/homelab/subject/system:serviceaccount:external-secrets:external-secrets"
 }
 
-resource "google_secret_manager_secret" "cloudflare_token" {
-  project   = google_project.homelab.project_id
-  secret_id = "cloudflare-token"
 
-  replication {
-    auto {}
-  }
-}
-
-resource "google_secret_manager_secret_version" "cloudflare_token" {
-  secret      = google_secret_manager_secret.cloudflare_token.id
-  secret_data = file("${path.module}/../../secrets/cloudflare-token.json")
-}
-
-resource "google_secret_manager_secret_iam_binding" "cloudflare_token_eso" {
-  project   = google_project.homelab.project_id
-  secret_id = google_secret_manager_secret.cloudflare_token.secret_id
-  role      = "roles/secretmanager.secretAccessor"
-  members   = [local.eso_principal]
-}
-
-resource "google_secret_manager_secret" "argocd_github" {
-  project   = google_project.homelab.project_id
-  secret_id = "argocd-github"
-
-  replication {
-    auto {}
-  }
-}
-
-resource "google_secret_manager_secret_version" "argocd_github" {
-  secret      = google_secret_manager_secret.argocd_github.id
-  secret_data = file("${path.module}/../../secrets/argocd-github.json")
-}
-
-resource "google_secret_manager_secret_iam_binding" "argocd_github_eso" {
-  project   = google_project.homelab.project_id
-  secret_id = google_secret_manager_secret.argocd_github.secret_id
-  role      = "roles/secretmanager.secretAccessor"
-  members   = [local.eso_principal]
-}
 
 resource "google_secret_manager_secret" "talos_secrets" {
   project   = google_project.homelab.project_id
@@ -137,47 +97,49 @@ resource "google_secret_manager_secret_version" "talos_secrets" {
   secret_data = file("${path.module}/../../secrets/talos-secrets.yaml")
 }
 
-resource "google_secret_manager_secret" "talos_macaddr_sol" {
+
+resource "google_secret_manager_secret" "talos_macaddr" {
   project   = google_project.homelab.project_id
-  secret_id = "talos-macaddr-sol"
+  secret_id = "talos-macaddr"
 
   replication {
     auto {}
   }
 }
 
-resource "google_secret_manager_secret_version" "talos_macaddr_sol" {
-  secret      = google_secret_manager_secret.talos_macaddr_sol.id
-  secret_data = file("${path.module}/../../secrets/talos-macaddr-sol")
+resource "google_secret_manager_secret_version" "talos_macaddr" {
+  secret      = google_secret_manager_secret.talos_macaddr.id
+  secret_data = file("${path.module}/../../secrets/talos-macaddr.json")
 }
 
-resource "google_secret_manager_secret" "talos_macaddr_clu" {
+resource "google_secret_manager_secret_iam_binding" "talos_macaddr_eso" {
   project   = google_project.homelab.project_id
-  secret_id = "talos-macaddr-clu"
+  secret_id = google_secret_manager_secret.talos_macaddr.secret_id
+  role      = "roles/secretmanager.secretAccessor"
+  members   = [local.eso_principal]
+}
+
+resource "google_secret_manager_secret" "homelab_app_secrets" {
+  project   = google_project.homelab.project_id
+  secret_id = "homelab-app-secrets"
 
   replication {
     auto {}
   }
 }
 
-resource "google_secret_manager_secret_version" "talos_macaddr_clu" {
-  secret      = google_secret_manager_secret.talos_macaddr_clu.id
-  secret_data = file("${path.module}/../../secrets/talos-macaddr-clu")
+resource "google_secret_manager_secret_version" "homelab_app_secrets" {
+  secret      = google_secret_manager_secret.homelab_app_secrets.id
+  secret_data = file("${path.module}/../../secrets/homelab-app-secrets.json")
 }
 
-resource "google_secret_manager_secret" "talos_macaddr_ion" {
+resource "google_secret_manager_secret_iam_binding" "homelab_app_secrets_eso" {
   project   = google_project.homelab.project_id
-  secret_id = "talos-macaddr-ion"
-
-  replication {
-    auto {}
-  }
+  secret_id = google_secret_manager_secret.homelab_app_secrets.secret_id
+  role      = "roles/secretmanager.secretAccessor"
+  members   = [local.eso_principal]
 }
 
-resource "google_secret_manager_secret_version" "talos_macaddr_ion" {
-  secret      = google_secret_manager_secret.talos_macaddr_ion.id
-  secret_data = file("${path.module}/../../secrets/talos-macaddr-ion")
-}
 
 resource "google_monitoring_notification_channel" "budget_email" {
   project      = google_project.homelab.project_id

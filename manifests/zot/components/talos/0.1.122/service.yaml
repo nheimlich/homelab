@@ -1,0 +1,20 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: zot
+  namespace: zot
+  labels:
+    app.kubernetes.io/name: zot
+    app.kubernetes.io/instance: zot
+    app.kubernetes.io/version: "v2.1.18"
+spec:
+  type: NodePort
+  ports:
+    - port: 5000
+      targetPort: zot
+      protocol: TCP
+      name: zot
+  selector:
+    app.kubernetes.io/name: zot
+    app.kubernetes.io/instance: zot

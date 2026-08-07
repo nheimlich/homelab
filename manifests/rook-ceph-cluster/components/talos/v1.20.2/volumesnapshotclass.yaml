@@ -2,7 +2,6 @@
 kind: VolumeSnapshotClass
 apiVersion: snapshot.storage.k8s.io/v1
 metadata:
-  namespace: rook-ceph
   name: ceph-filesystem
   annotations:
     snapshot.storage.kubernetes.io/is-default-class: "true"
@@ -16,7 +15,6 @@ deletionPolicy: Delete
 kind: VolumeSnapshotClass
 apiVersion: snapshot.storage.k8s.io/v1
 metadata:
-  namespace: rook-ceph
   name: ceph-block
   annotations:
     snapshot.storage.kubernetes.io/is-default-class: "false"

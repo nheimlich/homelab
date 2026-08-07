@@ -62,6 +62,14 @@ apps:
     namespace: pipelines-as-code
     github_repo: "openshift-pipelines/pipelines-as-code"
 
+  tekton-pipelines:
+    type: url
+    url: "https://github.com/tektoncd/pipeline/releases/download/${VERSION}/release.yaml"
+    namespace: tekton-pipelines
+    create_namespace: true
+    github_repo: "tektoncd/pipeline"
+    kustomize_namespace: false
+
   # --- Helm Based ---
   spegel:
     type: helm
@@ -82,7 +90,7 @@ apps:
   cert-manager:
     type: helm
     repo_name: jetstack
-    repo_url: "https://charts.jetstack.io"
+    repo_url: "oci://quay.io/jetstack/charts/cert-manager"
     chart: cert-manager
     namespace: cert-manager
     create_namespace: true
@@ -126,26 +134,19 @@ apps:
   cilium:
     type: helm
     repo_name: cilium
-    repo_url: "https://helm.cilium.io/"
+    repo_url: "oci://quay.io/cilium/charts/cilium"
     chart: cilium
     namespace: kube-system
     kustomize_namespace: false
     create_namespace: false
-
-  opentelemetry-operator:
-    type: helm
-    repo_name: opentelemetry
-    repo_url: "https://open-telemetry.github.io/opentelemetry-helm-charts"
-    chart: opentelemetry-operator
-    namespace: opentelemetry-operator
-    create_namespace: true
 
   opentelemetry-collector:
     type: helm
     repo_name: opentelemetry
     repo_url: "https://open-telemetry.github.io/opentelemetry-helm-charts"
     chart: opentelemetry-collector
-    namespace: opentelemetry-operator
+    namespace: opentelemetry
+    create_namespace: true
 
   external-secrets:
     type: helm
@@ -155,10 +156,89 @@ apps:
     namespace: external-secrets
     create_namespace: true
 
-  perses:
+  perses-operator:
     type: helm
     repo_name: perses
     repo_url: https://perses.github.io/helm-charts
-    chart: perses
+    chart: perses-operator
     namespace: perses
+    create_namespace: false
+
+  victoria-metrics:
+    type: helm
+    repo_name: vm
+    repo_url: "https://victoriametrics.github.io/helm-charts"
+    chart: victoria-metrics-single
+    namespace: victoria-metrics
+    create_namespace: true
+
+  victoria-logs:
+    type: helm
+    repo_name: vm
+    repo_url: "https://victoriametrics.github.io/helm-charts"
+    chart: victoria-logs-single
+    namespace: victoria-logs
+    create_namespace: true
+
+  kube-state-metrics:
+    type: helm
+    repo_name: prometheus-community
+    repo_url: "https://prometheus-community.github.io/helm-charts"
+    chart: kube-state-metrics
+    namespace: kube-state-metrics
+    create_namespace: true
+
+  kyverno:
+    type: helm
+    repo_name: kyverno
+    repo_url: "https://kyverno.github.io/kyverno/"
+    chart: kyverno
+    namespace: kyverno
+    create_namespace: true
+
+  spire-crds:
+    type: helm
+    repo_name: spire
+    repo_url: "https://spiffe.github.io/helm-charts-hardened/"
+    chart: spire-crds
+    namespace: spire-system
+    create_namespace: true
+
+  spire:
+    type: helm
+    repo_name: spire
+    repo_url: "https://spiffe.github.io/helm-charts-hardened/"
+    chart: spire
+    namespace: spire-system
+    create_namespace: true
+
+  velero:
+    type: helm
+    repo_name: vmware-tanzu
+    repo_url: "https://vmware-tanzu.github.io/helm-charts"
+    chart: velero
+    namespace: velero
+    create_namespace: true
+
+  tekton-chains:
+    type: url
+    url: "https://github.com/tektoncd/chains/releases/download/${VERSION}/release.yaml"
+    namespace: tekton-chains
+    create_namespace: true
+    github_repo: "tektoncd/chains"
+
+  zot:
+    type: helm
+    repo_name: zot
+    repo_url: "https://zotregistry.dev/helm-charts/"
+    chart: zot
+    namespace: zot
+    create_namespace: true
+
+  vpa:
+    type: helm
+    repo_name: fairwinds
+    repo_url: "https://charts.fairwinds.com/stable"
+    chart: vpa
+    namespace: vpa
     create_namespace: true

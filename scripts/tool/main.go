@@ -672,6 +672,10 @@ func renderHelm(appName, version, typeName string, app AppDef) (string, error) {
 
 	caps := chartutil.DefaultCapabilities
 
+	if err := chartutil.ProcessDependenciesWithMerge(chart, vals); err != nil {
+		return "", fmt.Errorf("process dependencies: %w", err)
+	}
+
 	renderVals, err := chartutil.ToRenderValues(chart, vals, options, caps)
 	if err != nil {
 		return "", fmt.Errorf("render values: %w", err)
@@ -694,6 +698,9 @@ func renderHelm(appName, version, typeName string, app AppDef) (string, error) {
 			continue
 		}
 		if isSubchartDisabled(k, vals) {
+			continue
+		}
+		if isHelmHook(trimmed) {
 			continue
 		}
 		out.WriteString("---\n")
@@ -820,6 +827,19 @@ func mergeMaps(a, b map[string]interface{}) map[string]interface{} {
 		}
 	}
 	return a
+}
+
+func isHelmHook(doc string) bool {
+	if !strings.Contains(doc, "helm.sh/hook") {
+		return false
+	}
+	for _, line := range strings.Split(doc, "\n") {
+		trimmed := strings.TrimSpace(line)
+		if strings.Contains(trimmed, "helm.sh/hook") {
+			return true
+		}
+	}
+	return false
 }
 
 func isSubchartDisabled(key string, vals map[string]interface{}) bool {
@@ -1043,6 +1063,10 @@ func processAndSlice(raw string, outDir string) {
 		cleaned := cleanDocBlanks(currentDoc)
 		content := strings.TrimSpace(strings.Join(cleaned, "\n"))
 		if content == "" || kind == "" || strings.ToLower(kind) == "namespace" {
+			currentDoc, kind = nil, ""
+			return
+		}
+		if isHelmHook(content) {
 			currentDoc, kind = nil, ""
 			return
 		}

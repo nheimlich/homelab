@@ -1,0 +1,11 @@
+---
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+    labels:
+        app.kubernetes.io/name: perses-operator
+        app.kubernetes.io/instance: perses-operator
+    name: perses-operator-selfsigned-issuer
+    namespace: perses
+spec:
+    selfSigned: {}

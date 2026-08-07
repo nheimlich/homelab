@@ -1,0 +1,14 @@
+recommender:
+  enabled: true
+  replicaCount: 1
+  resources:
+    requests:
+      cpu: 50m
+      memory: 500Mi
+    limits:
+      cpu: 500m
+      memory: 1Gi
+updater:
+  enabled: false
+admissionController:
+  enabled: false

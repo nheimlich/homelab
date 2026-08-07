@@ -3,7 +3,6 @@ kind: Kustomization
 resources:
   - 01-namespace.yaml
   - daemonset.yaml
-  - pod.yaml
   - service.yaml
   - serviceaccount.yaml
 namespace: spegel

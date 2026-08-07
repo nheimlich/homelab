@@ -1,0 +1,93 @@
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: victoria-logs-victoria-logs-single-server
+  namespace: victoria-logs
+  labels:
+    app.kubernetes.io/component: server
+    app.kubernetes.io/instance: victoria-logs
+    app.kubernetes.io/name: victoria-logs-single
+    app.kubernetes.io/version: v1.52.0
+spec:
+  podManagementPolicy: OrderedReady
+  updateStrategy: {}
+  replicas: 1
+  serviceName: victoria-logs-victoria-logs-single-server
+  selector:
+    matchLabels:
+      app: server
+      app.kubernetes.io/instance: victoria-logs
+      app.kubernetes.io/name: victoria-logs-single
+  template:
+    metadata:
+      labels:
+        app: server
+        app.kubernetes.io/component: server
+        app.kubernetes.io/instance: victoria-logs
+        app.kubernetes.io/name: victoria-logs-single
+    spec:
+      securityContext:
+        fsGroup: 2000
+        runAsNonRoot: true
+        runAsUser: 1000
+      containers:
+        - name: vlogs
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+              - ALL
+            readOnlyRootFilesystem: true
+          image: victoriametrics/victoria-logs:v1.52.0
+          imagePullPolicy: IfNotPresent
+          args:
+            - --envflag.enable
+            - --envflag.prefix=VM_
+            - --http.shutdownDelay=15s
+            - --httpListenAddr=:9428
+            - --loggerFormat=json
+            - --retentionPeriod=14d
+            - --storageDataPath=/storage
+          ports:
+            - name: http
+              containerPort: 9428
+          readinessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /health
+              port: http
+              scheme: HTTP
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 5
+          livenessProbe:
+            failureThreshold: 10
+            initialDelaySeconds: 30
+            periodSeconds: 30
+            tcpSocket:
+              port: http
+            timeoutSeconds: 5
+          resources:
+            limits:
+              memory: 1Gi
+            requests:
+              cpu: 100m
+              memory: 256Mi
+          volumeMounts:
+            - name: server-volume
+              mountPath: /storage
+      terminationGracePeriodSeconds: 60
+      volumes:
+  volumeClaimTemplates:
+    - apiVersion: v1
+      kind: PersistentVolumeClaim
+      metadata:
+        name: server-volume
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 20Gi
+        storageClassName: ceph-block

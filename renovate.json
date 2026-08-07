@@ -1,0 +1,149 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended"],
+  "schedule": ["on the first day of the month"],
+  "automerge": false,
+  "customManagers": [
+    {
+      "customType": "regex",
+      "description": "Helm chart versions pinned in the versions: map of clusters/*/app_config.yaml (app key == chart name)",
+      "fileMatch": ["^clusters/.*/app_config\\.yaml$"],
+      "matchStrings": [
+        "(?m)^\\s{4}(?<depName>ceph-csi-drivers|cert-manager|cilium|external-dns|external-secrets|kube-state-metrics|kyverno|ollama|opentelemetry-collector|perses|rook-ceph-cluster|rook-ceph|spegel|spire-crds|spire|tekton-pipelines|velero|victoria-logs|vpa|zot): (?<currentValue>[^\\s#]+)\\s*$"
+      ],
+      "datasourceTemplate": "helm",
+      "registryUrls": [
+        "https://helm.cilium.io/",
+        "https://charts.jetstack.io",
+        "https://charts.external-secrets.io",
+        "https://kubernetes-sigs.github.io/external-dns/",
+        "https://charts.rook.io/release",
+        "https://ceph.github.io/ceph-csi-operator",
+        "https://open-telemetry.github.io/opentelemetry-helm-charts",
+        "https://perses.github.io/helm-charts",
+        "https://victoriametrics.github.io/helm-charts",
+        "https://prometheus-community.github.io/helm-charts",
+        "https://kyverno.github.io/kyverno/",
+        "https://spiffe.github.io/helm-charts-hardened/",
+        "https://vmware-tanzu.github.io/helm-charts",
+        "https://tekton-helm-charts.storage.googleapis.com",
+        "https://zotregistry.dev/helm-charts/",
+        "https://helm.otwld.com/",
+        "oci://ghcr.io/spegel-org/helm-charts/spegel",
+        "https://charts.fairwinds.com/stable"
+      ]
+    },
+    {
+      "customType": "regex",
+      "description": "victoria-metrics: the app key differs from the chart name (victoria-metrics-single)",
+      "fileMatch": ["^clusters/.*/app_config\\.yaml$"],
+      "matchStrings": [
+        "(?m)^\\s{4}victoria-metrics: (?<currentValue>[^\\s#]+)\\s*$"
+      ],
+      "depNameTemplate": "victoria-metrics",
+      "packageNameTemplate": "victoria-metrics-single",
+      "datasourceTemplate": "helm",
+      "registryUrls": ["https://victoriametrics.github.io/helm-charts"]
+    },
+    {
+      "customType": "regex",
+      "description": "argocd URL component version (argoproj/argo-cd)",
+      "fileMatch": ["^clusters/.*/app_config\\.yaml$"],
+      "matchStrings": [
+        "(?m)^\\s{4}argocd: (?<currentValue>[^\\s#]+)\\s*$"
+      ],
+      "depNameTemplate": "argoproj/argo-cd",
+      "datasourceTemplate": "github-tags"
+    },
+    {
+      "customType": "regex",
+      "description": "cdi URL component version (kubevirt/containerized-data-importer)",
+      "fileMatch": ["^clusters/.*/app_config\\.yaml$"],
+      "matchStrings": [
+        "(?m)^\\s{4}cdi: (?<currentValue>[^\\s#]+)\\s*$"
+      ],
+      "depNameTemplate": "kubevirt/containerized-data-importer",
+      "datasourceTemplate": "github-tags"
+    },
+    {
+      "customType": "regex",
+      "description": "kubelet-serving URL component version (alex1989hu/kubelet-serving-cert-approver)",
+      "fileMatch": ["^clusters/.*/app_config\\.yaml$"],
+      "matchStrings": [
+        "(?m)^\\s{4}kubelet-serving: (?<currentValue>[^\\s#]+)\\s*$"
+      ],
+      "depNameTemplate": "alex1989hu/kubelet-serving-cert-approver",
+      "datasourceTemplate": "github-tags"
+    },
+    {
+      "customType": "regex",
+      "description": "kubevirt URL component version (kubevirt/kubevirt)",
+      "fileMatch": ["^clusters/.*/app_config\\.yaml$"],
+      "matchStrings": [
+        "(?m)^\\s{4}kubevirt: (?<currentValue>[^\\s#]+)\\s*$"
+      ],
+      "depNameTemplate": "kubevirt/kubevirt",
+      "datasourceTemplate": "github-tags"
+    },
+    {
+      "customType": "regex",
+      "description": "local-path URL component version (rancher/local-path-provisioner)",
+      "fileMatch": ["^clusters/.*/app_config\\.yaml$"],
+      "matchStrings": [
+        "(?m)^\\s{4}local-path: (?<currentValue>[^\\s#]+)\\s*$"
+      ],
+      "depNameTemplate": "rancher/local-path-provisioner",
+      "datasourceTemplate": "github-tags"
+    },
+    {
+      "customType": "regex",
+      "description": "metrics-server URL component version (kubernetes-sigs/metrics-server)",
+      "fileMatch": ["^clusters/.*/app_config\\.yaml$"],
+      "matchStrings": [
+        "(?m)^\\s{4}metrics-server: (?<currentValue>[^\\s#]+)\\s*$"
+      ],
+      "depNameTemplate": "kubernetes-sigs/metrics-server",
+      "datasourceTemplate": "github-tags"
+    },
+    {
+      "customType": "regex",
+      "description": "multus URL component version (k8snetworkplumbingwg/multus-cni)",
+      "fileMatch": ["^clusters/.*/app_config\\.yaml$"],
+      "matchStrings": [
+        "(?m)^\\s{4}multus: (?<currentValue>[^\\s#]+)\\s*$"
+      ],
+      "depNameTemplate": "k8snetworkplumbingwg/multus-cni",
+      "datasourceTemplate": "github-tags"
+    },
+    {
+      "customType": "regex",
+      "description": "pipelines-as-code URL component version (openshift-pipelines/pipelines-as-code)",
+      "fileMatch": ["^clusters/.*/app_config\\.yaml$"],
+      "matchStrings": [
+        "(?m)^\\s{4}pipelines-as-code: (?<currentValue>[^\\s#]+)\\s*$"
+      ],
+      "depNameTemplate": "openshift-pipelines/pipelines-as-code",
+      "datasourceTemplate": "github-tags"
+    },
+    {
+      "customType": "regex",
+      "description": "shared-gateway URL component version (kubernetes-sigs/gateway-api)",
+      "fileMatch": ["^clusters/.*/app_config\\.yaml$"],
+      "matchStrings": [
+        "(?m)^\\s{4}shared-gateway: (?<currentValue>[^\\s#]+)\\s*$"
+      ],
+      "depNameTemplate": "kubernetes-sigs/gateway-api",
+      "datasourceTemplate": "github-tags"
+    },
+    {
+      "customType": "regex",
+      "description": "tekton-chains URL component version (tektoncd/chains)",
+      "fileMatch": ["^clusters/.*/app_config\\.yaml$"],
+      "matchStrings": [
+        "(?m)^\\s{4}tekton-chains: (?<currentValue>[^\\s#]+)\\s*$"
+      ],
+      "depNameTemplate": "tektoncd/chains",
+      "datasourceTemplate": "github-tags"
+    }
+  ]
+}

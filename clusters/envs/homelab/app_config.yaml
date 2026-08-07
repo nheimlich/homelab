@@ -1,4 +1,32 @@
 install_list:
+    - argocd
+    - cdi
+    - ceph-csi-drivers
+    - cert-manager
     - cilium
+    - external-dns
     - external-secrets
-    - perses
+    - kube-state-metrics
+    - kubelet-serving
+    - kubevirt
+    - kyverno
+    - local-path
+    - metrics-server
+    - multus
+    - ollama
+    - opentelemetry-collector
+    - perses-operator
+    - pipelines-as-code
+    - rook-ceph
+    - rook-ceph-cluster
+    - shared-gateway
+    - spegel
+    - spire
+    - spire-crds
+    - tekton-chains
+    - tekton-pipelines
+    - velero
+    - victoria-logs
+    - victoria-metrics
+    - vpa
+    - zot

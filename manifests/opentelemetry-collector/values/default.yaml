@@ -1,3 +1,161 @@
 image:
   repository: "otel/opentelemetry-collector-k8s"
 mode: daemonset
+presets:
+  kubernetesAttributes:
+    enabled: true
+  kubeletMetrics:
+    enabled: true
+  hostMetrics:
+    enabled: true
+  logsCollection:
+    enabled: true
+    storeCheckpoints: true
+resources:
+  requests:
+    cpu: 250m
+    memory: 300Mi
+  limits:
+    cpu: "1"
+    memory: 1Gi
+alternateConfig:
+  exporters:
+    otlphttp/victoriametrics:
+      endpoint: http://victoria-metrics-victoria-metrics-single-server.victoria-metrics.svc.cluster.local:8428/opentelemetry
+      tls:
+        insecure: true
+    otlphttp/victorialogs:
+      endpoint: http://victoria-logs-victoria-logs-single-server.victoria-logs.svc.cluster.local:9428/insert/opentelemetry
+      tls:
+        insecure: true
+      retry_on_failure:
+        enabled: true
+        initial_interval: 5s
+        max_interval: 30s
+        max_elapsed_time: 120s
+  extensions:
+    health_check:
+      endpoint: ${env:MY_POD_IP}:13133
+  processors:
+    memory_limiter:
+      check_interval: 5s
+      limit_percentage: 80
+      spike_limit_percentage: 25
+    batch:
+      send_batch_size: 10000
+      timeout: 10s
+    filter/victorialogs_errors:
+      error_mode: ignore
+      logs:
+        log_record:
+          - 'body == ""'
+  receivers:
+    prometheus:
+      config:
+        scrape_configs:
+          - job_name: hubble-relay
+            scrape_interval: 30s
+            kubernetes_sd_configs:
+              - role: pod
+            relabel_configs:
+              - source_labels: [__meta_kubernetes_namespace, __meta_kubernetes_pod_container_name]
+                action: keep
+                regex: "kube-system;hubble-relay"
+              - source_labels: [__address__]
+                action: replace
+                regex: "([^:]+)(?::\\d+)?"
+                replacement: "$1:9966"
+                target_label: __address__
+          - job_name: cert-manager
+            scrape_interval: 30s
+            kubernetes_sd_configs:
+              - role: pod
+            relabel_configs:
+              - source_labels: [__meta_kubernetes_namespace, __meta_kubernetes_pod_container_name]
+                action: keep
+                regex: "cert-manager;(cert-manager|cert-manager-webhook|cert-manager-cainjector)"
+              - source_labels: [__address__]
+                action: replace
+                regex: "([^:]+)(?::\\d+)?"
+                replacement: "$1:9402"
+                target_label: __address__
+          - job_name: argocd-server
+            scrape_interval: 30s
+            kubernetes_sd_configs:
+              - role: pod
+            relabel_configs:
+              - source_labels: [__meta_kubernetes_namespace, __meta_kubernetes_pod_container_name]
+                action: keep
+                regex: "argocd;argocd-server"
+              - source_labels: [__address__]
+                action: replace
+                regex: "([^:]+)(?::\\d+)?"
+                replacement: "$1:8083"
+                target_label: __address__
+          - job_name: argocd-application-controller
+            scrape_interval: 30s
+            kubernetes_sd_configs:
+              - role: pod
+            relabel_configs:
+              - source_labels: [__meta_kubernetes_namespace, __meta_kubernetes_pod_container_name]
+                action: keep
+                regex: "argocd;argocd-application-controller"
+              - source_labels: [__address__]
+                action: replace
+                regex: "([^:]+)(?::\\d+)?"
+                replacement: "$1:8082"
+                target_label: __address__
+
+          - job_name: kube-state-metrics
+            scrape_interval: 30s
+            kubernetes_sd_configs:
+              - role: pod
+            relabel_configs:
+              - source_labels: [__meta_kubernetes_namespace, __meta_kubernetes_pod_container_name]
+                action: keep
+                regex: "kube-state-metrics;kube-state-metrics"
+              - source_labels: [__address__]
+                action: replace
+                regex: "([^:]+)(?::\\d+)?"
+                replacement: "$1:8080"
+                target_label: __address__
+          - job_name: opentelemetry-collector
+            scrape_interval: 30s
+            kubernetes_sd_configs:
+              - role: pod
+            relabel_configs:
+              - source_labels: [__meta_kubernetes_namespace, __meta_kubernetes_pod_container_name]
+                action: keep
+                regex: "opentelemetry;opentelemetry-collector"
+              - source_labels: [__address__]
+                action: replace
+                regex: "([^:]+)(?::\\d+)?"
+                replacement: "$1:8888"
+                target_label: __address__
+  service:
+    extensions:
+      - health_check
+    pipelines:
+      metrics:
+        receivers: [prometheus, hostmetrics, kubeletstats]
+        processors: [memory_limiter, batch]
+        exporters: [otlphttp/victoriametrics]
+      logs:
+        receivers: [filelog]
+        processors: [memory_limiter, batch, filter/victorialogs_errors]
+        exporters: [otlphttp/victorialogs]
+    telemetry:
+      metrics:
+        readers:
+          - pull:
+              exporter:
+                prometheus:
+                  host: ${env:MY_POD_IP}
+                  port: 8888
+      resource:
+        host.name: ${env:OTEL_K8S_NODE_NAME}
+        k8s.namespace.name: ${env:OTEL_K8S_NAMESPACE}
+        k8s.node.ip: ${env:OTEL_K8S_NODE_IP}
+        k8s.node.name: ${env:OTEL_K8S_NODE_NAME}
+        k8s.pod.ip: ${env:OTEL_K8S_POD_IP}
+        k8s.pod.name: ${env:OTEL_K8S_POD_NAME}

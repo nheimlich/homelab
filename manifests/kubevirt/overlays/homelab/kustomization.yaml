@@ -3,3 +3,5 @@ kind: Kustomization
 resources:
   - ../../components/v1.9.0
   - resources
+patches:
+  - path: patches/patch-namespace.yaml

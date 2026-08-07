@@ -1,4 +1,4 @@
-.PHONY: all check clean setup generate bootstrap shutdown help generate-manifests
+.PHONY: all check clean setup generate bootstrap shutdown help generate-manifests kubescape
 .DEFAULT_GOAL := help
 
 all: check clean setup generate bootstrap clean
@@ -13,6 +13,7 @@ help:
 	# shutdown: Shutdown Talos nodes
 	# upgrade: Check available upgrades
 	# generate-manifests: Generate K8s manifests for a cluster type
+	# kubescape: Run a Kubescape cluster scan (framework full)
 
 check:
 	@./scripts/common.sh check
@@ -40,3 +41,6 @@ upgrade:
 
 generate-manifests:
 	@./scripts/generate-manifests --all-types -f
+
+kubescape:
+	@kubescape scan framework AllControls

@@ -10,15 +10,15 @@ spec:
   - remoteRef:
       conversionStrategy: Default
       decodingStrategy: None
-      key: argocd-github
-      property: github_client_id
+      key: homelab-app-secrets
+      property: argocd-github-client-id
       metadataPolicy: None
     secretKey: github_client_id
   - remoteRef:
       conversionStrategy: Default
       decodingStrategy: None
-      key: argocd-github
-      property: github_client_secret
+      key: homelab-app-secrets
+      property: argocd-github-client-secret
       metadataPolicy: None
     secretKey: github_client_secret
   refreshInterval: 1h

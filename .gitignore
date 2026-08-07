@@ -12,3 +12,14 @@ clusters/types/talos/provision/configs/*
 clusters/types/talos/provision/secrets.yaml
 clusters/types/talos/provision/dhcp_data.sh
 scripts/seed-secrets.sh
+configs/
+SESSION-CHECKPOINT.md
+session-*.md
+clusters/envs/homelab/docs/
+clusters/envs/homelab/docs.md
+/secrets.yaml
+/controlplane.yaml
+/dhcp_data.sh
+.opencode/
+AGENTS.md
+opencode.json

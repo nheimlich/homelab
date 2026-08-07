@@ -84,5 +84,15 @@ bootstrap() {
       sleep 5
     done
   done
+  echo "Waiting for Gateway API CRDs to be applied by ArgoCD..."
+  until kubectl wait --for condition=established crd/gateways.gateway.networking.k8s.io --timeout=15m 2>/dev/null; do
+    echo "Retrying..."
+    sleep 10
+  done
+  echo "Restarting Cilium to pick up Gateway API CRDs..."
+  kubectl -n kube-system rollout restart deploy/cilium-operator
+  kubectl -n kube-system rollout status deploy/cilium-operator --timeout=5m
+  kubectl -n kube-system rollout restart daemonset/cilium
+  kubectl -n kube-system rollout status daemonset/cilium --timeout=5m
 }
 bootstrap

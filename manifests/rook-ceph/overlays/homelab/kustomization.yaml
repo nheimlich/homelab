@@ -3,3 +3,5 @@ kind: Kustomization
 resources:
   - ../../components/talos/v1.20.2
   - resources
+patches:
+  - path: patches/patch-namespace.yaml
