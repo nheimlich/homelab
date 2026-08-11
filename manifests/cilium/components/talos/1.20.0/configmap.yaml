@@ -157,7 +157,7 @@ data:
   enable-host-firewall: "false"
   # List of devices used to attach bpf_host.o (implements BPF NodePort,
   # host-firewall and BPF masquerading)
-  devices: ""
+  devices: "br-homelab"
   kube-proxy-replacement: "true"
   kube-proxy-replacement-healthz-bind-address: ""
   enable-no-service-endpoints-routable: "true"

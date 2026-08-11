@@ -4,6 +4,7 @@ operator:
     enabled: true
 k8sServiceHost: localhost
 k8sServicePort: 7445
+devices: "br-homelab"
 debug:
   enabled: true
 cgroup:
