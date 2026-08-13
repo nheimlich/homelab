@@ -3,7 +3,10 @@ set -euo pipefail
 
 REPO_ROOT="$(git rev-parse --show-toplevel)"
 YAML_FILE="$REPO_ROOT/clusters/default_app_config.yaml"
-APP=$(yq eval '.apps | to_entries | .[] | select(.value.type == "helm") | .value.chart' "$YAML_FILE" | fzf --prompt="Select App: " )
+
+if [[ -z "$1" ]]; then
+  APP=$(yq eval '.apps | to_entries | .[] | select(.value.type == "helm") | .value.chart' "$YAML_FILE" | fzf --prompt="Select App: " )
+fi
 
 REPO_URL=$(yq ".apps.${APP}.repo_url" "$YAML_FILE")
 CHART=$(yq ".apps.${APP}.chart" "$YAML_FILE")

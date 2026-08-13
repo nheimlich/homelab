@@ -64,6 +64,13 @@ encryption:
       tpm: {}
       lockToState: true
 ---
+apiVersion: v1alpha1
+kind: BridgeConfig
+name: br-homelab
+links:
+    - enp1s0
+up: true
+---
 debug: false
 machine:
   files:
@@ -95,8 +102,7 @@ machine:
 
   network:
     interfaces:
-      - deviceSelector:
-          physical: true
+      - interface: br-homelab
         dhcp: false
         vip:
           ip: "${network}${lbvip}"
