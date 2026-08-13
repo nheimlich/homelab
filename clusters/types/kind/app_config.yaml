@@ -4,7 +4,7 @@ install_list:
     - external-secrets
     - vpa
 versions:
-    argocd: v3.5.0
+    argocd: v3.5.1
     cilium: 1.20.0
-    external-secrets: 2.8.0
-    vpa: 4.12.5
+    external-secrets: 2.9.0
+    vpa: 5.0.0
