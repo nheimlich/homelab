@@ -35,18 +35,18 @@ versions:
     cdi: v1.66.0
     ceph-csi-drivers: 1.0.4
     cert-manager: 1.21.1
-    cilium: 1.20.0
+    cilium: 1.20.1
     external-dns: 1.21.1
     external-secrets: 2.9.0
-    kube-state-metrics: 8.3.0
+    kube-state-metrics: 8.4.0
     kubelet-serving: v0.11.0
     kubevirt: v1.9.0
-    kyverno: 3.8.2
+    kyverno: 3.9.0
     local-path: v0.0.37
     metrics-server: v0.9.0
     multus: v4.3.0
-    ollama: 1.74.0
-    opentelemetry-collector: 0.169.0
+    ollama: 1.77.0
+    opentelemetry-collector: 0.170.0
     perses-operator: 0.5.0
     pipelines-as-code: v0.50.0
     rook-ceph: v1.20.2
@@ -59,6 +59,6 @@ versions:
     tekton-pipelines: v1.15.0
     velero: 12.1.0
     victoria-logs: 0.13.9
-    victoria-metrics: 0.44.0
+    victoria-metrics: 0.45.0
     vpa: 5.0.0
     zot: 0.1.122
