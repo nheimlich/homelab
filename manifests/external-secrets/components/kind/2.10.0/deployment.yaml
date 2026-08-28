@@ -7,7 +7,7 @@ metadata:
   labels:
     app.kubernetes.io/name: external-secrets-cert-controller
     app.kubernetes.io/instance: external-secrets
-    app.kubernetes.io/version: "v2.8.0"
+    app.kubernetes.io/version: "v2.10.0"
 spec:
   replicas: 1
   revisionHistoryLimit: 10
@@ -20,7 +20,7 @@ spec:
       labels:
         app.kubernetes.io/name: external-secrets-cert-controller
         app.kubernetes.io/instance: external-secrets
-        app.kubernetes.io/version: "v2.8.0"
+        app.kubernetes.io/version: "v2.10.0"
     spec:
       serviceAccountName: external-secrets-cert-controller
       automountServiceAccountToken: true
@@ -37,7 +37,7 @@ spec:
             runAsUser: 1000
             seccompProfile:
               type: RuntimeDefault
-          image: ghcr.io/external-secrets/external-secrets:v2.8.0
+          image: ghcr.io/external-secrets/external-secrets:v2.10.0
           imagePullPolicy: IfNotPresent
           args:
           - certcontroller
@@ -76,7 +76,7 @@ metadata:
   labels:
     app.kubernetes.io/name: external-secrets
     app.kubernetes.io/instance: external-secrets
-    app.kubernetes.io/version: "v2.8.0"
+    app.kubernetes.io/version: "v2.10.0"
 spec:
   replicas: 1
   revisionHistoryLimit: 10
@@ -89,7 +89,7 @@ spec:
       labels:
         app.kubernetes.io/name: external-secrets
         app.kubernetes.io/instance: external-secrets
-        app.kubernetes.io/version: "v2.8.0"
+        app.kubernetes.io/version: "v2.10.0"
     spec:
       serviceAccountName: external-secrets
       automountServiceAccountToken: true
@@ -106,7 +106,7 @@ spec:
             runAsUser: 1000
             seccompProfile:
               type: RuntimeDefault
-          image: ghcr.io/external-secrets/external-secrets:v2.8.0
+          image: ghcr.io/external-secrets/external-secrets:v2.10.0
           imagePullPolicy: IfNotPresent
           args:
           - --concurrent=1
@@ -127,7 +127,7 @@ metadata:
   labels:
     app.kubernetes.io/name: external-secrets-webhook
     app.kubernetes.io/instance: external-secrets
-    app.kubernetes.io/version: "v2.8.0"
+    app.kubernetes.io/version: "v2.10.0"
 spec:
   replicas: 1
   revisionHistoryLimit: 10
@@ -140,7 +140,7 @@ spec:
       labels:
         app.kubernetes.io/name: external-secrets-webhook
         app.kubernetes.io/instance: external-secrets
-        app.kubernetes.io/version: "v2.8.0"
+        app.kubernetes.io/version: "v2.10.0"
     spec:
       hostNetwork: false
       serviceAccountName: external-secrets-webhook
@@ -157,7 +157,7 @@ spec:
             runAsUser: 1000
             seccompProfile:
               type: RuntimeDefault
-          image: ghcr.io/external-secrets/external-secrets:v2.8.0
+          image: ghcr.io/external-secrets/external-secrets:v2.10.0
           imagePullPolicy: IfNotPresent
           args:
           - webhook
