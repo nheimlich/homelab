@@ -1,10 +1,2 @@
-install_list:
-    - argocd
-    - cilium
-    - external-secrets
-    - vpa
-versions:
-    argocd: v3.5.1
-    cilium: 1.20.1
-    external-secrets: 2.9.0
-    vpa: 5.0.0
+install_list: []
+versions: []

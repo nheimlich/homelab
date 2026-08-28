@@ -1,6 +1,2 @@
-install_list:
-    - cert-manager
-    - cilium
-versions:
-    cert-manager: 1.21.1
-    cilium: 1.20.0
+install_list: []
+versions: []
