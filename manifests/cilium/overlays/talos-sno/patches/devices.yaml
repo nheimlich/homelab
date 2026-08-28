@@ -1,9 +1,0 @@
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: cilium-config
-  namespace: kube-system
-data:
-  devices: "eth1"
-  enable-l2-announcements: "false"
-  enable-wireguard: "false"
