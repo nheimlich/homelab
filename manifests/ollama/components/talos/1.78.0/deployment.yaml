@@ -7,7 +7,7 @@ metadata:
   labels:
     app.kubernetes.io/name: ollama
     app.kubernetes.io/instance: ollama
-    app.kubernetes.io/version: "0.32.9"
+    app.kubernetes.io/version: "0.33.0"
 spec:
   replicas: 0
   strategy:
@@ -15,6 +15,7 @@ spec:
       maxSurge: 0
       maxUnavailable: 1
     type: RollingUpdate
+  revisionHistoryLimit: 10
   selector:
     matchLabels:
       app.kubernetes.io/name: ollama
@@ -24,7 +25,7 @@ spec:
       labels:
         app.kubernetes.io/name: ollama
         app.kubernetes.io/instance: ollama
-        app.kubernetes.io/version: "0.32.9"
+        app.kubernetes.io/version: "0.33.0"
     spec:
       serviceAccountName: ollama
       terminationGracePeriodSeconds: 120
@@ -34,7 +35,7 @@ spec:
         - name: ollama
           securityContext:
             {}
-          image: "ollama/ollama:0.32.9"
+          image: "ollama/ollama:0.33.0"
           imagePullPolicy: IfNotPresent
           ports:
             - name: http
