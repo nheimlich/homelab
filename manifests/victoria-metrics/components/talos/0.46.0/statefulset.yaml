@@ -8,7 +8,7 @@ metadata:
     app.kubernetes.io/component: server
     app.kubernetes.io/instance: victoria-metrics
     app.kubernetes.io/name: victoria-metrics-single
-    app.kubernetes.io/version: v1.149.0
+    app.kubernetes.io/version: v1.151.0
 spec:
   podManagementPolicy: OrderedReady
   updateStrategy: {}
@@ -35,7 +35,7 @@ spec:
         - name: vmsingle
           securityContext:
             {}
-          image: victoriametrics/victoria-metrics:v1.149.0
+          image: victoriametrics/victoria-metrics:v1.151.0
           imagePullPolicy: IfNotPresent
           args:
             - --envflag.enable
