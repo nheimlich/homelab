@@ -7,13 +7,13 @@ metadata:
   labels:
     app.kubernetes.io/name: opentelemetry-collector
     app.kubernetes.io/instance: opentelemetry-collector
-    app.kubernetes.io/version: "0.158.0"
+    app.kubernetes.io/version: "0.159.0"
     app.kubernetes.io/part-of: opentelemetry-collector
     app.kubernetes.io/component: agent-collector
 data:
   relay: |
     exporters:
-      otlphttp/victorialogs:
+      otlp_http/victorialogs:
         endpoint: http://victoria-logs-victoria-logs-single-server.victoria-logs.svc.cluster.local:9428/insert/opentelemetry
         retry_on_failure:
           enabled: true
@@ -22,7 +22,7 @@ data:
           max_interval: 30s
         tls:
           insecure: true
-      otlphttp/victoriametrics:
+      otlp_http/victoriametrics:
         endpoint: http://victoria-metrics-victoria-metrics-single-server.victoria-metrics.svc.cluster.local:8428/opentelemetry
         tls:
           insecure: true
@@ -255,7 +255,7 @@ data:
       pipelines:
         logs:
           exporters:
-          - otlphttp/victorialogs
+          - otlp_http/victorialogs
           processors:
           - k8s_attributes
           - memory_limiter
@@ -265,7 +265,7 @@ data:
           - file_log
         metrics:
           exporters:
-          - otlphttp/victoriametrics
+          - otlp_http/victoriametrics
           processors:
           - k8s_attributes
           - memory_limiter
