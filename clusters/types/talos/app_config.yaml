@@ -4,6 +4,7 @@ install_list:
     - ceph-csi-drivers
     - cert-manager
     - cilium
+    - cnpg
     - external-dns
     - external-secrets
     - kube-state-metrics
@@ -36,6 +37,7 @@ versions:
     ceph-csi-drivers: 1.0.4
     cert-manager: 1.21.1
     cilium: 1.20.1
+    cnpg: 0.26.0
     external-dns: 1.21.1
     external-secrets: 2.10.0
     kube-state-metrics: 8.4.2

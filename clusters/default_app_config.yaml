@@ -243,3 +243,11 @@ apps:
     chart: vpa
     namespace: vpa
     create_namespace: true
+
+  cnpg:
+    type: helm
+    repo_name: cnpg
+    repo_url: "https://cloudnative-pg.github.io/charts"
+    chart: cloudnative-pg
+    namespace: cnpg-system
+    create_namespace: true
