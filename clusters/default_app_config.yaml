@@ -60,6 +60,7 @@ apps:
     type: url
     url: "https://github.com/openshift-pipelines/pipelines-as-code/releases/download/${VERSION}/release.k8s.yaml"
     namespace: pipelines-as-code
+    create_namespace: true
     github_repo: "openshift-pipelines/pipelines-as-code"
 
   tekton-pipelines:
