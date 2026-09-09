@@ -204,6 +204,7 @@ apps:
     chart: spire-crds
     namespace: spire-system
     create_namespace: true
+    kustomize_namespace: false
 
   spire:
     type: helm
@@ -212,6 +213,7 @@ apps:
     chart: spire
     namespace: spire-system
     create_namespace: true
+    kustomize_namespace: false
 
   velero:
     type: helm

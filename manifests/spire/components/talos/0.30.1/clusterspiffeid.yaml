@@ -2,6 +2,7 @@
 apiVersion: spire.spiffe.io/v1alpha1
 kind: ClusterSPIFFEID
 metadata:
+  namespace: spire-system
   name: spire-system-spire-default
   labels:
     spire.spiffe.io/class-name: spire-system-spire
@@ -20,6 +21,7 @@ spec:
 apiVersion: spire.spiffe.io/v1alpha1
 kind: ClusterSPIFFEID
 metadata:
+  namespace: spire-system
   name: spire-system-spire-oidc-discovery-provider
   labels:
     spire.spiffe.io/class-name: spire-system-spire
@@ -45,6 +47,7 @@ spec:
 apiVersion: spire.spiffe.io/v1alpha1
 kind: ClusterSPIFFEID
 metadata:
+  namespace: spire-system
   name: spire-system-spire-test-keys
   labels:
     spire.spiffe.io/class-name: spire-system-spire

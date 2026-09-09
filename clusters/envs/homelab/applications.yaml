@@ -54,3 +54,7 @@ spec:
           name: "cdis.cdi.kubevirt.io"
           jqPathExpressions:
             - ".spec"
+        - group: "apiextensions.k8s.io"
+          kind: "CustomResourceDefinition"
+          jsonPointers:
+            - /spec/preserveUnknownFields

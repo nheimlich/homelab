@@ -15,4 +15,3 @@ resources:
   - serviceaccount.yaml
   - statefulset.yaml
   - validatingwebhookconfiguration.yaml
-namespace: spire-system
