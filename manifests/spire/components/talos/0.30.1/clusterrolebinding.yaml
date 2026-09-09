@@ -24,7 +24,7 @@ roleRef:
 subjects:
 - kind: ServiceAccount
   name: spire-server
-  namespace: spire-server
+  namespace: spire-system
 ---
 # Binds above cluster role to spire-server service account
 kind: ClusterRoleBinding
@@ -34,7 +34,7 @@ metadata:
 subjects:
 - kind: ServiceAccount
   name: spire-server
-  namespace: spire-server
+  namespace: spire-system
 roleRef:
   kind: ClusterRole
   name: spire-system-spire-server

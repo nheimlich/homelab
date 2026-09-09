@@ -3,7 +3,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: spire-spiffe-oidc-discovery-provider
-  namespace: spire-server
+  namespace: spire-system
 spec:
   type: ClusterIP
   ports:
@@ -19,7 +19,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: spire-controller-manager-webhook
-  namespace: spire-server
+  namespace: spire-system
   labels:
     app.kubernetes.io/name: server
     app.kubernetes.io/instance: spire
@@ -39,7 +39,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: spire-server
-  namespace: spire-server
+  namespace: spire-system
   labels:
     app.kubernetes.io/name: server
     app.kubernetes.io/instance: spire

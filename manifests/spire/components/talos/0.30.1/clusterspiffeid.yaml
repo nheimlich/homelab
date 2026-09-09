@@ -15,7 +15,6 @@ spec:
       operator: NotIn
       values:
       - spire-system
-      - spire-server
   fallback: true
 ---
 apiVersion: spire.spiffe.io/v1alpha1
@@ -39,7 +38,6 @@ spec:
       operator: In
       values:
       - spire-system
-      - spire-server
   dnsNameTemplates:
     - oidc-discovery.{{ .TrustDomain }}
   autoPopulateDNSNames: true
@@ -65,4 +63,3 @@ spec:
       operator: In
       values:
       - spire-system
-      - spire-server

@@ -2,6 +2,11 @@ global:
   spire:
     trustDomain: nhlabs.org
     clusterName: homelab
+    namespaces:
+      system:
+        name: spire-system
+      server:
+        name: spire-system
     recommendations:
       enabled: true
       namespaceLayout: true

@@ -141,7 +141,7 @@ spec:
     metadata:
       annotations:
         kubectl.kubernetes.io/default-container: spire-agent
-        checksum/config: "d21de2656a9e7b4c05ec0273cf67df24afbbce185c0285d0f9645552dda2394e"
+        checksum/config: "21fed021ebe3a53b5cdccaf34b19be2a697373421dd32c6a72383cf0b1994bda"
       labels:
         app.kubernetes.io/name: "agent"
         app.kubernetes.io/instance: "spire"

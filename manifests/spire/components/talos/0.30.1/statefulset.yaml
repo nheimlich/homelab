@@ -3,7 +3,7 @@ apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: spire-server
-  namespace: spire-server
+  namespace: spire-system
   labels:
     app.kubernetes.io/name: server
     app.kubernetes.io/instance: spire
@@ -21,9 +21,9 @@ spec:
     metadata:
       annotations:
         kubectl.kubernetes.io/default-container: spire-server
-        checksum/config: e22facb72ee8555f13cb38e6967f4c0afebfc692fa4b27bc76b8c801db07100e
+        checksum/config: 935ce16b2473804293f3ccef2a552352d02893f8e093b4ac2e9aefd020aaacc1
         checksum/config2: 01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b
-        checksum/config3: 70d3705c613393f8332c8328bac2c7832d3b803094fdc179bf7b2a69c60fd303
+        checksum/config3: 7c26c877cc73d0ea771060dbb452d17a31d6371991c9f9f8a2e146353481045a
         checksum/configTornjak: 01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b
       labels:
         app.kubernetes.io/name: server

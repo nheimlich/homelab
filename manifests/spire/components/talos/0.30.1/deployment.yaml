@@ -3,7 +3,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: spire-spiffe-oidc-discovery-provider
-  namespace: spire-server
+  namespace: spire-system
   labels:
     app.kubernetes.io/name: spiffe-oidc-discovery-provider
     app.kubernetes.io/instance: spire
@@ -17,7 +17,7 @@ spec:
   template:
     metadata:
       annotations:
-        checksum/config: b6de117b34f6a587bce4439e59b62d14e85b81ff05364d489ad2ff42aa22ea8d
+        checksum/config: d4db483bb1fa0910f8c738851971f65f90a8acd48a75ce7a21d4442194403f20
       labels:
         app.kubernetes.io/name: spiffe-oidc-discovery-provider
         app.kubernetes.io/instance: spire
