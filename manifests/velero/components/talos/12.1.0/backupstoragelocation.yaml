@@ -1,0 +1,16 @@
+---
+apiVersion: velero.io/v1
+kind: BackupStorageLocation
+metadata:
+  name: default
+  namespace: velero
+  labels:
+    app.kubernetes.io/name: velero
+    app.kubernetes.io/instance: velero
+    app.kubernetes.io/version: 1.18.1
+spec:
+  credential:
+  provider:
+  accessMode: ReadWrite
+  objectStorage:
+    bucket: ""

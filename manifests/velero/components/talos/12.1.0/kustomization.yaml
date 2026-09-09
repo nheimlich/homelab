@@ -1,0 +1,16 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - 01-namespace.yaml
+  - backupstoragelocation.yaml
+  - clusterrolebinding.yaml
+  - configmap.yaml
+  - customresourcedefinition.yaml
+  - deployment.yaml
+  - role.yaml
+  - rolebinding.yaml
+  - secret.yaml
+  - service.yaml
+  - serviceaccount.yaml
+  - volumesnapshotlocation.yaml
+namespace: velero
