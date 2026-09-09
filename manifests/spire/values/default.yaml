@@ -23,6 +23,17 @@ spire-server:
     enabled: true
   externalControllerManagers:
     enabled: true
+  volumeClaimTemplates:
+    - apiVersion: v1
+      kind: PersistentVolumeClaim
+      metadata:
+        name: spire-data
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 1Gi
 
 spire-agent:
   enabled: true
