@@ -1,0 +1,1201 @@
+---
+# Copyright 2019 The Tekton Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: config-defaults
+  namespace: tekton-pipelines
+  labels:
+    app.kubernetes.io/instance: default
+    app.kubernetes.io/part-of: tekton-pipelines
+data:
+  _example: |
+    ################################
+    ################################
+
+    # This block is not actually functional configuration,
+    # but serves to illustrate the available configuration
+    # options and document them in a way that is accessible
+    # to users that `kubectl edit` this config map.
+    #
+    # These sample configuration options may be copied out of
+    # this example block and unindented to be in the data block
+    # to actually change the configuration.
+
+    # default-timeout-minutes contains the default number of
+    # minutes to use for TaskRun and PipelineRun, if none is specified.
+    default-timeout-minutes: "60"  # 60 minutes
+
+    # default-service-account contains the default service account name
+    # to use for TaskRun and PipelineRun, if none is specified.
+    default-service-account: "default"
+
+    # default-managed-by-label-value contains the default value given to the
+    # "app.kubernetes.io/managed-by" label applied to all Pods created for
+    # TaskRuns. If a user's requested TaskRun specifies another value for this
+    # label, the user's request supercedes.
+    default-managed-by-label-value: "tekton-pipelines"
+
+    # default-pod-template contains the default pod template to use for
+    # TaskRun and PipelineRun. If a pod template is specified on the
+    # PipelineRun, the default-pod-template is merged with that one.
+    # default-pod-template:
+
+    # default-affinity-assistant-pod-template contains the default pod template
+    # to use for affinity assistant pods. If a pod template is specified on the
+    # PipelineRun, the default-affinity-assistant-pod-template is merged with
+    # that one.
+    # default-affinity-assistant-pod-template:
+
+    # default-cloud-events-sink contains the default CloudEvents sink to be
+    # used for TaskRun and PipelineRun, when no sink is specified.
+    # Note that right now it is still not possible to set a PipelineRun or
+    # TaskRun specific sink, so the default is the only option available.
+    # If no sink is specified, no CloudEvent is generated
+    # default-cloud-events-sink:
+
+    # default-task-run-workspace-binding contains the default workspace
+    # configuration provided for any Workspaces that a Task declares
+    # but that a TaskRun does not explicitly provide.
+    # default-task-run-workspace-binding: |
+
+    # default-max-matrix-combinations-count contains the default maximum number
+    # of combinations from a Matrix, if none is specified.
+    default-max-matrix-combinations-count: "256"
+
+    # default-forbidden-env contains comma seperated environment variables that cannot be
+    # overridden by podTemplate.
+    default-forbidden-env:
+
+    # default-resolver-type contains the default resolver type to be used in the cluster,
+    # no default-resolver-type is specified by default
+    default-resolver-type:
+
+    # default-imagepullbackoff-timeout contains the default duration to wait
+    # before requeuing the TaskRun to retry, specifying 0 here is equivalent to fail fast
+    # possible values could be 1m, 5m, 10s, 1h, etc
+    # default-imagepullbackoff-timeout: "5m"
+
+    # default-create-container-error-timeout contains the default duration to wait
+    # before failing a TaskRun when a container fails with "context deadline exceeded"
+    # (e.g. CRI-O under heavy load). Specifying 0 here is equivalent to fail fast.
+    # possible values could be 1m, 5m, 10s, 1h, etc
+    # default-create-container-error-timeout: "5m"
+
+    # default-maximum-resolution-timeout specifies the default duration used by the
+    # resolution controller before timing out when exceeded.
+    # Possible values include "1m", "5m", "10s", "1h", etc.
+    # Example: default-maximum-resolution-timeout: "1m"
+
+    # default-container-resource-requirements allow users to configure default resource
+    # requirements for init containers and containers in pods created by the controller.
+    # No resource requirements are applied by default when this key is unset.
+    # Note: All the resource requirements are applied to init-containers and containers
+    # only if the existing resource requirements are empty, except Tekton internal
+    # containers can be overridden by named entries such as prepare or place-scripts.
+    # default-container-resource-requirements: |
+    #
+    #
+    #
+    #
+    #
+
+    # default-sidecar-log-polling-interval specifies the polling interval for the Tekton sidecar log results container.
+    # This controls how frequently the sidecar checks for step completion files written by steps in a TaskRun.
+    # Lower values (e.g., "10ms") make the sidecar more responsive but may increase CPU usage; higher values (e.g., "1s")
+    # reduce resource usage but may delay result collection.
+    # This value is used by the sidecar-tekton-log-results container and can be tuned for performance or test scenarios.
+    # Example values: "100ms", "500ms", "1s"
+    default-sidecar-log-polling-interval: "100ms"
+
+    # default-step-ref-concurrency-limit specifies the concurrency limit for resolving step references.
+    # This setting controls the maximum number of concurrent goroutines used to resolve
+    # step references (`step.ref` fields) simultaneously. This limit acts as a throttle
+    # to prevent overwhelming remote servers (e.g., git providers, OCI registries) or
+    # the Kubernetes API server, especially when a TaskRun contains many steps that
+    # reference StepActions.
+    default-step-ref-concurrency-limit: "5"
+---
+# Copyright 2023 The Tekton Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: config-events
+  namespace: tekton-pipelines
+  labels:
+    app.kubernetes.io/instance: default
+    app.kubernetes.io/part-of: tekton-pipelines
+data:
+  _example: |
+    ################################
+    ################################
+
+    # This block is not actually functional configuration,
+    # but serves to illustrate the available configuration
+    # options and document them in a way that is accessible
+    # to users that `kubectl edit` this config map.
+    #
+    # These sample configuration options may be copied out of
+    # this example block and unindented to be in the data block
+    # to actually change the configuration.
+
+    # formats contains a comma separated list of event formats to be used
+    # the only format supported today is "tektonv1". An empty string is not
+    # a valid configuration. To disable events, do not specify the sink.
+    formats: "tektonv1"
+
+    # sink contains the event sink to be used for TaskRun, PipelineRun and
+    # CustomRun. If no sink is specified, no CloudEvent is generated.
+    # This setting supercedes the "default-cloud-events-sink" from the
+    # "config-defaults" config map
+    sink: "https://events.sink/cdevents"
+---
+# Copyright 2019 The Tekton Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: feature-flags
+  namespace: tekton-pipelines
+  labels:
+    app.kubernetes.io/instance: default
+    app.kubernetes.io/part-of: tekton-pipelines
+data:
+  # Setting this flag will determine how PipelineRun Pods are scheduled with Affinity Assistant.
+  # Acceptable values are "workspaces" (default), "pipelineruns", "isolate-pipelinerun", or "disabled".
+  #
+  # Setting it to "workspaces" will schedule all the taskruns sharing the same PVC-based workspace in a pipelinerun to the same node.
+  # Setting it to "pipelineruns" will schedule all the taskruns in a pipelinerun to the same node.
+  # Setting it to "isolate-pipelinerun" will schedule all the taskruns in a pipelinerun to the same node,
+  # and only allows one pipelinerun to run on a node at a time.
+  # Setting it to "disabled" will not apply any coschedule policy.
+  #
+  # See more in the Affinity Assistant documentation
+  # https://github.com/tektoncd/pipeline/blob/main/docs/affinityassistants.md
+  coschedule: "workspaces"
+  # Setting this flag to "true" will prevent Tekton scanning attached
+  # service accounts and injecting any credentials it finds into your
+  # Steps.
+  #
+  # The default behaviour currently is for Tekton to search service
+  # accounts for secrets matching a specified format and automatically
+  # mount those into your Steps.
+  #
+  # Note: setting this to "true" will prevent PipelineResources from
+  # working.
+  #
+  # See https://github.com/tektoncd/pipeline/issues/2791 for more
+  # info.
+  disable-creds-init: "false"
+  # Setting this flag to "false" will stop Tekton from waiting for a
+  # TaskRun's sidecar containers to be running before starting the first
+  # step. This will allow Tasks to be run in environments that don't
+  # support the DownwardAPI volume type, but may lead to unintended
+  # behaviour if sidecars are used.
+  #
+  # See https://github.com/tektoncd/pipeline/issues/4937 for more info.
+  await-sidecar-readiness: "true"
+  # This option should be set to false when Pipelines is running in a
+  # cluster that does not use injected sidecars such as Istio. Setting
+  # it to false should decrease the time it takes for a TaskRun to start
+  # running. For clusters that use injected sidecars, setting this
+  # option to false can lead to unexpected behavior.
+  #
+  # See https://github.com/tektoncd/pipeline/issues/2080 for more info.
+  running-in-environment-with-injected-sidecars: "true"
+  # Setting this flag to "true" will require that any Git SSH Secret
+  # offered to Tekton must have known_hosts included.
+  #
+  # See https://github.com/tektoncd/pipeline/issues/2981 for more
+  # info.
+  require-git-ssh-secret-known-hosts: "false"
+  # Setting this flag to "true" enables the use of Tekton OCI bundle.
+  # This is an experimental feature and thus should still be considered
+  # an alpha feature.
+  enable-tekton-oci-bundles: "false"
+  # Setting this flag will determine which gated features are enabled.
+  # Acceptable values are "stable", "beta", or "alpha".
+  enable-api-fields: "beta"
+  # DEPRECATED: send-cloudevents-for-runs is deprecated and will be removed in a future
+  # release. CloudEvents are now enabled by default when a sink is configured in the
+  # config-events ConfigMap. This flag only affects CustomRuns; it has no effect on
+  # TaskRuns or PipelineRuns.
+  send-cloudevents-for-runs: "true"
+  # This flag affects the behavior of taskruns and pipelineruns in cases where no VerificationPolicies match them.
+  # If it is set to "fail", TaskRuns and PipelineRuns will fail verification if no matching policies are found.
+  # If it is set to "warn", TaskRuns and PipelineRuns will run to completion if no matching policies are found, and an error will be logged.
+  # If it is set to "ignore", TaskRuns and PipelineRuns will run to completion if no matching policies are found, and no error will be logged.
+  trusted-resources-verification-no-match-policy: "ignore"
+  # Setting this flag to "true" enables populating the "provenance" field in TaskRun
+  # and PipelineRun status. This field contains metadata about resources used
+  # in the TaskRun/PipelineRun such as the source from where a remote Task/Pipeline
+  # definition was fetched.
+  enable-provenance-in-status: "true"
+  # Setting this flag will determine how Tekton pipelines will handle non-falsifiable provenance.
+  # If set to "spire", then SPIRE will be used to ensure non-falsifiable provenance.
+  # If set to "none", then Tekton will not have non-falsifiable provenance.
+  # This is an experimental feature and thus should still be considered an alpha feature.
+  enforce-nonfalsifiability: "none"
+  # Setting this flag will determine how Tekton pipelines will handle extracting results from the task.
+  # Acceptable values are "termination-message" or "sidecar-logs".
+  # "sidecar-logs" is now a beta feature.
+  results-from: "termination-message"
+  # Setting this flag will determine the upper limit of each task result
+  # This flag is optional and only associated with the previous flag, results-from
+  # When results-from is set to "sidecar-logs", this flag can be used to configure the upper limit of a task result
+  # max-result-size: "4096"
+  # Setting this flag to "true" will limit privileges for containers injected by Tekton into TaskRuns.
+  # This allows TaskRuns to run in namespaces with "restricted" pod security standards.
+  # Not all Kubernetes implementations support this option.
+  set-security-context: "false"
+  # Setting this flag to "true" will set readOnlyRootFilesystem in securityContext for all containers used in TaskRuns and AffinityAssistant.
+  set-security-context-read-only-root-filesystem: "false"
+  # Setting this flag to "true" will keep pod on cancellation
+  # allowing examination of the logs on the pods from cancelled taskruns
+  keep-pod-on-cancel: "false"
+  # Setting this flag to "true" will enable the CEL evaluation in WhenExpression
+  enable-cel-in-whenexpression: "false"
+  # Setting this flag to "true" will enable the use of Artifacts in Steps
+  # This feature is in preview mode and not implemented yet. Please check #7693 for updates.
+  enable-artifacts: "false"
+  # Setting this flag to "true" will enable the built-in param input validation via param enum.
+  enable-param-enum: "false"
+  # Setting this flag to "pipeline,pipelinerun,taskrun" will prevent users from creating
+  # embedded spec Taskruns or Pipelineruns for Pipeline, Pipelinerun and taskrun
+  # respectively. We can specify "pipeline" to disable for Pipeline resource only.
+  # "pipelinerun" for Pipelinerun and "taskrun" for Taskrun. Or a combination of
+  # these.
+  disable-inline-spec: ""
+  # Setting this flag to "true" will enable the use of concise resolver syntax
+  enable-concise-resolver-syntax: "false"
+  # Setthing this flag to "true" will enable native Kubernetes Sidecar support
+  enable-kubernetes-sidecar: "false"
+  # Setting this flag to "false" will have no effect since StepActions are a stable feature
+  enable-step-actions: "true"
+  # Controls whether exponential backoff is enabled when creating TaskRuns or CustomRuns.
+  # If set to "true", the controller will use exponential backoff when retrying failed create operations,
+  # which can help mitigate issues caused by temporary API server or webhook unavailability.
+  # If set to "false", exponential backoff will be disabled.
+  # For advanced tuning of backoff parameters, update the 'wait-exponential-backoff' ConfigMap.
+  enable-wait-exponential-backoff: "false"
+  # Setting this flag to "true" will compress termination messages with flate
+  # to fit more results in the 4KB Kubernetes termination message limit.
+  # Only applies when results-from is set to "termination-message" (the default);
+  # ignored when results-from is "sidecar-logs".
+  # Alpha feature — this is a short-term measure. External result storage
+  # (TEP-0164) will address the underlying 4KB limitation.
+  enable-termination-message-compression: "false"
+  # Controls whether informer cache transforms are enabled. When enabled (default),
+  # the controller strips large, unnecessary metadata fields (managedFields and the
+  # kubectl last-applied-configuration annotation) from PipelineRuns, TaskRuns,
+  # CustomRuns, and Pods stored in the informer cache to reduce memory usage.
+  #
+  # Set to "false" to disable if you encounter issues with missing data in cached objects.
+  # Changes require a controller restart to take effect.
+  #
+  # See https://github.com/tektoncd/pipeline/issues/7691 for more info.
+  enable-informer-cache-transforms: "true"
+---
+# Copyright 2021 The Tekton Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: pipelines-info
+  namespace: tekton-pipelines
+  labels:
+    app.kubernetes.io/instance: default
+    app.kubernetes.io/part-of: tekton-pipelines
+data:
+  # Contains pipelines version which can be queried by external
+  # tools such as CLI. Elevated permissions are already given to
+  # this ConfigMap such that even if we don't have access to
+  # other resources in the namespace we still can have access to
+  # this ConfigMap.
+  version: "v1.15.1"
+---
+# Copyright 2020 Tekton Authors LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: config-leader-election-controller
+  namespace: tekton-pipelines
+  labels:
+    app.kubernetes.io/instance: default
+    app.kubernetes.io/part-of: tekton-pipelines
+data:
+  _example: |
+    ################################
+    ################################
+    # This block is not actually functional configuration,
+    # but serves to illustrate the available configuration
+    # options and document them in a way that is accessible
+    # to users that `kubectl edit` this config map.
+    #
+    # These sample configuration options may be copied out of
+    # this example block and unindented to be in the data block
+    # to actually change the configuration.
+    # lease-duration is how long non-leaders will wait to try to acquire the
+    # lock; 15 seconds is the value used by core kubernetes controllers.
+    lease-duration: "60s"
+    # renew-deadline is how long a leader will try to renew the lease before
+    # giving up; 10 seconds is the value used by core kubernetes controllers.
+    renew-deadline: "40s"
+    # retry-period is how long the leader election client waits between tries of
+    # actions; 2 seconds is the value used by core kubernetes controllers.
+    retry-period: "10s"
+    # buckets is the number of buckets used to partition key space of each
+    # Reconciler. If this number is M and the replica number of the controller
+    # is N, the N replicas will compete for the M buckets. The owner of a
+    # bucket will take care of the reconciling for the keys partitioned into
+    # that bucket.
+    buckets: "1"
+---
+# Copyright 2023 Tekton Authors LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: config-leader-election-events
+  namespace: tekton-pipelines
+  labels:
+    app.kubernetes.io/instance: default
+    app.kubernetes.io/part-of: tekton-pipelines
+data:
+  _example: |
+    ################################
+    ################################
+    # This block is not actually functional configuration,
+    # but serves to illustrate the available configuration
+    # options and document them in a way that is accessible
+    # to users that `kubectl edit` this config map.
+    #
+    # These sample configuration options may be copied out of
+    # this example block and unindented to be in the data block
+    # to actually change the configuration.
+    # lease-duration is how long non-leaders will wait to try to acquire the
+    # lock; 15 seconds is the value used by core kubernetes controllers.
+    lease-duration: "60s"
+    # renew-deadline is how long a leader will try to renew the lease before
+    # giving up; 10 seconds is the value used by core kubernetes controllers.
+    renew-deadline: "40s"
+    # retry-period is how long the leader election client waits between tries of
+    # actions; 2 seconds is the value used by core kubernetes controllers.
+    retry-period: "10s"
+    # buckets is the number of buckets used to partition key space of each
+    # Reconciler. If this number is M and the replica number of the controller
+    # is N, the N replicas will compete for the M buckets. The owner of a
+    # bucket will take care of the reconciling for the keys partitioned into
+    # that bucket.
+    buckets: "1"
+---
+# Copyright 2023 Tekton Authors LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: config-leader-election-webhook
+  namespace: tekton-pipelines
+  labels:
+    app.kubernetes.io/instance: default
+    app.kubernetes.io/part-of: tekton-pipelines
+data:
+  _example: |
+    ################################
+    ################################
+    # This block is not actually functional configuration,
+    # but serves to illustrate the available configuration
+    # options and document them in a way that is accessible
+    # to users that `kubectl edit` this config map.
+    #
+    # These sample configuration options may be copied out of
+    # this example block and unindented to be in the data block
+    # to actually change the configuration.
+    # lease-duration is how long non-leaders will wait to try to acquire the
+    # lock; 15 seconds is the value used by core kubernetes controllers.
+    lease-duration: "60s"
+    # renew-deadline is how long a leader will try to renew the lease before
+    # giving up; 10 seconds is the value used by core kubernetes controllers.
+    renew-deadline: "40s"
+    # retry-period is how long the leader election client waits between tries of
+    # actions; 2 seconds is the value used by core kubernetes controllers.
+    retry-period: "10s"
+    # buckets is the number of buckets used to partition key space of each
+    # Reconciler. If this number is M and the replica number of the controller
+    # is N, the N replicas will compete for the M buckets. The owner of a
+    # bucket will take care of the reconciling for the keys partitioned into
+    # that bucket.
+    buckets: "1"
+---
+# Copyright 2019 Tekton Authors LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: config-logging
+  namespace: tekton-pipelines
+  labels:
+    app.kubernetes.io/instance: default
+    app.kubernetes.io/part-of: tekton-pipelines
+data:
+  zap-logger-config: |
+    {
+      "level": "info",
+      "development": false,
+      "sampling": {
+        "initial": 100,
+        "thereafter": 100
+      },
+      "outputPaths": ["stdout"],
+      "errorOutputPaths": ["stderr"],
+      "encoding": "json",
+      "encoderConfig": {
+        "timeKey": "timestamp",
+        "levelKey": "severity",
+        "nameKey": "logger",
+        "callerKey": "caller",
+        "messageKey": "message",
+        "stacktraceKey": "stacktrace",
+        "lineEnding": "",
+        "levelEncoder": "",
+        "timeEncoder": "iso8601",
+        "durationEncoder": "",
+        "callerEncoder": ""
+      }
+    }
+  # Log level overrides
+  loglevel.controller: "info"
+  loglevel.webhook: "info"
+---
+# Copyright 2019 The Tekton Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: config-observability
+  namespace: tekton-pipelines
+  labels:
+    app.kubernetes.io/instance: default
+    app.kubernetes.io/part-of: tekton-pipelines
+data:
+  metrics-protocol: prometheus
+  _example: |
+    ################################
+    ################################
+
+    # This block is not actually functional configuration,
+    # but serves to illustrate the available configuration
+    # options and document them in a way that is accessible
+    # to users that `kubectl edit` this config map.
+    #
+    # These sample configuration options may be copied out of
+    # this example block and unindented to be in the data block
+    # to actually change the configuration.
+
+    # OpenTelemetry Metrics Configuration
+    # Protocol for metrics export (prometheus, grpc, http/protobuf, none)
+    # Default if not specified: "none"
+    metrics-protocol: prometheus
+
+    # Metrics endpoint (for grpc/http protocols)
+    # Default: empty (uses default OTLP endpoint)
+    metrics-endpoint: ""
+
+    # Metrics export interval (e.g., "30s", "1m")
+    # Default: empty (uses default interval)
+    metrics-export-interval: ""
+
+    # OpenTelemetry Tracing Configuration
+    # Protocol for tracing export (grpc, http/protobuf, none, stdout)
+    # Default: none
+    tracing-protocol: none
+
+    # Tracing endpoint (for grpc/http protocols)
+    # Default: empty
+    tracing-endpoint: ""
+
+    # Tracing sampling rate (0.0 to 1.0)
+    # Default: 1.0 (100% sampling)
+    tracing-sampling-rate: "1.0"
+
+    # Runtime Configuration
+    # Enable profiling (enabled, disabled)
+    # Default: disabled
+    runtime-profiling: disabled
+
+    # Runtime export interval (e.g., "15s")
+    # Default: 15s
+    runtime-export-interval: "15s"
+
+    # Note: Legacy OpenCensus configuration (metrics.backend-destination, etc.) has been
+    # removed as OpenCensus support is no longer provided by the underlying infrastructure.
+    # Please use the OpenTelemetry configuration options above.
+
+    # Tekton-specific metrics configuration
+    metrics.taskrun.level: "task"
+    metrics.taskrun.duration-type: "histogram"
+    metrics.pipelinerun.level: "pipeline"
+    metrics.pipelinerun.duration-type: "histogram"
+    metrics.count.enable-reason: "false"
+    metrics.running-pipelinerun.level: ""
+---
+# Copyright 2020 Tekton Authors LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: config-registry-cert
+  namespace: tekton-pipelines
+  labels:
+    app.kubernetes.io/instance: default
+    app.kubernetes.io/part-of: tekton-pipelines
+# data:
+#  # Registry's self-signed certificate
+#  cert: |
+---
+# Copyright 2022 The Tekton Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: config-spire
+  namespace: tekton-pipelines
+  labels:
+    app.kubernetes.io/instance: default
+    app.kubernetes.io/part-of: tekton-pipelines
+data:
+  _example: |
+    ################################
+    ################################
+    # This block is not actually functional configuration,
+    # but serves to illustrate the available configuration
+    # options and document them in a way that is accessible
+    # to users that `kubectl edit` this config map.
+    #
+    # These sample configuration options may be copied out of
+    # this example block and unindented to be in the data block
+    # to actually change the configuration.
+    #
+    # spire-trust-domain specifies the SPIRE trust domain to use.
+    # spire-trust-domain: "example.org"
+    #
+    # spire-socket-path specifies the SPIRE agent socket for SPIFFE workload API.
+    # spire-socket-path: "unix:///spiffe-workload-api/spire-agent.sock"
+    #
+    # spire-server-addr specifies the SPIRE server address for workload/node registration.
+    # spire-server-addr: "spire-server.spire.svc.cluster.local:8081"
+    #
+    # spire-node-alias-prefix specifies the SPIRE node alias prefix to use.
+    # spire-node-alias-prefix: "/tekton-node/"
+---
+# Copyright 2023 The Tekton Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# NOTE: Exported traces may include Kubernetes resource identifiers (e.g. TaskRun/PipelineRun
+# names and namespaces) as span attributes. Treat the trace backend as a trusted observability
+# system. See docs/developers/tracing.md for details.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: config-tracing
+  namespace: tekton-pipelines
+  labels:
+    app.kubernetes.io/instance: default
+    app.kubernetes.io/part-of: tekton-pipelines
+data:
+  _example: |
+    ################################
+    ################################
+    # This block is not actually functional configuration,
+    # but serves to illustrate the available configuration
+    # options and document them in a way that is accessible
+    # to users that `kubectl edit` this config map.
+    #
+    # These sample configuration options may be copied out of
+    # this example block and unindented to be in the data block
+    # to actually change the configuration.
+    #
+    # Enable sending traces to defined endpoint by setting this to true
+    enabled: "true"
+    #
+    # API endpoint to send the traces to
+    # (optional): The default value is given below
+    endpoint: "http://jaeger-collector.jaeger.svc.cluster.local:4318/v1/traces"
+    # (optional) Name of the k8s secret which contains basic auth credentials
+    credentialsSecret: "jaeger-creds"
+---
+# Copyright 2025 The Tekton Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# This ConfigMap allows cluster operators to configure the exponential backoff
+# parameters used by Tekton Pipelines when retrying Kubernetes API operations,
+# such as creating TaskRuns or CustomRuns. Adjusting these values can help
+# tune retry behavior in response to webhook timeouts or transient errors.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: config-wait-exponential-backoff
+  namespace: tekton-pipelines
+  labels:
+    app.kubernetes.io/instance: default
+    app.kubernetes.io/part-of: tekton-pipelines
+data:
+  duration: "10s" # The initial duration before the first retry (Go duration string, e.g. "1s").
+  factor: "2.0" # The factor by which the duration increases after each retry (should not be negative).
+  jitter: "0.0" # Jitter factor (0.0 = no jitter, 0.2 = up to 20% random additional wait).
+  steps: "5" # The number of times the duration may change (number of backoff steps).
+  cap: "60s" # The maximum duration between retries (Go duration string, e.g. "30s").
+---
+# Copyright 2022 The Tekton Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: bundleresolver-config
+  namespace: tekton-pipelines-resolvers
+  labels:
+    app.kubernetes.io/component: resolvers
+    app.kubernetes.io/instance: default
+    app.kubernetes.io/part-of: tekton-pipelines
+data:
+  # the default service account name to use for bundle requests.
+  default-service-account: "default"
+  # The default layer kind in the bundle image.
+  default-kind: "task"
+  # Optional: Default cache mode for this resolver. Valid values: "always", "never", "auto" (default: "auto")
+  # "always" - Always cache resolved resources
+  # "never"  - Never cache resolved resources
+  # "auto"   - Only cache bundles with digest references (@sha256:...)
+  # default-cache-mode: "auto"
+---
+# Copyright 2022 The Tekton Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cluster-resolver-config
+  namespace: tekton-pipelines-resolvers
+  labels:
+    app.kubernetes.io/component: resolvers
+    app.kubernetes.io/instance: default
+    app.kubernetes.io/part-of: tekton-pipelines
+data:
+  # The default kind to fetch.
+  default-kind: "task"
+  # The default namespace to look for resources in.
+  default-namespace: ""
+  # An optional comma-separated list of namespaces which the resolver is allowed to access. Defaults to empty, meaning all namespaces are allowed.
+  allowed-namespaces: ""
+  # An optional comma-separated list of namespaces which the resolver is blocked from accessing. Defaults to empty, meaning all namespaces are allowed.
+  blocked-namespaces: ""
+  # Optional: Default cache mode for this resolver. Valid values: "always", "never", "auto" (default: "auto")
+  # "always" - Always cache resolved resources
+  # "never"  - Never cache resolved resources (recommended for cluster resolver since resources are mutable)
+  # "auto"   - Never cache for cluster resolver (same as "never")
+  # default-cache-mode: "auto"
+---
+# Copyright 2019 The Tekton Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: resolvers-feature-flags
+  namespace: tekton-pipelines-resolvers
+  labels:
+    app.kubernetes.io/component: resolvers
+    app.kubernetes.io/instance: default
+    app.kubernetes.io/part-of: tekton-pipelines
+data:
+  # Setting this flag to "true" enables remote resolution of Tekton OCI bundles.
+  enable-bundles-resolver: "true"
+  # Setting this flag to "true" enables remote resolution of tasks and pipelines via the Tekton Hub.
+  enable-hub-resolver: "true"
+  # Setting this flag to "true" enables remote resolution of tasks and pipelines from Git repositories.
+  enable-git-resolver: "true"
+  # Setting this flag to "true" enables remote resolution of tasks and pipelines from other namespaces within the cluster.
+  enable-cluster-resolver: "true"
+  # Setting this flag to "true" enables remote resolution of tasks and pipelines from HTTP URLs.
+  enable-http-resolver: "true"
+---
+# Copyright 2020 Tekton Authors LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: config-leader-election-resolvers
+  namespace: tekton-pipelines-resolvers
+  labels:
+    app.kubernetes.io/component: resolvers
+    app.kubernetes.io/instance: default
+    app.kubernetes.io/part-of: tekton-pipelines
+data:
+  _example: |
+    ################################
+    ################################
+    # This block is not actually functional configuration,
+    # but serves to illustrate the available configuration
+    # options and document them in a way that is accessible
+    # to users that `kubectl edit` this config map.
+    #
+    # These sample configuration options may be copied out of
+    # this example block and unindented to be in the data block
+    # to actually change the configuration.
+    # lease-duration is how long non-leaders will wait to try to acquire the
+    # lock; 15 seconds is the value used by core kubernetes controllers.
+    lease-duration: "60s"
+    # renew-deadline is how long a leader will try to renew the lease before
+    # giving up; 10 seconds is the value used by core kubernetes controllers.
+    renew-deadline: "40s"
+    # retry-period is how long the leader election client waits between tries of
+    # actions; 2 seconds is the value used by core kubernetes controllers.
+    retry-period: "10s"
+    # buckets is the number of buckets used to partition key space of each
+    # Reconciler. If this number is M and the replica number of the controller
+    # is N, the N replicas will compete for the M buckets. The owner of a
+    # bucket will take care of the reconciling for the keys partitioned into
+    # that bucket.
+    buckets: "1"
+---
+# Copyright 2019 Tekton Authors LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: config-logging
+  namespace: tekton-pipelines-resolvers
+  labels:
+    app.kubernetes.io/component: resolvers
+    app.kubernetes.io/instance: default
+    app.kubernetes.io/part-of: tekton-pipelines
+data:
+  zap-logger-config: |
+    {
+      "level": "info",
+      "development": false,
+      "sampling": {
+        "initial": 100,
+        "thereafter": 100
+      },
+      "outputPaths": ["stdout"],
+      "errorOutputPaths": ["stderr"],
+      "encoding": "json",
+      "encoderConfig": {
+        "timeKey": "timestamp",
+        "levelKey": "severity",
+        "nameKey": "logger",
+        "callerKey": "caller",
+        "messageKey": "message",
+        "stacktraceKey": "stacktrace",
+        "lineEnding": "",
+        "levelEncoder": "",
+        "timeEncoder": "iso8601",
+        "durationEncoder": "",
+        "callerEncoder": ""
+      }
+    }
+  # Log level overrides
+  loglevel.controller: "info"
+  loglevel.webhook: "info"
+---
+# Copyright 2022 The Tekton Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: config-observability
+  namespace: tekton-pipelines-resolvers
+  labels:
+    app.kubernetes.io/component: resolvers
+    app.kubernetes.io/instance: default
+    app.kubernetes.io/part-of: tekton-pipelines
+data:
+  metrics-protocol: prometheus
+  _example: |
+    ################################
+    ################################
+
+    # This block is not actually functional configuration,
+    # but serves to illustrate the available configuration
+    # options and document them in a way that is accessible
+    # to users that `kubectl edit` this config map.
+    #
+    # These sample configuration options may be copied out of
+    # this example block and unindented to be in the data block
+    # to actually change the configuration.
+
+    # OpenTelemetry Metrics Configuration
+    # Protocol for metrics export (prometheus, grpc, http/protobuf, none)
+    # Default if not specified: "none"
+    metrics-protocol: prometheus
+
+    # Metrics endpoint (for grpc/http protocols)
+    # Default: empty (uses default OTLP endpoint)
+    metrics-endpoint: ""
+
+    # Metrics export interval (e.g., "30s", "1m")
+    # Default: empty (uses default interval)
+    metrics-export-interval: ""
+
+    # OpenTelemetry Tracing Configuration
+    # Protocol for tracing export (grpc, http/protobuf, none, stdout)
+    # Default: none
+    tracing-protocol: none
+
+    # Tracing endpoint (for grpc/http protocols)
+    # Default: empty
+    tracing-endpoint: ""
+
+    # Tracing sampling rate (0.0 to 1.0)
+    # Default: 1.0 (100% sampling)
+    tracing-sampling-rate: "1.0"
+
+    # Runtime Configuration
+    # Enable profiling (enabled, disabled)
+    # Default: disabled
+    runtime-profiling: disabled
+
+    # Runtime export interval (e.g., "15s")
+    # Default: 15s
+    runtime-export-interval: "15s"
+
+    # Note: Legacy OpenCensus configuration (metrics.backend-destination, etc.) has been
+    # removed as OpenCensus support is no longer provided by the underlying infrastructure.
+    # Please use the OpenTelemetry configuration options above.
+---
+# Copyright 2022 The Tekton Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: git-resolver-config
+  namespace: tekton-pipelines-resolvers
+  labels:
+    app.kubernetes.io/component: resolvers
+    app.kubernetes.io/instance: default
+    app.kubernetes.io/part-of: tekton-pipelines
+data:
+  # The maximum amount of time a single anonymous cloning resolution may take.
+  fetch-timeout: "1m"
+  # The git url to fetch the remote resource from when using anonymous cloning.
+  default-url: "https://github.com/tektoncd/catalog.git"
+  # The git revision to fetch the remote resource from with either anonymous cloning or the authenticated API.
+  default-revision: "main"
+  # The SCM type to use with the authenticated API. Can be github, gitlab, gitea, bitbucketserver, bitbucketcloud
+  scm-type: "github"
+  # The SCM server URL to use with the authenticated API. Not needed when using github.com, gitlab.com, or BitBucket Cloud
+  server-url: ""
+  # The Kubernetes secret containing the API token for the SCM provider. Required when using the authenticated API.
+  api-token-secret-name: ""
+  # The key in the API token secret containing the actual token. Required when using the authenticated API.
+  api-token-secret-key: ""
+  # The namespace containing the API token secret. Defaults to "default".
+  api-token-secret-namespace: "default"
+  # The default organization to look for repositories under when using the authenticated API,
+  # if not specified in the resolver parameters. Optional.
+  default-org: ""
+  # Optional: Default cache mode for this resolver. Valid values: "always", "never", "auto" (default: "auto")
+  # "always" - Always cache resolved resources
+  # "never"  - Never cache resolved resources
+  # "auto"   - Only cache when revision is a commit hash
+  # default-cache-mode: "auto"
+  # Optional: Backoff configuration for retrying failed git resolution requests.
+  # These settings control the exponential backoff behavior when transient errors occur.
+  # backoff-duration: "2s"
+  # backoff-factor: "2.0"
+  # backoff-jitter: "0.1"
+  # backoff-steps: "2"  # total number of resolution attempts (must be >= 1)
+  # backoff-cap: "10s"
+---
+# Copyright 2023 The Tekton Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: http-resolver-config
+  namespace: tekton-pipelines-resolvers
+  labels:
+    app.kubernetes.io/component: resolvers
+    app.kubernetes.io/instance: default
+    app.kubernetes.io/part-of: tekton-pipelines
+data:
+  # The maximum amount of time the http resolver will wait for a response from the server.
+  fetch-timeout: "1m"
+---
+# Copyright 2022 The Tekton Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: hubresolver-config
+  namespace: tekton-pipelines-resolvers
+  labels:
+    app.kubernetes.io/component: resolvers
+    app.kubernetes.io/instance: default
+    app.kubernetes.io/part-of: tekton-pipelines
+data:
+  # the default Tekton Hub catalog from where to pull the resource.
+  default-tekton-hub-catalog: "Tekton"
+  # the default Artifact Hub Task catalog from where to pull the resource.
+  default-artifact-hub-task-catalog: "tekton-catalog-tasks"
+  # the default Artifact Hub Pipeline catalog from where to pull the resource.
+  default-artifact-hub-pipeline-catalog: "tekton-catalog-pipelines"
+  # the default layer kind in the hub image.
+  default-kind: "task"
+  # the default hub source to pull the resource from.
+  default-type: "artifact"
+  # Ordered list of Artifact Hub API URLs to try. First successful response wins.
+  # If not set, the ARTIFACT_HUB_API env var or default (https://artifacthub.io) is used.
+  # URLs must use http or https scheme.
+  # artifact-hub-urls: |
+  # Ordered list of Tekton Hub API URLs to try. First successful response wins.
+  # If not set, the TEKTON_HUB_API env var is used.
+  # URLs must use http or https scheme.
+  # tekton-hub-urls: |
+---
+# Copyright 2025 The Tekton Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: resolver-cache-config
+  namespace: tekton-pipelines-resolvers
+  labels:
+    app.kubernetes.io/component: resolvers
+    app.kubernetes.io/instance: default
+    app.kubernetes.io/part-of: tekton-pipelines
+data:
+  # Maximum number of entries in the resolver cache
+  max-size: "1000"
+  # Time-to-live for cache entries (examples: 5m, 10m, 1h)
+  ttl: "5m"

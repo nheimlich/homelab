@@ -1,0 +1,17 @@
+---
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingWebhookConfiguration
+metadata:
+  name: validation.pipelinesascode.tekton.dev
+  labels:
+    app.kubernetes.io/version: "v0.50.0"
+    app.kubernetes.io/part-of: pipelines-as-code
+webhooks:
+  - admissionReviewVersions: ["v1"]
+    clientConfig:
+      service:
+        name: pipelines-as-code-webhook
+        namespace: pipelines-as-code
+    failurePolicy: Fail
+    sideEffects: None
+    name: validation.pipelinesascode.tekton.dev

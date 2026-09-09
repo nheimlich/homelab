@@ -1,0 +1,191 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: chains-config
+  namespace: tekton-chains
+  labels:
+    app.kubernetes.io/instance: default
+    app.kubernetes.io/part-of: tekton-chains
+# The data can be tweaked at install time, it is commented out
+# because these are the default settings.
+# data:
+# storage.oci.encoding-format controls the on-disk format used by the OCI storage backend.
+---
+# Copyright 2022 The Tekton Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: chains-info
+  namespace: tekton-chains
+  labels:
+    app.kubernetes.io/instance: default
+    app.kubernetes.io/part-of: tekton-chains
+data:
+  # Contains chains version which can be queried by external
+  # tools such as CLI. Elevated permissions are given to
+  # this ConfigMap such that even if we don't have access to
+  # other resources in the namespace, we can still access
+  # this ConfigMap.
+  version: "v0.29.0"
+---
+# Copyright 2023 Tekton Authors LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: tekton-chains-config-leader-election
+  namespace: tekton-chains
+  labels:
+    app.kubernetes.io/instance: default
+    app.kubernetes.io/part-of: tekton-chains
+data:
+  _example: |
+    ################################
+    ################################
+    # This block is not actually functional configuration,
+    # but serves to illustrate the available configuration
+    # options and document them in a way that is accessible
+    # to users that `kubectl edit` this config map.
+    #
+    # These sample configuration options may be copied out of
+    # this example block and unindented to be in the data block
+    # to actually change the configuration.
+    # lease-duration is how long non-leaders will wait to try to acquire the
+    # lock; 15 seconds is the value used by core kubernetes controllers.
+    lease-duration: "60s"
+    # renew-deadline is how long a leader will try to renew the lease before
+    # giving up; 10 seconds is the value used by core kubernetes controllers.
+    renew-deadline: "40s"
+    # retry-period is how long the leader election client waits between tries of
+    # actions; 2 seconds is the value used by core kubernetes controllers.
+    retry-period: "10s"
+    # buckets is the number of buckets used to partition key space of each
+    # Reconciler. If this number is M and the replica number of the controller
+    # is N, the N replicas will compete for the M buckets. The owner of a
+    # bucket will take care of the reconciling for the keys partitioned into
+    # that bucket.
+    buckets: "1"
+---
+# Copyright 2019 Tekton Authors LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: config-logging
+  namespace: tekton-chains
+  labels:
+    app.kubernetes.io/instance: default
+    app.kubernetes.io/part-of: tekton-chains
+data:
+  # Common configuration for all knative codebase
+  zap-logger-config: |
+    {
+      "level": "info",
+      "development": false,
+      "sampling": {
+        "initial": 100,
+        "thereafter": 100
+      },
+      "outputPaths": ["stdout"],
+      "errorOutputPaths": ["stderr"],
+      "encoding": "json",
+      "encoderConfig": {
+        "timeKey": "ts",
+        "levelKey": "level",
+        "nameKey": "logger",
+        "callerKey": "caller",
+        "messageKey": "msg",
+        "stacktraceKey": "stacktrace",
+        "lineEnding": "",
+        "levelEncoder": "",
+        "timeEncoder": "iso8601",
+        "durationEncoder": "",
+        "callerEncoder": ""
+      }
+    }
+  # Log level overrides
+  loglevel.controller: "info"
+  loglevel.webhook: "info"
+---
+# Copyright 2023 Tekton Authors LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: tekton-chains-config-observability
+  namespace: tekton-chains
+  labels:
+    app.kubernetes.io/instance: default
+    app.kubernetes.io/part-of: tekton-chains
+data:
+  # metrics-protocol specifies the OpenTelemetry export protocol for metrics.
+  # Supported values: prometheus (default), grpc, http/protobuf, none.
+  metrics-protocol: prometheus
+  _example: |
+    ################################
+    ################################
+    # This block is not actually functional configuration,
+    # but serves to illustrate the available configuration
+    # options and document them in a way that is accessible
+    # to users that `kubectl edit` this config map.
+    #
+    # These sample configuration options may be copied out of
+    # this example block and unindented to be in the data block
+    # to actually change the configuration.
+    #
+    # metrics-protocol specifies the OpenTelemetry export protocol.
+    # Supported values: prometheus (default), grpc, http/protobuf, none.
+    #
+    metrics-protocol: prometheus
+    #
+    # metrics-endpoint is the OTLP collector endpoint to send metrics to.
+    # Required when metrics-protocol is grpc or http/protobuf.
+    #
+    metrics-endpoint: "otel-collector.observability.svc.cluster.local:4317"
+    #
+    # metrics-export-interval is the interval at which metrics are exported.
+    # Uses Go duration format (e.g. 30s, 1m). Defaults to 30s.
+    #
+    metrics-export-interval: 30s

@@ -1,0 +1,29 @@
+global:
+  spire:
+    trustDomain: nhlabs.org
+    clusterName: homelab
+    recommendations:
+      enabled: true
+      namespaceLayout: true
+      namespacePSS: true
+      priorityClassName: true
+      strictMode: false
+      securityContexts: true
+      prometheus: true
+
+spire-server:
+  enabled: true
+  kind: statefulset
+  controllerManager:
+    enabled: true
+  externalControllerManagers:
+    enabled: true
+
+spire-agent:
+  enabled: true
+
+spiffe-csi-driver:
+  enabled: true
+
+spiffe-oidc-discovery-provider:
+  enabled: true

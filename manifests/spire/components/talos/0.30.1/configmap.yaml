@@ -1,0 +1,281 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: spire-spiffe-oidc-discovery-provider
+  namespace: spire-server
+data:
+  oidc-discovery-provider.conf: |
+    {
+      "domains": [
+        "spire-spiffe-oidc-discovery-provider",
+        "spire-spiffe-oidc-discovery-provider.spire-server",
+        "spire-spiffe-oidc-discovery-provider.spire-server.svc.cluster.local",
+        "oidc-discovery.nhlabs.org"
+      ],
+      "health_checks": {
+        "bind_port": "8008",
+        "live_path": "/live",
+        "ready_path": "/ready"
+      },
+      "jwt_issuer": "https://oidc-discovery.nhlabs.org",
+      "log_format": "text",
+      "log_level": "info",
+      "serving_cert_file": {
+        "addr": ":8443",
+        "cert_file_path": "/certs/tls.crt",
+        "key_file_path": "/certs/tls.key"
+      },
+      "workload_api": {
+        "socket_path": "/spiffe-workload-api/spire-agent.sock",
+        "trust_domain": "nhlabs.org"
+      }
+    }
+  spiffe-helper.conf: |
+    agent_address = "/spiffe-workload-api/spire-agent.sock"
+    cert_dir = "/certs"
+    svid_file_name = "tls.crt"
+    svid_key_file_name = "tls.key"
+    svid_bundle_file_name = "ca.pem"
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: "spire-agent"
+  namespace: "spire-system"
+data:
+  agent.conf: |
+    {
+      "agent": {
+        "data_dir": "/var/lib/spire",
+        "log_format": "text",
+        "log_level": "info",
+        "rebootstrap_delay": "10m",
+        "rebootstrap_mode": "always",
+        "server_address": "spire-server.spire-server",
+        "server_port": "443",
+        "socket_path": "/tmp/spire-agent/public/spire-agent.sock",
+        "trust_bundle_format": "spiffe",
+        "trust_bundle_path": "/run/spire/bundle/bundle.spiffe",
+        "trust_domain": "nhlabs.org"
+      },
+      "health_checks": {
+        "bind_address": "0.0.0.0",
+        "bind_port": "9982",
+        "listener_enabled": true,
+        "live_path": "/live",
+        "ready_path": "/ready"
+      },
+      "plugins": {
+        "KeyManager": [
+          {
+            "memory": {
+              "plugin_data": null
+            }
+          }
+        ],
+        "NodeAttestor": [
+          {
+            "k8s_psat": {
+              "plugin_data": {
+                "cluster": "homelab"
+              }
+            }
+          }
+        ],
+        "WorkloadAttestor": [
+          {
+            "k8s": {
+              "plugin_data": {
+                "disable_container_selectors": false,
+                "skip_kubelet_verification": true,
+                "use_new_container_locator": true,
+                "verbose_container_locator_logs": false
+              }
+            }
+          }
+        ]
+      },
+      "telemetry": [
+        {
+          "Prometheus": [
+            {
+              "host": "0.0.0.0",
+              "port": 9988
+            }
+          ]
+        }
+      ]
+    }
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: spire-server
+  namespace: spire-server
+data:
+  server.conf: |
+    {
+      "health_checks": {
+        "bind_address": "0.0.0.0",
+        "bind_port": "8080",
+        "listener_enabled": true,
+        "live_path": "/live",
+        "ready_path": "/ready"
+      },
+      "plugins": {
+        "BundlePublisher": [
+          {
+            "k8s_configmap": {
+              "plugin_data": {
+                "clusters": [
+                  {
+                    "chart-internal": {
+                      "configmap_key": "bundle.spiffe",
+                      "configmap_name": "spire-bundle",
+                      "format": "spiffe",
+                      "namespace": "spire-system"
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        ],
+        "DataStore": [
+          {
+            "sql": {
+              "plugin_data": {
+                "connection_string": "/run/spire/data/datastore.sqlite3",
+                "database_type": "sqlite3",
+                "disable_migration": false,
+                "max_idle_conns": 2,
+                "max_open_conns": 100
+              }
+            }
+          }
+        ],
+        "KeyManager": [
+          {
+            "disk": {
+              "plugin_data": {
+                "keys_path": "/run/spire/data/keys.json"
+              }
+            }
+          }
+        ],
+        "NodeAttestor": [
+          {
+            "k8s_psat": {
+              "plugin_data": {
+                "clusters": [
+                  {
+                    "homelab": {
+                      "allowed_node_label_keys": [],
+                      "allowed_pod_label_keys": [],
+                      "audience": [
+                        "spire-server"
+                      ],
+                      "service_account_allow_list": [
+                        "spire-system:spire-agent"
+                      ]
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "server": {
+        "audit_log_enabled": false,
+        "bind_address": "0.0.0.0",
+        "bind_port": "8081",
+        "ca_key_type": "rsa-2048",
+        "ca_subject": [
+          {
+            "common_name": "example.org",
+            "country": [
+              "ARPA"
+            ],
+            "organization": [
+              "Example"
+            ]
+          }
+        ],
+        "ca_ttl": "24h",
+        "data_dir": "/run/spire/data",
+        "default_jwt_svid_ttl": "1h",
+        "default_x509_svid_ttl": "4h",
+        "disable_jwt_svids": false,
+        "jwt_issuer": "https://oidc-discovery.nhlabs.org",
+        "log_format": "text",
+        "log_level": "info",
+        "ratelimit": {
+          "attestation": true,
+          "signing": true
+        },
+        "trust_domain": "nhlabs.org"
+      },
+      "telemetry": [
+        {
+          "Prometheus": [
+            {
+              "host": "0.0.0.0",
+              "port": 9988
+            }
+          ]
+        }
+      ]
+    }
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: spire-controller-manager
+  namespace: spire-server
+data:
+  controller-manager-config.yaml: |
+
+    apiVersion: spire.spiffe.io/v1alpha1
+    kind: ControllerManagerConfig
+    metadata:
+      name: spire-controller-manager
+      namespace: spire-server
+      labels:
+        app.kubernetes.io/name: server
+        app.kubernetes.io/instance: spire
+        app.kubernetes.io/version: "1.15.3"
+    metrics:
+      bindAddress: 0.0.0.0:8082
+    health:
+      healthProbeBindAddress: 0.0.0.0:8083
+    gcInterval: 1e+10
+    logLevel: info
+    logEncoding: console
+    leaderElection:
+      leaderElect: true
+      resourceName: edb05a13.spiffe.io
+      resourceNamespace: spire-server
+      leaseDuration: 15s
+      renewDeadline: 10s
+      retryPeriod: 2s
+    validatingWebhookConfigurationName: spire-system-spire-controller-manager-webhook
+    entryIDPrefix: homelab
+    clusterName: homelab
+    trustDomain: nhlabs.org
+    ignoreNamespaces:
+      - kube-system
+      - kube-public
+      - local-path-storage
+      - openshift-.*
+      - ibm-.*
+    spireServerSocketPath: "/tmp/spire-server/private/api.sock"
+    className: "spire-system-spire"
+    watchClassless: false
+    filterByClassName: false
+    parentIDTemplate: "spiffe://{{ .TrustDomain }}/spire/agent/k8s_psat/{{ .ClusterName }}/{{ .NodeMeta.UID }}"
+    reconcile:
+      clusterSPIFFEIDs: true
+      clusterStaticEntries: true
+      clusterFederatedTrustDomains: true

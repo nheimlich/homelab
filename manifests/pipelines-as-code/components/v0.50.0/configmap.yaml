@@ -1,0 +1,407 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: pac-config-logging
+  namespace: pipelines-as-code
+  labels:
+    app.kubernetes.io/instance: default
+    app.kubernetes.io/part-of: pipelines-as-code
+data:
+  zap-logger-config: |
+    {
+      "level": "info",
+      "development": false,
+      "sampling": {
+        "initial": 100,
+        "thereafter": 100
+      },
+      "outputPaths": ["stdout"],
+      "errorOutputPaths": ["stderr"],
+      "encoding": "json",
+      "encoderConfig": {
+        "timeKey": "ts",
+        "levelKey": "level",
+        "nameKey": "logger",
+        "callerKey": "caller",
+        "messageKey": "msg",
+        "stacktraceKey": "stacktrace",
+        "lineEnding": "",
+        "levelEncoder": "",
+        "timeEncoder": "iso8601",
+        "durationEncoder": "",
+        "callerEncoder": ""
+      }
+    }
+  # Log level overrides
+  loglevel.pipelinesascode: "info"
+  loglevel.pac-watcher: "info"
+  loglevel.pipelines-as-code-webhook: "info"
+---
+# Copyright 2026 Red Hat
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# See https://pipelinesascode.com/docs/install/settings/ for the complete
+# documentation of all settings.
+apiVersion: v1
+data:
+  # The application name, you can customize this label. If using the Github App you will need to customize the label on the github app setting as well.
+  application-name: "Pipelines as Code CI"
+  # Whether to automatically create a secret with the token to be use by git-clone
+  secret-auto-create: "true"
+  # By default we only generate token scoped to the repository from where the
+  # payload come from.
+  # We do this because if the github apps is installed on an github organisation
+  #
+  # and there is a mix of public and private repositories in there
+  # where some users on that org does not have access.
+  #
+  # If you trust every users on your organisations to access any repos there or
+  # not planning to install your github application globally on a Github Organisation
+  # then you can safely set this option to false.
+  secret-github-app-token-scoped: "true"
+  # If you don't want to completely disable the scoping of the token, but still
+  # wants some other repos (on the same installation id) available from the
+  # token, then you can add an extra owner/repo here.
+  #
+  # You can have multiple owner/repositories separated by commas:
+  # i.e: "owner/private-repo1, org/repo2"
+  secret-github-app-scope-extra-repos: ""
+  # The default hub API url to use, by default it is Artifact Hub's API.
+  hub-url: "https://artifacthub.io"
+  # Additional Hub Catalogs are supported, for example:
+  #
+  # catalog-1-id: custom
+  # catalog-1-name: tekton
+  # catalog-1-url: https://api.custom.hub
+  #
+  # With this configuration, a catalog named "custom" will be available at
+  # https://api.custom.hub, using the catalog named "tekton". Users can
+  # reference these catalogs in their templates like this:
+  #
+  # pipelinesascode.tekton.dev/task: "custom://task"
+  #
+  # Increase the number of the catalogs to add more of them. catalog-2-*,
+  # catalog-3-*, etc.
+  # Allow fetching remote tasks
+  remote-tasks: "true"
+  # Using the URL of the Tekton dashboard, Pipelines-as-Code generates a URL to the
+  # PipelineRun on the Tekton dashboard
+  tekton-dashboard-url: ""
+  # Enable or disable the feature to show a log snippet of the failed task when there is
+  # an error in a Pipeline. The number of lines shown is controlled by the
+  # error-log-snippet-number-of-lines setting below.
+  #
+  # You may want to disable this if you think your pipeline may leak sensitive values.
+  error-log-snippet: "true"
+  # The number of lines to display in error log snippets, when `error-log-snippet` is
+  # set to "true".
+  # The GitHub Check interface (via the GitHub App) has a 65,535 character limit,
+  # so consider using a conservative value for this setting.
+  error-log-snippet-number-of-lines: "3"
+  # Enable or disable the inspection of container logs to detect error message
+  # and expose them as annotations on Pull Request. Only Github apps is supported
+  error-detection-from-container-logs: "true"
+  # How many lines to grab from the container when inspecting the
+  # logs for error-detection. Increasing this value may increase the watcher
+  # memory usage.  Use -1 for unlimited lines.
+  error-detection-max-number-of-lines: "50"
+  # The default regexp used when we use the simple error detection
+  error-detection-simple-regexp: |-
+    ^(?P<filename>[^:]*):(?P<line>[0-9]+):(?P<column>[0-9]+)?([ ]*)?(?P<error>.*)
+
+  # Global setting to control whether Pipelines-as-Code should automatically cancel
+  # any in-progress PipelineRuns associated with a pull request when that pull request is updated.
+  # This helps prevent multiple redundant runs from executing simultaneously.
+  # Default value: false.
+  enable-cancel-in-progress-on-pull-requests: "false"
+  # Global setting to determine whether Pipelines-as-Code should automatically cancel
+  # in-progress PipelineRuns triggered by a push event, if a new push occurs on the same branch.
+  # This prevents overlapping or redundant runs for the same branch.
+  # Default value: false.
+  enable-cancel-in-progress-on-push: "false"
+  # Since public bitbucket doesn't have the concept of Secret, we need to be
+  # able to secure the request by querying https://ip-ranges.atlassian.com/,
+  # this only happen for public bitbucket (ie: when provider.url is not set in
+  # repository spec). If you want to override this, you need to bear in mind
+  # this could be a security issue, a malicious user can send a PR to your repo
+  # with a modification to your PipelineRun that would grab secrets, tunnel or
+  # others and then send a malicious webhook payload to the controller which
+  # look like a authorized owner has send the PR to run it..
+  bitbucket-cloud-check-source-ip: "true"
+  # Add extra IPS (ie: 127.0.0.1) or networks (127.0.0.0/16) separated by commas.
+  bitbucket-cloud-additional-source-ip: ""
+  # max-keep-run-upper-limit defines the upper limit for max-keep-run annotation
+  # value which a user can set on pipelineRun. the value set on annotation
+  # should be less than or equal to the upper limit otherwise the upper limit
+  # will be used while cleaning up
+  max-keep-run-upper-limit: ""
+  # if defined then applies to all pipelineRun who doesn't have max-keep-runs annotation
+  default-max-keep-runs: ""
+  # Whether to auto configure newly created repositories, this will create a new
+  # namespace and repository CR, supported only with GitHub App
+  auto-configure-new-github-repo: "false"
+  # Add a template to generate the name for a Repository CR for an auto-configured
+  # GitHub repository. Supported fields are `repo_owner` and `repo_name`. e.g.,
+  # if defined as `{{repo_owner}}-{{repo_name}}-repo-cr`, the generated CR name for
+  # https://github.com/owner/test will be `owner-test-repo-cr`
+  auto-configure-repo-namespace-template: ""
+  # add a template to generate name for repository for your auto configured
+  # github repo. supported fields are repo_owner, repo_name eg. if defined as
+  # `{{repo_owner}}-{{repo_name}}-repo-cr`, then repository CR generated for  git repository
+  # https://github.com/owner/test will be `owner-test-repo-cr`
+  auto-configure-repo-repository-template: ""
+  # Enable or disable the feature to rerun the CI if push event happens on
+  # a pull request
+  #
+  # By default it is true and CI will be re-run in case of push/amend on the
+  # pull request if ok-to-test is done once
+  #
+  # you may want to disable this if ok-to-test should be done on each iteration
+  remember-ok-to-test: "false"
+  # require-ok-to-test-sha enforces that a pull request's commit SHA must be specified
+  # in an `/ok-to-test` comment. This prevents a race condition where a malicious
+  # user could push a bad commit after the `/ok-to-test` comment is posted but
+  # before the CI runs.
+  # Default: false
+  require-ok-to-test-sha: "false"
+  # When enabled, this option prevents duplicate pipeline runs when a commit appears in
+  # both a push event and a pull request. If a push event comes from a commit that is
+  # part of an open pull request, the push event will be skipped as it would create
+  # a duplicate pipeline run.
+  # Default: true
+  skip-push-event-for-pr-commits: "true"
+  # PipelineRun label names PaC reads to populate tracing span attributes.
+  # Empty disables emission of the corresponding attribute.
+  tracing-label-action: "delivery.tekton.dev/action"
+  tracing-label-application: "delivery.tekton.dev/application"
+  tracing-label-component: "delivery.tekton.dev/component"
+  # Configure a custom console here, the driver support custom parameters from
+  # Repo CR along a few other template variable, see documentation for more
+  # details.
+  #
+  # When custom-console-url is set, custom-console-url-pr-details,
+  # custom-console-url-namespace, and custom-console-url-pr-tasklog should
+  # also be set, otherwise links in status reports will be broken.
+  #
+  # custom-console-name: Console Name
+  # custom-console-url: https://url
+  # custom-console-url-namespace: pipelines-as-code
+  # custom-console-url-pr-details: https://url/ns/{{ namespace }}/{{ pr }}
+  # custom-console-url-pr-tasklog: https://url/ns/{{ namespace }}/{{ pr }}/logs/{{ task }}
+kind: ConfigMap
+metadata:
+  name: pipelines-as-code
+  namespace: pipelines-as-code
+  labels:
+    app.kubernetes.io/version: "v0.50.0"
+    app.kubernetes.io/part-of: pipelines-as-code
+---
+# Copyright 2026 Red Hat
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# This configmap is filled by bootstrap command
+# GitHub App is added as provider and later this is checked
+# before configuring a new GitHub App so that we don't
+# configure more than one App
+apiVersion: v1
+data:
+  # pipelines as code controller version
+  version: "v0.50.0"
+  # controller url to be used for configuring webhook using cli
+  controller-url: ""
+  # display the configured provider on the platform
+  # only one provider type to be configured at a time
+  # eg. if GitHub App is configured, then webhooks should not be configured
+  provider: ""
+kind: ConfigMap
+metadata:
+  name: pipelines-as-code-info
+  namespace: pipelines-as-code
+  labels:
+    app.kubernetes.io/version: "v0.50.0"
+    app.kubernetes.io/part-of: pipelines-as-code
+---
+# Copyright 2026 Red Hat
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: pipelines-as-code-config-observability
+  namespace: pipelines-as-code
+  labels:
+    app.kubernetes.io/version: "v0.50.0"
+    app.kubernetes.io/part-of: pipelines-as-code
+data:
+  metrics-protocol: prometheus
+  metrics-endpoint: ":9090"
+  _example: |
+    ################################
+    ################################
+    # This block is not actually functional configuration,
+    # but serves to illustrate the available configuration
+    # options and document them in a way that is accessible
+    # to users that `kubectl edit` this config map.
+    #
+    # These sample configuration options may be copied out of
+    # this example block and unindented to be in the data block
+    # to actually change the configuration.
+
+    # metrics-protocol specifies the metrics export protocol.
+    # Supported values: "prometheus", "grpc", "http/protobuf", "none".
+    # Default is "none" (metrics disabled).
+    metrics-protocol: prometheus
+
+    # metrics-endpoint specifies the host:port for the metrics server.
+    # For prometheus, this is the listen address (e.g. ":9090").
+    # For grpc/http, this is the collector endpoint.
+    # metrics-endpoint: ""
+
+    # metrics-export-interval specifies how often metrics are exported.
+    # Only applicable for grpc and http/protobuf protocols.
+    # metrics-export-interval: "30s"
+
+    # runtime-profiling enables/disables the pprof profiling server on port 8008.
+    # Supported values: "enabled", "disabled" (default).
+    # runtime-profiling: "disabled"
+
+    # runtime-export-interval controls how often runtime metrics are exported.
+    # Default is "15s".
+    # runtime-export-interval: "15s"
+# Copyright 2026 Red Hat
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: pac-watcher-config-leader-election
+  namespace: pipelines-as-code
+  labels:
+    app.kubernetes.io/instance: default
+    app.kubernetes.io/part-of: pipelines-as-code
+data:
+  _example: |
+    ################################
+    ################################
+    # This block is not actually functional configuration,
+    # but serves to illustrate the available configuration
+    # options and document them in a way that is accessible
+    # to users that `kubectl edit` this config map.
+    #
+    # These sample configuration options may be copied out of
+    # this example block and unindented to be in the data block
+    # to actually change the configuration.
+    # lease-duration is how long non-leaders will wait to try to acquire the
+    # lock; 15 seconds is the value used by core kubernetes controllers.
+    lease-duration: "60s"
+    # renew-deadline is how long a leader will try to renew the lease before
+    # giving up; 10 seconds is the value used by core kubernetes controllers.
+    renew-deadline: "40s"
+    # retry-period is how long the leader election client waits between tries of
+    # actions; 2 seconds is the value used by core kubernetes controllers.
+    retry-period: "10s"
+    # buckets is the number of buckets used to partition key space of each
+    # Reconciler. If this number is M and the replica number of the controller
+    # is N, the N replicas will compete for the M buckets. The owner of a
+    # bucket will take care of the reconciling for the keys partitioned into
+    # that bucket.
+    buckets: "1"
+# Copyright 2026 Red Hat
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: pac-webhook-config-leader-election
+  namespace: pipelines-as-code
+  labels:
+    app.kubernetes.io/instance: default
+    app.kubernetes.io/part-of: pipelines-as-code
+data:
+  _example: |
+    ################################
+    ################################
+    # This block is not actually functional configuration,
+    # but serves to illustrate the available configuration
+    # options and document them in a way that is accessible
+    # to users that `kubectl edit` this config map.
+    #
+    # These sample configuration options may be copied out of
+    # this example block and unindented to be in the data block
+    # to actually change the configuration.
+    # lease-duration is how long non-leaders will wait to try to acquire the
+    # lock; 15 seconds is the value used by core kubernetes controllers.
+    lease-duration: "60s"
+    # renew-deadline is how long a leader will try to renew the lease before
+    # giving up; 10 seconds is the value used by core kubernetes controllers.
+    renew-deadline: "40s"
+    # retry-period is how long the leader election client waits between tries of
+    # actions; 2 seconds is the value used by core kubernetes controllers.
+    retry-period: "10s"
+    # buckets is the number of buckets used to partition key space of each
+    # Reconciler. If this number is M and the replica number of the controller
+    # is N, the N replicas will compete for the M buckets. The owner of a
+    # bucket will take care of the reconciling for the keys partitioned into
+    # that bucket.
+    buckets: "1"
+# Copyright 2026 Red Hat
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
