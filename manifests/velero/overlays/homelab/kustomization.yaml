@@ -2,3 +2,13 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
   - ../../components/talos/12.1.0
+  - resources
+patches:
+  - path: patches/backupstoragelocation-patch.yaml
+    target:
+      kind: BackupStorageLocation
+      name: default
+  - path: patches/volumesnapshotlocation-patch.yaml
+    target:
+      kind: VolumeSnapshotLocation
+      name: default

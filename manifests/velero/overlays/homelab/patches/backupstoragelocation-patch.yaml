@@ -1,0 +1,13 @@
+apiVersion: velero.io/v1
+kind: BackupStorageLocation
+metadata:
+  name: default
+  namespace: velero
+spec:
+  credential:
+    name: velero-gcp-credentials
+    key: credentials
+  provider: gcp
+  accessMode: ReadWrite
+  objectStorage:
+    bucket: homelab-backups
