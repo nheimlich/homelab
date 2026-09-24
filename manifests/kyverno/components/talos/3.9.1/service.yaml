@@ -9,7 +9,7 @@ metadata:
     app.kubernetes.io/instance: kyverno
     app.kubernetes.io/name: kyverno-admission-controller
     app.kubernetes.io/part-of: kyverno
-    app.kubernetes.io/version: 3.8.2
+    app.kubernetes.io/version: 3.9.1
 spec:
   ports:
   - port: 443
@@ -33,7 +33,7 @@ metadata:
     app.kubernetes.io/instance: kyverno
     app.kubernetes.io/name: kyverno-admission-controller
     app.kubernetes.io/part-of: kyverno
-    app.kubernetes.io/version: 3.8.2
+    app.kubernetes.io/version: 3.9.1
 spec:
   ports:
   - port: 8000
@@ -56,7 +56,7 @@ metadata:
     app.kubernetes.io/instance: kyverno
     app.kubernetes.io/name: kyverno-background-controller
     app.kubernetes.io/part-of: kyverno
-    app.kubernetes.io/version: 3.8.2
+    app.kubernetes.io/version: 3.9.1
 spec:
   ports:
   - port: 8000
@@ -79,7 +79,7 @@ metadata:
     app.kubernetes.io/instance: kyverno
     app.kubernetes.io/name: kyverno-cleanup-controller
     app.kubernetes.io/part-of: kyverno
-    app.kubernetes.io/version: 3.8.2
+    app.kubernetes.io/version: 3.9.1
 spec:
   ports:
   - port: 443
@@ -103,7 +103,7 @@ metadata:
     app.kubernetes.io/instance: kyverno
     app.kubernetes.io/name: kyverno-cleanup-controller
     app.kubernetes.io/part-of: kyverno
-    app.kubernetes.io/version: 3.8.2
+    app.kubernetes.io/version: 3.9.1
 spec:
   ports:
   - port: 8000
@@ -126,7 +126,7 @@ metadata:
     app.kubernetes.io/instance: kyverno
     app.kubernetes.io/name: kyverno-reports-controller
     app.kubernetes.io/part-of: kyverno
-    app.kubernetes.io/version: 3.8.2
+    app.kubernetes.io/version: 3.9.1
 spec:
   ports:
   - port: 8000

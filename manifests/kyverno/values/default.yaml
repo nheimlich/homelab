@@ -1,4 +1,3 @@
-# Helm values for kyverno, shared across types
 kyverno-api:
   labels:
     app.kubernetes.io/component: crds
