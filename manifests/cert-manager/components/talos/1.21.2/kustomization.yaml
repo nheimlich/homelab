@@ -7,7 +7,6 @@ resources:
   - configmap.yaml
   - customresourcedefinition.yaml
   - deployment.yaml
-  - job.yaml
   - mutatingwebhookconfiguration.yaml
   - role.yaml
   - rolebinding.yaml
