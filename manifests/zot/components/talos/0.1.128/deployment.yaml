@@ -7,7 +7,7 @@ metadata:
   labels:
     app.kubernetes.io/name: zot
     app.kubernetes.io/instance: zot
-    app.kubernetes.io/version: "v2.1.21"
+    app.kubernetes.io/version: "v2.1.22"
 spec:
   replicas: 1
   strategy:
@@ -30,7 +30,7 @@ spec:
         - name: zot
           securityContext:
             null
-          image: "ghcr.io/project-zot/zot:v2.1.21"
+          image: "ghcr.io/project-zot/zot:v2.1.22"
           imagePullPolicy: IfNotPresent
           env:
             null
