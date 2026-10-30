@@ -32,35 +32,35 @@ install_list:
     - vpa
     - zot
 versions:
-    argocd: v3.5.3
+    argocd: v3.5.6
     cdi: v1.66.1
-    ceph-csi-drivers: 1.0.5
-    cert-manager: 1.21.2
-    cilium: 1.20.2
+    ceph-csi-drivers: 1.1.0
+    cert-manager: 1.21.3
+    cilium: 1.20.4
     cnpg: 0.29.1
-    external-dns: 1.22.0
-    external-secrets: 2.11.0
-    kube-state-metrics: 8.5.0
+    external-dns: 1.23.0
+    external-secrets: 2.14.0
+    kube-state-metrics: 8.8.0
     kubelet-serving: v0.12.1
-    kubevirt: v1.9.0
-    kyverno: 3.9.1
+    kubevirt: v1.9.1
+    kyverno: 3.9.2
     local-path: v0.0.37
-    metrics-server: v0.9.0
+    metrics-server: v0.9.1
     multus: v4.3.1
-    ollama: 1.83.0
-    opentelemetry-collector: 0.173.1
+    ollama: 1.93.0
+    opentelemetry-collector: 0.178.1
     perses-operator: 0.5.0
-    pipelines-as-code: v0.51.0
-    rook-ceph: v1.20.2
-    rook-ceph-cluster: v1.20.2
-    shared-gateway: v1.6.2
-    spegel: 0.7.4
-    spire: 0.30.2
+    pipelines-as-code: v0.52.0
+    rook-ceph: 1.21.1
+    rook-ceph-cluster: 1.21.1
+    shared-gateway: v1.7.0
+    spegel: 0.8.1
+    spire: 0.30.4
     spire-crds: 0.6.1
-    tekton-chains: v0.29.0
-    tekton-pipelines: v1.16.0
-    velero: 12.2.0
-    victoria-logs: 0.13.9
-    victoria-metrics: 0.47.0
+    tekton-chains: v0.29.9
+    tekton-pipelines: v1.18.0
+    velero: 12.2.1
+    victoria-logs: 0.13.10
+    victoria-metrics: 0.50.0
     vpa: 5.1.0
-    zot: 0.1.125
+    zot: 0.1.128
