@@ -8,7 +8,7 @@ metadata:
     app.kubernetes.io/component: metrics
     app.kubernetes.io/name: spegel
     app.kubernetes.io/instance: spegel
-    app.kubernetes.io/version: "v0.7.4"
+    app.kubernetes.io/version: "v0.8.0"
 spec:
   selector:
     app.kubernetes.io/component: spegel
@@ -28,11 +28,10 @@ metadata:
   labels:
     app.kubernetes.io/name: spegel
     app.kubernetes.io/instance: spegel
-    app.kubernetes.io/version: "v0.7.4"
-  annotations:
-    service.kubernetes.io/topology-mode: "auto"
+    app.kubernetes.io/version: "v0.8.0"
 spec:
   type: NodePort
+  trafficDistribution: PreferSameNode
   selector:
     app.kubernetes.io/component: spegel
     app.kubernetes.io/name: spegel
@@ -41,7 +40,7 @@ spec:
     - name: registry
       port: 5000
       targetPort: registry
-      nodePort: 30021
+      nodePort: 30020
       protocol: TCP
 ---
 apiVersion: v1
@@ -52,7 +51,7 @@ metadata:
   labels:
     app.kubernetes.io/name: spegel
     app.kubernetes.io/instance: spegel
-    app.kubernetes.io/version: "v0.7.4"
+    app.kubernetes.io/version: "v0.8.0"
 spec:
   selector:
     app.kubernetes.io/component: spegel

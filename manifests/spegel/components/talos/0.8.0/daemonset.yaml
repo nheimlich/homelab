@@ -8,7 +8,7 @@ metadata:
     app.kubernetes.io/component: spegel
     app.kubernetes.io/name: spegel
     app.kubernetes.io/instance: spegel
-    app.kubernetes.io/version: "v0.7.4"
+    app.kubernetes.io/version: "v0.8.0"
 spec:
   revisionHistoryLimit: 10
   updateStrategy:
@@ -31,7 +31,7 @@ spec:
       priorityClassName: system-node-critical
       initContainers:
       - name: configuration
-        image: "ghcr.io/spegel-org/spegel@sha256:26c60b05e08ac738e8442bc389c5780bff0e1d8153956e45d810a2f1008cf56f"
+        image: "ghcr.io/spegel-org/spegel@sha256:b48194957bf9b5bdcea2700536a302ade23315082b05e5a44c0822f5c301850a"
         imagePullPolicy: IfNotPresent
         securityContext:
             readOnlyRootFilesystem: true
@@ -41,7 +41,6 @@ spec:
           - --containerd-registry-config-path=/etc/cri/conf.d/hosts
           - --mirror-targets
           - http://$(NODE_IP):30020
-          - http://$(NODE_IP):30021
           - --resolve-tags=true
           - --prepend-existing=false
         env:
@@ -59,7 +58,7 @@ spec:
             mountPath: /etc/cri/conf.d/hosts
       containers:
       - name: registry
-        image: "ghcr.io/spegel-org/spegel@sha256:26c60b05e08ac738e8442bc389c5780bff0e1d8153956e45d810a2f1008cf56f"
+        image: "ghcr.io/spegel-org/spegel@sha256:b48194957bf9b5bdcea2700536a302ade23315082b05e5a44c0822f5c301850a"
         imagePullPolicy: IfNotPresent
         securityContext:
             readOnlyRootFilesystem: true
@@ -73,6 +72,7 @@ spec:
           - --metrics-addr=:9090
           - --containerd-sock=/run/containerd/containerd.sock
           - --containerd-namespace=k8s.io
+          - --containerd-registry-config-path=/etc/cri/conf.d/hosts
           - --bootstrap-kind=dns
           - --dns-bootstrap-domain=spegel-bootstrap.spegel.svc.cluster.local.
           - --containerd-content-path=/var/lib/containerd/io.containerd.content.v1.content
@@ -91,7 +91,6 @@ spec:
         ports:
           - name: registry
             containerPort: 5000
-            hostPort: 30020
             protocol: TCP
           - name: router-tcp
             containerPort: 5001
