@@ -1,0 +1,21 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: ceph-csi-ceph-csi-controller-manager
+  namespace: rook-ceph
+  labels:
+    app.kubernetes.io/name: ceph-csi
+    app.kubernetes.io/instance: rook-ceph
+    app.kubernetes.io/version: "v1.1.0"
+spec:
+  # Deny all ingress — no exposed ports.
+  # Allow open egress for API server access.
+  egress:
+  - {}
+  podSelector:
+    matchLabels:
+      control-plane: ceph-csi-op-controller-manager
+  policyTypes:
+  - Ingress
+  - Egress
