@@ -167,11 +167,6 @@ kind: KubeInlineManifestConfig
 name: cluster-bootstrap
 manifest: |-
   ---
-  apiVersion: v1
-  kind: Namespace
-  metadata:
-    name: external-secrets
-  ---
   apiVersion: rbac.authorization.k8s.io/v1
   kind: ClusterRoleBinding
   metadata:
