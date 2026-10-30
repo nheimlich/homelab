@@ -8,7 +8,7 @@ spec:
   monitoring:
     enabled: false
   cephVersion:
-    image: "quay.io/ceph/ceph:v20.2.2"
+    image: "quay.io/ceph/ceph:v20.2.4"
     allowUnsupported: false
   cleanupPolicy:
     allowUninstallWithVolumes: false
@@ -52,7 +52,9 @@ spec:
   mgr:
     allowMultiplePerNode: false
     count: 2
-    modules: null
+    modules:
+    - enabled: false
+      name: rook
   mon:
     allowMultiplePerNode: false
     count: 3
@@ -62,7 +64,7 @@ spec:
         enabled: false
       encryption:
         enabled: false
-      requireMsgr2: false
+      requireMsgr2: true
   priorityClassNames:
     mgr: system-cluster-critical
     mon: system-node-critical
@@ -127,6 +129,10 @@ spec:
       requests:
         cpu: 500m
         memory: 50Mi
+  security:
+    cephx:
+      csi:
+        keyType: aes
   skipUpgradeChecks: false
   storage:
     useAllDevices: true
