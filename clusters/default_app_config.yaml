@@ -203,7 +203,7 @@ apps:
     repo_url: "https://spiffe.github.io/helm-charts-hardened/"
     chart: spire-crds
     namespace: spire-system
-    create_namespace: true
+    create_namespace: false
     kustomize_namespace: false
 
   spire:

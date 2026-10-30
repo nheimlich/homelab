@@ -2,5 +2,8 @@ apiVersion: v1
 kind: Namespace
 metadata:
   name: spire-system
+  annotations:
+    argocd.argoproj.io/sync-options: Prune=false
   labels:
+    pod-security.kubernetes.io/enforce: privileged
     shared-gateway-access: "true"
