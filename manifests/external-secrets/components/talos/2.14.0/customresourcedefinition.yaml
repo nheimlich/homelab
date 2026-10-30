@@ -3,7 +3,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.19.0
+    controller-gen.kubebuilder.io/version: v0.23.0
   labels:
     external-secrets.io/component: controller
   name: acraccesstokens.generators.external-secrets.io
@@ -212,7 +212,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.19.0
+    controller-gen.kubebuilder.io/version: v0.23.0
   labels:
     external-secrets.io/component: controller
   name: beyondtrustworkloadcredentialsdynamicsecrets.generators.external-secrets.io
@@ -425,7 +425,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.19.0
+    controller-gen.kubebuilder.io/version: v0.23.0
   labels:
     external-secrets.io/component: controller
   name: cloudsmithaccesstokens.generators.external-secrets.io
@@ -518,7 +518,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.19.0
+    controller-gen.kubebuilder.io/version: v0.23.0
   labels:
     external-secrets.io/component: controller
   name: clusterexternalsecrets.external-secrets.io
@@ -2152,7 +2152,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.19.0
+    controller-gen.kubebuilder.io/version: v0.23.0
   labels:
     external-secrets.io/component: controller
   name: clustergenerators.generators.external-secrets.io
@@ -2929,7 +2929,34 @@ spec:
                       description: GithubAccessTokenSpec defines the desired state to generate a GitHub access token.
                       properties:
                         appID:
+                          description: AppID is the GitHub App ID. Exactly one of AppID or AppIDRef must be set.
                           type: string
+                        appIDRef:
+                          description: AppIDRef references a secret key containing the GitHub App ID. Exactly one of AppID or AppIDRef must be set.
+                          properties:
+                            key:
+                              description: |-
+                                A key in the referenced Secret.
+                                Some instances of this field may be defaulted, in others it may be required.
+                              maxLength: 253
+                              minLength: 1
+                              pattern: ^[-._a-zA-Z0-9]+$
+                              type: string
+                            name:
+                              description: The name of the Secret resource being referred to.
+                              maxLength: 253
+                              minLength: 1
+                              pattern: ^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$
+                              type: string
+                            namespace:
+                              description: |-
+                                The namespace of the Secret resource being referred to.
+                                Ignored if referent is not cluster-scoped, otherwise defaults to the namespace of the referent.
+                              maxLength: 63
+                              minLength: 1
+                              pattern: ^[a-z0-9]([-a-z0-9]*[a-z0-9])?$
+                              type: string
+                          type: object
                         auth:
                           description: Auth configures how ESO authenticates with a Github instance.
                           properties:
@@ -2971,7 +2998,36 @@ spec:
                             - privateKey
                           type: object
                         installID:
+                          description: InstallID is the GitHub App installation ID. Exactly one of InstallID or InstallIDRef must be set.
                           type: string
+                        installIDRef:
+                          description: |-
+                            InstallIDRef references a secret key containing the GitHub App installation ID. Exactly one of InstallID or
+                            InstallIDRef must be set.
+                          properties:
+                            key:
+                              description: |-
+                                A key in the referenced Secret.
+                                Some instances of this field may be defaulted, in others it may be required.
+                              maxLength: 253
+                              minLength: 1
+                              pattern: ^[-._a-zA-Z0-9]+$
+                              type: string
+                            name:
+                              description: The name of the Secret resource being referred to.
+                              maxLength: 253
+                              minLength: 1
+                              pattern: ^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$
+                              type: string
+                            namespace:
+                              description: |-
+                                The namespace of the Secret resource being referred to.
+                                Ignored if referent is not cluster-scoped, otherwise defaults to the namespace of the referent.
+                              maxLength: 63
+                              minLength: 1
+                              pattern: ^[a-z0-9]([-a-z0-9]*[a-z0-9])?$
+                              type: string
+                          type: object
                         permissions:
                           additionalProperties:
                             type: string
@@ -2988,10 +3044,13 @@ spec:
                           description: URL configures the GitHub instance URL. Defaults to https://github.com/.
                           type: string
                       required:
-                        - appID
                         - auth
-                        - installID
                       type: object
+                      x-kubernetes-validations:
+                        - message: exactly one of the fields in [appID appIDRef] must be set
+                          rule: (has(self.appID)?1:0)+(has(self.appIDRef)?1:0) == 1
+                        - message: exactly one of the fields in [installID installIDRef] must be set
+                          rule: (has(self.installID)?1:0)+(has(self.installIDRef)?1:0) == 1
                     gitlabDeployTokenSpec:
                       description: GitlabDeployTokenSpec defines the desired state to generate a GitLab deploy token.
                       properties:
@@ -3269,6 +3328,11 @@ spec:
                           default: false
                           description: Set NoUpper to disable uppercase characters
                           type: boolean
+                        prefix:
+                          description: |-
+                            Prefix is prepended to every generated password after encoding.
+                            It is not counted in length or subject to the character settings.
+                          type: string
                         secretKeys:
                           description: |-
                             SecretKeys defines the keys that will be populated with generated passwords.
@@ -3277,6 +3341,11 @@ spec:
                             type: string
                           minItems: 1
                           type: array
+                        suffix:
+                          description: |-
+                            Suffix is appended to every generated password after encoding.
+                            It is not counted in length or subject to the character settings.
+                          type: string
                         symbolCharacters:
                           description: |-
                             SymbolCharacters specifies the special characters that should be used
@@ -4689,7 +4758,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.19.0
+    controller-gen.kubebuilder.io/version: v0.23.0
   labels:
     external-secrets.io/component: controller
   name: clusterpushsecrets.external-secrets.io
@@ -5381,7 +5450,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.19.0
+    controller-gen.kubebuilder.io/version: v0.23.0
   labels:
     external-secrets.io/component: controller
   name: clustersecretstores.external-secrets.io
@@ -7013,6 +7082,61 @@ spec:
                                 - apiKeyRef
                                 - userRef
                               type: object
+                            azure:
+                              description: Azure enables authentication to Conjur via the authn-azure authenticator.
+                              properties:
+                                account:
+                                  description: Account is the Conjur organization account name.
+                                  type: string
+                                clientId:
+                                  description: |-
+                                    ClientID is the Azure managed identity client ID. Required for user-assigned
+                                    managed identities; omit for system-assigned identities.
+                                  type: string
+                                hostId:
+                                  description: |-
+                                    HostID is the Conjur host mapped to the Azure managed identity
+                                    (e.g. "data/myapp/myhost").
+                                  type: string
+                                serviceAccountRef:
+                                  description: |-
+                                    ServiceAccountRef specifies the Kubernetes service account for which to request
+                                    a token via the TokenRequest API. That token is used as the Azure JWT for Conjur
+                                    authn-azure. If omitted, the token is fetched from the Azure IMDS endpoint instead.
+                                  properties:
+                                    audiences:
+                                      description: |-
+                                        Audience specifies the `aud` claim for the service account token
+                                        Some providers automatically extend the audience field based on well-known annotations for workload
+                                        identity (e.g. IRSA or GCP Workload Identity)
+                                      items:
+                                        type: string
+                                      type: array
+                                    name:
+                                      description: The name of the ServiceAccount resource being referred to.
+                                      maxLength: 253
+                                      minLength: 1
+                                      pattern: ^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$
+                                      type: string
+                                    namespace:
+                                      description: |-
+                                        Namespace of the resource being referred to.
+                                        Ignored if referent is not cluster-scoped, otherwise defaults to the namespace of the referent.
+                                      maxLength: 63
+                                      minLength: 1
+                                      pattern: ^[a-z0-9]([-a-z0-9]*[a-z0-9])?$
+                                      type: string
+                                  required:
+                                    - name
+                                  type: object
+                                serviceID:
+                                  description: ServiceID is the Conjur authn-azure webservice identifier (e.g. "prod").
+                                  type: string
+                              required:
+                                - account
+                                - hostId
+                                - serviceID
+                              type: object
                             cert:
                               description: Cert enables certificate-based authentication using a client certificate and key.
                               properties:
@@ -7085,6 +7209,177 @@ spec:
                                 - account
                                 - clientCertRef
                                 - clientKeyRef
+                                - serviceID
+                              type: object
+                            gcp:
+                              description: GCP enables authentication to Conjur via the authn-gcp authenticator.
+                              properties:
+                                account:
+                                  description: Account is the Conjur organization account name.
+                                  type: string
+                                hostId:
+                                  description: |-
+                                    HostID is the Conjur host mapped to the GCP service account
+                                    (e.g. "data/myapp/myhost").
+                                  type: string
+                                secretRef:
+                                  description: |-
+                                    SecretRef holds a reference to a Kubernetes Secret containing a pre-obtained
+                                    GCP identity token. If omitted, the token is fetched from the GCP Metadata
+                                    Service automatically (requires GKE Workload Identity or a GCE/GKE node).
+                                  properties:
+                                    jwt:
+                                      description: JWT is a reference to the Kubernetes Secret key holding the GCP identity token.
+                                      properties:
+                                        key:
+                                          description: |-
+                                            A key in the referenced Secret.
+                                            Some instances of this field may be defaulted, in others it may be required.
+                                          maxLength: 253
+                                          minLength: 1
+                                          pattern: ^[-._a-zA-Z0-9]+$
+                                          type: string
+                                        name:
+                                          description: The name of the Secret resource being referred to.
+                                          maxLength: 253
+                                          minLength: 1
+                                          pattern: ^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$
+                                          type: string
+                                        namespace:
+                                          description: |-
+                                            The namespace of the Secret resource being referred to.
+                                            Ignored if referent is not cluster-scoped, otherwise defaults to the namespace of the referent.
+                                          maxLength: 63
+                                          minLength: 1
+                                          pattern: ^[a-z0-9]([-a-z0-9]*[a-z0-9])?$
+                                          type: string
+                                      type: object
+                                  required:
+                                    - jwt
+                                  type: object
+                                serviceID:
+                                  description: |-
+                                    ServiceID is the Conjur authn-gcp webservice identifier (e.g. "prod").
+                                    Note: Conjur's authn-gcp authenticator does not include the service ID in the
+                                    authentication URL; this field is reserved for future use.
+                                  type: string
+                              required:
+                                - account
+                                - hostId
+                              type: object
+                            iam:
+                              description: IAM enables authentication to Conjur via the authn-iam authenticator.
+                              properties:
+                                account:
+                                  description: Account is the Conjur organization account name.
+                                  type: string
+                                hostId:
+                                  description: |-
+                                    HostID is the Conjur host mapped to the AWS IAM role
+                                    (e.g. "data/myapp/123456789012/MyRole").
+                                  type: string
+                                insecure:
+                                  description: |-
+                                    Insecure allows authenticating to Conjur over plain HTTP. The AWS IAM authenticator
+                                    sends a signed request as a bearer credential, so this should only be enabled when the
+                                    connection is otherwise protected (e.g. a service mesh sidecar terminating TLS).
+                                  type: boolean
+                                secretRef:
+                                  description: |-
+                                    SecretRef holds optional references to Kubernetes Secrets containing explicit
+                                    AWS credentials. If omitted, the default AWS SDK credential chain is used
+                                    (IRSA, instance metadata, environment variables, etc.).
+                                  properties:
+                                    accessKeyIDSecretRef:
+                                      description: A reference to a Secret key containing the AWS Access Key ID.
+                                      properties:
+                                        key:
+                                          description: |-
+                                            A key in the referenced Secret.
+                                            Some instances of this field may be defaulted, in others it may be required.
+                                          maxLength: 253
+                                          minLength: 1
+                                          pattern: ^[-._a-zA-Z0-9]+$
+                                          type: string
+                                        name:
+                                          description: The name of the Secret resource being referred to.
+                                          maxLength: 253
+                                          minLength: 1
+                                          pattern: ^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$
+                                          type: string
+                                        namespace:
+                                          description: |-
+                                            The namespace of the Secret resource being referred to.
+                                            Ignored if referent is not cluster-scoped, otherwise defaults to the namespace of the referent.
+                                          maxLength: 63
+                                          minLength: 1
+                                          pattern: ^[a-z0-9]([-a-z0-9]*[a-z0-9])?$
+                                          type: string
+                                      type: object
+                                    secretAccessKeySecretRef:
+                                      description: A reference to a Secret key containing the AWS Secret Access Key.
+                                      properties:
+                                        key:
+                                          description: |-
+                                            A key in the referenced Secret.
+                                            Some instances of this field may be defaulted, in others it may be required.
+                                          maxLength: 253
+                                          minLength: 1
+                                          pattern: ^[-._a-zA-Z0-9]+$
+                                          type: string
+                                        name:
+                                          description: The name of the Secret resource being referred to.
+                                          maxLength: 253
+                                          minLength: 1
+                                          pattern: ^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$
+                                          type: string
+                                        namespace:
+                                          description: |-
+                                            The namespace of the Secret resource being referred to.
+                                            Ignored if referent is not cluster-scoped, otherwise defaults to the namespace of the referent.
+                                          maxLength: 63
+                                          minLength: 1
+                                          pattern: ^[a-z0-9]([-a-z0-9]*[a-z0-9])?$
+                                          type: string
+                                      type: object
+                                    sessionTokenSecretRef:
+                                      description: |-
+                                        A reference to a Secret key containing the AWS Session Token.
+                                        Required only when using temporary credentials.
+                                      properties:
+                                        key:
+                                          description: |-
+                                            A key in the referenced Secret.
+                                            Some instances of this field may be defaulted, in others it may be required.
+                                          maxLength: 253
+                                          minLength: 1
+                                          pattern: ^[-._a-zA-Z0-9]+$
+                                          type: string
+                                        name:
+                                          description: The name of the Secret resource being referred to.
+                                          maxLength: 253
+                                          minLength: 1
+                                          pattern: ^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$
+                                          type: string
+                                        namespace:
+                                          description: |-
+                                            The namespace of the Secret resource being referred to.
+                                            Ignored if referent is not cluster-scoped, otherwise defaults to the namespace of the referent.
+                                          maxLength: 63
+                                          minLength: 1
+                                          pattern: ^[a-z0-9]([-a-z0-9]*[a-z0-9])?$
+                                          type: string
+                                      type: object
+                                  required:
+                                    - accessKeyIDSecretRef
+                                    - secretAccessKeySecretRef
+                                  type: object
+                                serviceID:
+                                  description: ServiceID is the Conjur authn-iam webservice identifier (e.g. "prod").
+                                  type: string
+                              required:
+                                - account
+                                - hostId
                                 - serviceID
                               type: object
                             jwt:
@@ -7491,7 +7786,7 @@ spec:
                         - message: one of auth or authRef is required
                           rule: has(self.auth) || has(self.authRef)
                         - message: at most one of the fields in [auth authRef] may be set
-                          rule: '[has(self.auth),has(self.authRef)].filter(x,x==true).size() <= 1'
+                          rule: (has(self.auth)?1:0)+(has(self.authRef)?1:0) <= 1
                     delinea:
                       description: |-
                         Delinea DevOps Secrets Vault
@@ -9815,7 +10110,7 @@ spec:
                       type: object
                       x-kubernetes-validations:
                         - message: at most one of the fields in [vault environment] may be set
-                          rule: '[has(self.vault),has(self.environment)].filter(x,x==true).size() <= 1'
+                          rule: (has(self.vault)?1:0)+(has(self.environment)?1:0) <= 1
                     openBao:
                       description: OpenBao configures this store to sync secrets using the OpenBao provider.
                       properties:
@@ -9907,7 +10202,7 @@ spec:
                               type: object
                               x-kubernetes-validations:
                                 - message: exactly one of the fields in [roleId roleRef] must be set
-                                  rule: '[has(self.roleId),has(self.roleRef)].filter(x,x==true).size() == 1'
+                                  rule: (has(self.roleId)?1:0)+(has(self.roleRef)?1:0) == 1
                             kubernetes:
                               description: |-
                                 Kubernetes authenticates with OpenBao by passing a ServiceAccount
@@ -9994,7 +10289,7 @@ spec:
                               type: object
                               x-kubernetes-validations:
                                 - message: exactly one of the fields in [serviceAccountRef secretRef] must be set
-                                  rule: '[has(self.serviceAccountRef),has(self.secretRef)].filter(x,x==true).size() == 1'
+                                  rule: (has(self.serviceAccountRef)?1:0)+(has(self.secretRef)?1:0) == 1
                             namespace:
                               description: |-
                                 Name of the [OpenBao Namespace] to authenticate to. This can be different
@@ -10085,7 +10380,7 @@ spec:
                           type: object
                           x-kubernetes-validations:
                             - message: exactly one of the fields in [appRole tokenSecretRef userPass kubernetes] must be set
-                              rule: '[has(self.appRole),has(self.tokenSecretRef),has(self.userPass),has(self.kubernetes)].filter(x,x==true).size() == 1'
+                              rule: (has(self.appRole)?1:0)+(has(self.tokenSecretRef)?1:0)+(has(self.userPass)?1:0)+(has(self.kubernetes)?1:0) == 1
                         caBundle:
                           description: |-
                             PEM encoded CA bundle used to validate the OpenBao server certificate. If
@@ -10161,7 +10456,7 @@ spec:
                       type: object
                       x-kubernetes-validations:
                         - message: at most one of the fields in [caBundle caProvider] may be set
-                          rule: '[has(self.caBundle),has(self.caProvider)].filter(x,x==true).size() <= 1'
+                          rule: (has(self.caBundle)?1:0)+(has(self.caProvider)?1:0) <= 1
                     oracle:
                       description: Oracle configures this store to sync secrets using Oracle Vault provider
                       properties:
@@ -16777,7 +17072,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.19.0
+    controller-gen.kubebuilder.io/version: v0.23.0
   labels:
     external-secrets.io/component: controller
   name: ecrauthorizationtokens.generators.external-secrets.io
@@ -16972,7 +17267,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.19.0
+    controller-gen.kubebuilder.io/version: v0.23.0
   labels:
     external-secrets.io/component: controller
   name: externalsecrets.external-secrets.io
@@ -18375,7 +18670,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.19.0
+    controller-gen.kubebuilder.io/version: v0.23.0
   labels:
     external-secrets.io/component: controller
   name: fakes.generators.external-secrets.io
@@ -18441,7 +18736,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.19.0
+    controller-gen.kubebuilder.io/version: v0.23.0
   labels:
     external-secrets.io/component: controller
   name: gcraccesstokens.generators.external-secrets.io
@@ -18702,7 +18997,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.19.0
+    controller-gen.kubebuilder.io/version: v0.23.0
   labels:
     external-secrets.io/component: controller
   name: generatorstates.generators.external-secrets.io
@@ -18810,7 +19105,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.19.0
+    controller-gen.kubebuilder.io/version: v0.23.0
   labels:
     external-secrets.io/component: controller
   name: githubaccesstokens.generators.external-secrets.io
@@ -18852,7 +19147,34 @@ spec:
               description: GithubAccessTokenSpec defines the desired state to generate a GitHub access token.
               properties:
                 appID:
+                  description: AppID is the GitHub App ID. Exactly one of AppID or AppIDRef must be set.
                   type: string
+                appIDRef:
+                  description: AppIDRef references a secret key containing the GitHub App ID. Exactly one of AppID or AppIDRef must be set.
+                  properties:
+                    key:
+                      description: |-
+                        A key in the referenced Secret.
+                        Some instances of this field may be defaulted, in others it may be required.
+                      maxLength: 253
+                      minLength: 1
+                      pattern: ^[-._a-zA-Z0-9]+$
+                      type: string
+                    name:
+                      description: The name of the Secret resource being referred to.
+                      maxLength: 253
+                      minLength: 1
+                      pattern: ^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$
+                      type: string
+                    namespace:
+                      description: |-
+                        The namespace of the Secret resource being referred to.
+                        Ignored if referent is not cluster-scoped, otherwise defaults to the namespace of the referent.
+                      maxLength: 63
+                      minLength: 1
+                      pattern: ^[a-z0-9]([-a-z0-9]*[a-z0-9])?$
+                      type: string
+                  type: object
                 auth:
                   description: Auth configures how ESO authenticates with a Github instance.
                   properties:
@@ -18894,7 +19216,36 @@ spec:
                     - privateKey
                   type: object
                 installID:
+                  description: InstallID is the GitHub App installation ID. Exactly one of InstallID or InstallIDRef must be set.
                   type: string
+                installIDRef:
+                  description: |-
+                    InstallIDRef references a secret key containing the GitHub App installation ID. Exactly one of InstallID or
+                    InstallIDRef must be set.
+                  properties:
+                    key:
+                      description: |-
+                        A key in the referenced Secret.
+                        Some instances of this field may be defaulted, in others it may be required.
+                      maxLength: 253
+                      minLength: 1
+                      pattern: ^[-._a-zA-Z0-9]+$
+                      type: string
+                    name:
+                      description: The name of the Secret resource being referred to.
+                      maxLength: 253
+                      minLength: 1
+                      pattern: ^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$
+                      type: string
+                    namespace:
+                      description: |-
+                        The namespace of the Secret resource being referred to.
+                        Ignored if referent is not cluster-scoped, otherwise defaults to the namespace of the referent.
+                      maxLength: 63
+                      minLength: 1
+                      pattern: ^[a-z0-9]([-a-z0-9]*[a-z0-9])?$
+                      type: string
+                  type: object
                 permissions:
                   additionalProperties:
                     type: string
@@ -18911,10 +19262,13 @@ spec:
                   description: URL configures the GitHub instance URL. Defaults to https://github.com/.
                   type: string
               required:
-                - appID
                 - auth
-                - installID
               type: object
+              x-kubernetes-validations:
+                - message: exactly one of the fields in [appID appIDRef] must be set
+                  rule: (has(self.appID)?1:0)+(has(self.appIDRef)?1:0) == 1
+                - message: exactly one of the fields in [installID installIDRef] must be set
+                  rule: (has(self.installID)?1:0)+(has(self.installIDRef)?1:0) == 1
           type: object
       served: true
       storage: true
@@ -18925,7 +19279,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.19.0
+    controller-gen.kubebuilder.io/version: v0.23.0
   labels:
     external-secrets.io/component: controller
   name: gitlabdeploytokens.generators.external-secrets.io
@@ -19074,7 +19428,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.19.0
+    controller-gen.kubebuilder.io/version: v0.23.0
   labels:
     external-secrets.io/component: controller
   name: grafanas.generators.external-secrets.io
@@ -19214,7 +19568,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.19.0
+    controller-gen.kubebuilder.io/version: v0.23.0
   labels:
     external-secrets.io/component: controller
   name: mfas.generators.external-secrets.io
@@ -19307,7 +19661,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.19.0
+    controller-gen.kubebuilder.io/version: v0.23.0
   labels:
     external-secrets.io/component: controller
   name: passwords.generators.external-secrets.io
@@ -19387,6 +19741,11 @@ spec:
                   default: false
                   description: Set NoUpper to disable uppercase characters
                   type: boolean
+                prefix:
+                  description: |-
+                    Prefix is prepended to every generated password after encoding.
+                    It is not counted in length or subject to the character settings.
+                  type: string
                 secretKeys:
                   description: |-
                     SecretKeys defines the keys that will be populated with generated passwords.
@@ -19395,6 +19754,11 @@ spec:
                     type: string
                   minItems: 1
                   type: array
+                suffix:
+                  description: |-
+                    Suffix is appended to every generated password after encoding.
+                    It is not counted in length or subject to the character settings.
+                  type: string
                 symbolCharacters:
                   description: |-
                     SymbolCharacters specifies the special characters that should be used
@@ -19420,7 +19784,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.19.0
+    controller-gen.kubebuilder.io/version: v0.23.0
   labels:
     external-secrets.io/component: controller
   name: pushsecrets.external-secrets.io
@@ -20072,7 +20436,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.19.0
+    controller-gen.kubebuilder.io/version: v0.23.0
   labels:
     external-secrets.io/component: controller
   name: quayaccesstokens.generators.external-secrets.io
@@ -20161,7 +20525,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.19.0
+    controller-gen.kubebuilder.io/version: v0.23.0
   labels:
     external-secrets.io/component: controller
   name: secretstores.external-secrets.io
@@ -21793,6 +22157,61 @@ spec:
                                 - apiKeyRef
                                 - userRef
                               type: object
+                            azure:
+                              description: Azure enables authentication to Conjur via the authn-azure authenticator.
+                              properties:
+                                account:
+                                  description: Account is the Conjur organization account name.
+                                  type: string
+                                clientId:
+                                  description: |-
+                                    ClientID is the Azure managed identity client ID. Required for user-assigned
+                                    managed identities; omit for system-assigned identities.
+                                  type: string
+                                hostId:
+                                  description: |-
+                                    HostID is the Conjur host mapped to the Azure managed identity
+                                    (e.g. "data/myapp/myhost").
+                                  type: string
+                                serviceAccountRef:
+                                  description: |-
+                                    ServiceAccountRef specifies the Kubernetes service account for which to request
+                                    a token via the TokenRequest API. That token is used as the Azure JWT for Conjur
+                                    authn-azure. If omitted, the token is fetched from the Azure IMDS endpoint instead.
+                                  properties:
+                                    audiences:
+                                      description: |-
+                                        Audience specifies the `aud` claim for the service account token
+                                        Some providers automatically extend the audience field based on well-known annotations for workload
+                                        identity (e.g. IRSA or GCP Workload Identity)
+                                      items:
+                                        type: string
+                                      type: array
+                                    name:
+                                      description: The name of the ServiceAccount resource being referred to.
+                                      maxLength: 253
+                                      minLength: 1
+                                      pattern: ^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$
+                                      type: string
+                                    namespace:
+                                      description: |-
+                                        Namespace of the resource being referred to.
+                                        Ignored if referent is not cluster-scoped, otherwise defaults to the namespace of the referent.
+                                      maxLength: 63
+                                      minLength: 1
+                                      pattern: ^[a-z0-9]([-a-z0-9]*[a-z0-9])?$
+                                      type: string
+                                  required:
+                                    - name
+                                  type: object
+                                serviceID:
+                                  description: ServiceID is the Conjur authn-azure webservice identifier (e.g. "prod").
+                                  type: string
+                              required:
+                                - account
+                                - hostId
+                                - serviceID
+                              type: object
                             cert:
                               description: Cert enables certificate-based authentication using a client certificate and key.
                               properties:
@@ -21865,6 +22284,177 @@ spec:
                                 - account
                                 - clientCertRef
                                 - clientKeyRef
+                                - serviceID
+                              type: object
+                            gcp:
+                              description: GCP enables authentication to Conjur via the authn-gcp authenticator.
+                              properties:
+                                account:
+                                  description: Account is the Conjur organization account name.
+                                  type: string
+                                hostId:
+                                  description: |-
+                                    HostID is the Conjur host mapped to the GCP service account
+                                    (e.g. "data/myapp/myhost").
+                                  type: string
+                                secretRef:
+                                  description: |-
+                                    SecretRef holds a reference to a Kubernetes Secret containing a pre-obtained
+                                    GCP identity token. If omitted, the token is fetched from the GCP Metadata
+                                    Service automatically (requires GKE Workload Identity or a GCE/GKE node).
+                                  properties:
+                                    jwt:
+                                      description: JWT is a reference to the Kubernetes Secret key holding the GCP identity token.
+                                      properties:
+                                        key:
+                                          description: |-
+                                            A key in the referenced Secret.
+                                            Some instances of this field may be defaulted, in others it may be required.
+                                          maxLength: 253
+                                          minLength: 1
+                                          pattern: ^[-._a-zA-Z0-9]+$
+                                          type: string
+                                        name:
+                                          description: The name of the Secret resource being referred to.
+                                          maxLength: 253
+                                          minLength: 1
+                                          pattern: ^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$
+                                          type: string
+                                        namespace:
+                                          description: |-
+                                            The namespace of the Secret resource being referred to.
+                                            Ignored if referent is not cluster-scoped, otherwise defaults to the namespace of the referent.
+                                          maxLength: 63
+                                          minLength: 1
+                                          pattern: ^[a-z0-9]([-a-z0-9]*[a-z0-9])?$
+                                          type: string
+                                      type: object
+                                  required:
+                                    - jwt
+                                  type: object
+                                serviceID:
+                                  description: |-
+                                    ServiceID is the Conjur authn-gcp webservice identifier (e.g. "prod").
+                                    Note: Conjur's authn-gcp authenticator does not include the service ID in the
+                                    authentication URL; this field is reserved for future use.
+                                  type: string
+                              required:
+                                - account
+                                - hostId
+                              type: object
+                            iam:
+                              description: IAM enables authentication to Conjur via the authn-iam authenticator.
+                              properties:
+                                account:
+                                  description: Account is the Conjur organization account name.
+                                  type: string
+                                hostId:
+                                  description: |-
+                                    HostID is the Conjur host mapped to the AWS IAM role
+                                    (e.g. "data/myapp/123456789012/MyRole").
+                                  type: string
+                                insecure:
+                                  description: |-
+                                    Insecure allows authenticating to Conjur over plain HTTP. The AWS IAM authenticator
+                                    sends a signed request as a bearer credential, so this should only be enabled when the
+                                    connection is otherwise protected (e.g. a service mesh sidecar terminating TLS).
+                                  type: boolean
+                                secretRef:
+                                  description: |-
+                                    SecretRef holds optional references to Kubernetes Secrets containing explicit
+                                    AWS credentials. If omitted, the default AWS SDK credential chain is used
+                                    (IRSA, instance metadata, environment variables, etc.).
+                                  properties:
+                                    accessKeyIDSecretRef:
+                                      description: A reference to a Secret key containing the AWS Access Key ID.
+                                      properties:
+                                        key:
+                                          description: |-
+                                            A key in the referenced Secret.
+                                            Some instances of this field may be defaulted, in others it may be required.
+                                          maxLength: 253
+                                          minLength: 1
+                                          pattern: ^[-._a-zA-Z0-9]+$
+                                          type: string
+                                        name:
+                                          description: The name of the Secret resource being referred to.
+                                          maxLength: 253
+                                          minLength: 1
+                                          pattern: ^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$
+                                          type: string
+                                        namespace:
+                                          description: |-
+                                            The namespace of the Secret resource being referred to.
+                                            Ignored if referent is not cluster-scoped, otherwise defaults to the namespace of the referent.
+                                          maxLength: 63
+                                          minLength: 1
+                                          pattern: ^[a-z0-9]([-a-z0-9]*[a-z0-9])?$
+                                          type: string
+                                      type: object
+                                    secretAccessKeySecretRef:
+                                      description: A reference to a Secret key containing the AWS Secret Access Key.
+                                      properties:
+                                        key:
+                                          description: |-
+                                            A key in the referenced Secret.
+                                            Some instances of this field may be defaulted, in others it may be required.
+                                          maxLength: 253
+                                          minLength: 1
+                                          pattern: ^[-._a-zA-Z0-9]+$
+                                          type: string
+                                        name:
+                                          description: The name of the Secret resource being referred to.
+                                          maxLength: 253
+                                          minLength: 1
+                                          pattern: ^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$
+                                          type: string
+                                        namespace:
+                                          description: |-
+                                            The namespace of the Secret resource being referred to.
+                                            Ignored if referent is not cluster-scoped, otherwise defaults to the namespace of the referent.
+                                          maxLength: 63
+                                          minLength: 1
+                                          pattern: ^[a-z0-9]([-a-z0-9]*[a-z0-9])?$
+                                          type: string
+                                      type: object
+                                    sessionTokenSecretRef:
+                                      description: |-
+                                        A reference to a Secret key containing the AWS Session Token.
+                                        Required only when using temporary credentials.
+                                      properties:
+                                        key:
+                                          description: |-
+                                            A key in the referenced Secret.
+                                            Some instances of this field may be defaulted, in others it may be required.
+                                          maxLength: 253
+                                          minLength: 1
+                                          pattern: ^[-._a-zA-Z0-9]+$
+                                          type: string
+                                        name:
+                                          description: The name of the Secret resource being referred to.
+                                          maxLength: 253
+                                          minLength: 1
+                                          pattern: ^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$
+                                          type: string
+                                        namespace:
+                                          description: |-
+                                            The namespace of the Secret resource being referred to.
+                                            Ignored if referent is not cluster-scoped, otherwise defaults to the namespace of the referent.
+                                          maxLength: 63
+                                          minLength: 1
+                                          pattern: ^[a-z0-9]([-a-z0-9]*[a-z0-9])?$
+                                          type: string
+                                      type: object
+                                  required:
+                                    - accessKeyIDSecretRef
+                                    - secretAccessKeySecretRef
+                                  type: object
+                                serviceID:
+                                  description: ServiceID is the Conjur authn-iam webservice identifier (e.g. "prod").
+                                  type: string
+                              required:
+                                - account
+                                - hostId
                                 - serviceID
                               type: object
                             jwt:
@@ -22271,7 +22861,7 @@ spec:
                         - message: one of auth or authRef is required
                           rule: has(self.auth) || has(self.authRef)
                         - message: at most one of the fields in [auth authRef] may be set
-                          rule: '[has(self.auth),has(self.authRef)].filter(x,x==true).size() <= 1'
+                          rule: (has(self.auth)?1:0)+(has(self.authRef)?1:0) <= 1
                     delinea:
                       description: |-
                         Delinea DevOps Secrets Vault
@@ -24595,7 +25185,7 @@ spec:
                       type: object
                       x-kubernetes-validations:
                         - message: at most one of the fields in [vault environment] may be set
-                          rule: '[has(self.vault),has(self.environment)].filter(x,x==true).size() <= 1'
+                          rule: (has(self.vault)?1:0)+(has(self.environment)?1:0) <= 1
                     openBao:
                       description: OpenBao configures this store to sync secrets using the OpenBao provider.
                       properties:
@@ -24687,7 +25277,7 @@ spec:
                               type: object
                               x-kubernetes-validations:
                                 - message: exactly one of the fields in [roleId roleRef] must be set
-                                  rule: '[has(self.roleId),has(self.roleRef)].filter(x,x==true).size() == 1'
+                                  rule: (has(self.roleId)?1:0)+(has(self.roleRef)?1:0) == 1
                             kubernetes:
                               description: |-
                                 Kubernetes authenticates with OpenBao by passing a ServiceAccount
@@ -24774,7 +25364,7 @@ spec:
                               type: object
                               x-kubernetes-validations:
                                 - message: exactly one of the fields in [serviceAccountRef secretRef] must be set
-                                  rule: '[has(self.serviceAccountRef),has(self.secretRef)].filter(x,x==true).size() == 1'
+                                  rule: (has(self.serviceAccountRef)?1:0)+(has(self.secretRef)?1:0) == 1
                             namespace:
                               description: |-
                                 Name of the [OpenBao Namespace] to authenticate to. This can be different
@@ -24865,7 +25455,7 @@ spec:
                           type: object
                           x-kubernetes-validations:
                             - message: exactly one of the fields in [appRole tokenSecretRef userPass kubernetes] must be set
-                              rule: '[has(self.appRole),has(self.tokenSecretRef),has(self.userPass),has(self.kubernetes)].filter(x,x==true).size() == 1'
+                              rule: (has(self.appRole)?1:0)+(has(self.tokenSecretRef)?1:0)+(has(self.userPass)?1:0)+(has(self.kubernetes)?1:0) == 1
                         caBundle:
                           description: |-
                             PEM encoded CA bundle used to validate the OpenBao server certificate. If
@@ -24941,7 +25531,7 @@ spec:
                       type: object
                       x-kubernetes-validations:
                         - message: at most one of the fields in [caBundle caProvider] may be set
-                          rule: '[has(self.caBundle),has(self.caProvider)].filter(x,x==true).size() <= 1'
+                          rule: (has(self.caBundle)?1:0)+(has(self.caProvider)?1:0) <= 1
                     oracle:
                       description: Oracle configures this store to sync secrets using Oracle Vault provider
                       properties:
@@ -31557,7 +32147,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.19.0
+    controller-gen.kubebuilder.io/version: v0.23.0
   labels:
     external-secrets.io/component: controller
   name: sshkeys.generators.external-secrets.io
@@ -31629,7 +32219,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.19.0
+    controller-gen.kubebuilder.io/version: v0.23.0
   labels:
     external-secrets.io/component: controller
   name: stssessiontokens.generators.external-secrets.io
@@ -31835,7 +32425,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.19.0
+    controller-gen.kubebuilder.io/version: v0.23.0
   labels:
     external-secrets.io/component: controller
   name: uuids.generators.external-secrets.io
@@ -31854,7 +32444,7 @@ spec:
     - name: v1alpha1
       schema:
         openAPIV3Schema:
-          description: UUID generates a version 1 UUID (e56657e3-764f-11ef-a397-65231a88c216).
+          description: UUID generates a version 4 UUID (21061816-abbd-40ef-8985-6db0fbcbc4c4).
           properties:
             apiVersion:
               description: |-
@@ -31886,7 +32476,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.19.0
+    controller-gen.kubebuilder.io/version: v0.23.0
   labels:
     external-secrets.io/component: controller
   name: vaultdynamicsecrets.generators.external-secrets.io
@@ -32903,7 +33493,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.19.0
+    controller-gen.kubebuilder.io/version: v0.23.0
   labels:
     external-secrets.io/component: controller
   name: webhooks.generators.external-secrets.io
