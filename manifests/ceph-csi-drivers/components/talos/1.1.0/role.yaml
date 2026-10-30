@@ -2,8 +2,8 @@
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
-  namespace: rook-ceph
   name: rook-ceph-cephfs-csi-ceph-com-ctrlplugin-r
+  namespace: rook-ceph
 rules:
 - apiGroups:
   - coordination.k8s.io
@@ -50,8 +50,8 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
-  namespace: rook-ceph
   name: rook-ceph-cephfs-csi-ceph-com-nodeplugin-r
+  namespace: rook-ceph
 rules:
 - apiGroups:
   - csiaddons.openshift.io
@@ -87,8 +87,8 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
-  namespace: rook-ceph
   name: rook-ceph-rbd-csi-ceph-com-ctrlplugin-r
+  namespace: rook-ceph
 rules:
 - apiGroups:
   - coordination.k8s.io
@@ -135,8 +135,8 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
-  namespace: rook-ceph
   name: rook-ceph-rbd-csi-ceph-com-nodeplugin-r
+  namespace: rook-ceph
 rules:
 - apiGroups:
   - csiaddons.openshift.io

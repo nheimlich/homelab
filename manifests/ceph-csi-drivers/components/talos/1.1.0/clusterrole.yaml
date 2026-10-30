@@ -102,6 +102,8 @@ rules:
   verbs:
   - get
   - list
+  - watch
+  - update
 - apiGroups:
   - snapshot.storage.k8s.io
   resources:
@@ -269,9 +271,15 @@ rules:
   - ""
   resources:
   - persistentvolumes
+  verbs:
+  - get
+- apiGroups:
+  - ""
+  resources:
   - persistentvolumeclaims
   verbs:
   - get
+  - patch
 - apiGroups:
   - authentication.k8s.io
   resources:
@@ -376,6 +384,7 @@ rules:
   - get
   - list
   - watch
+  - update
 - apiGroups:
   - snapshot.storage.k8s.io
   resources:
@@ -586,3 +595,4 @@ rules:
   - persistentvolumeclaims
   verbs:
   - get
+  - patch
