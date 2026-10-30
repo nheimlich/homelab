@@ -38,7 +38,7 @@ GSM access token → Secret Manager
 ## Gotchas (learned the hard way)
 
 - **Two different "audience" fields on the store**: `workloadIdentityFederation.audience` is only the STS exchange audience. The k8s token's audiences come from `serviceAccountRef.audiences`; if empty, the apiserver uses its default `--api-audiences`. Our store relies on the cluster default (an array incl. the STS URI) — do not confuse the two.
-- **Talos**: `api-audiences` is set via `cluster.apiServer.extraArgs` in the per-node patch (generate.sh). It must be a comma-joined string in the config; the rendered apiserver takes effect on re-render/reboot.
+- **Talos**: `api-audiences` is set via `KubeAPIServerConfig.extraArgs` in the per-node patch (generate.sh). It must be a comma-joined string in the config; the rendered apiserver takes effect on re-render/reboot.
 - **k8s v1.36**: flag is `--api-audiences`
 - **STS acceptance**: audience must be a single-element array `[<STS URI>]` or contained in the aud array. A comma-joined *string* audience → `invalid_grant`.
 - **`ReadWrite`** in status is the provider's inherent capability, not IAM permission. Writes are blocked by the read-only IAM role.
