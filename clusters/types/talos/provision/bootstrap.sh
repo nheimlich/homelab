@@ -78,8 +78,11 @@ bootstrap() {
   echo ""
   for pair in "${stat_data[@]}"; do
     IFS=":" read -r n i <<< "${pair}"
-    printf "Removing InlineManifests Config\n"
-    until talosctl patch mc -n "${network}${i}" -e "${network}${i}" --patch 'cluster: {inlineManifests: {$patch: delete}}'; do
+    printf "Removing KubeInlineManifestConfig\n"
+    until talosctl patch mc -n "${network}${i}" -e "${network}${i}" --patch "apiVersion: v1alpha1
+kind: KubeInlineManifestConfig
+name: cluster-bootstrap
+\$patch: delete"; do
       echo "Retrying..."
       sleep 5
     done

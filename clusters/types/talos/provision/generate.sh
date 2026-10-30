@@ -12,6 +12,7 @@ fi
 : "${network:?Error: network is not set}"
 : "${install_disk:?Error: install_disk is not set}"
 : "${image:?Error: image is not set}"
+: "${kubernetes_version:?Error: kubernetes_version is not set}"
 : "${lbvip:?Error: lbvip is not set}"
 : "${gcp_project_id:?Error: gcp_project_id is not set}"
 : "${oidc_issuer:?Error: oidc_issuer is not set}"
@@ -34,7 +35,7 @@ generate_configs() {
   mkdir -p configs/patches
   talosctl gen config k8s.nhlabs.local --with-secrets secrets.yaml https://"${network}${lbvip}":6443 --force --additional-sans \
     "${network}"111,"${network}"112,"${network}"113,sol,clu,ion,sol.nhlabs.local,clu.nhlabs.local,ion.nhlabs.local --with-docs=false \
-    --install-image "${image}" --output-types controlplane -o controlplane.yaml
+    --install-image "${image}" --kubernetes-version "${kubernetes_version}" --output-types controlplane -o controlplane.yaml
   for pair in "${stat_data[@]}"; do
     IFS=":" read -r n i <<< "${pair}"
     echo "Generating patch for ${n} (IP: ${network}${i})..."
@@ -70,16 +71,32 @@ name: br-homelab
 links:
     - enp1s0
 up: true
+addresses:
+    - address: "${network}${i}/24"
+routes:
+    - gateway: "${network}1"
 ---
-debug: false
+apiVersion: v1alpha1
+kind: Layer2VIPConfig
+name: "${network}${lbvip}"
+link: br-homelab
+---
+apiVersion: v1alpha1
+kind: CRICustomizationConfig
+name: discard-unpacked-layers
+content: |
+  [plugins."io.containerd.cri.v1.images"]
+    discard_unpacked_layers = false
+---
+apiVersion: v1alpha1
+kind: KubeletConfig
+\$patch: delete
+---
 machine:
-  files:
-    - path: /etc/cri/conf.d/20-customization.part
-      op: create
-      content: |
-        [plugins."io.containerd.cri.v1.images"]
-          discard_unpacked_layers = false
   kubelet:
+    image: "ghcr.io/siderolabs/kubelet:${kubernetes_version}"
+    defaultRuntimeSeccompProfileEnabled: true
+    disableManifestsDirectory: true
     extraMounts:
       - destination: /var/local-path-provisioner
         type: bind
@@ -91,191 +108,193 @@ machine:
     extraArgs:
       rotate-server-certificates: true
       feature-gates: "InPlacePodVerticalScaling=true"
-
-  install:
-      disk: "${install_disk}"
-      image: "${image}"
-      wipe: true
-
-  nodeLabels:
-    \$patch: delete
-
-  network:
-    interfaces:
-      - interface: br-homelab
-        dhcp: false
-        vip:
-          ip: "${network}${lbvip}"
-        addresses:
-          - "${network}${i}/24"
-        routes:
-          - network: 0.0.0.0/0
-            gateway: "${network}1"
-cluster:
-
-  network:
-    cni:
-      name: none
-
-  proxy:
-    disabled: true
-
-  apiServer:
-    extraArgs:
-      service-account-issuer: "${oidc_issuer}"
-      api-audiences: "https://${network}${lbvip}:6443,${wif_audience}"
-    auditPolicy:
-      apiVersion: audit.k8s.io/v1
-      kind: Policy
-      omitStages:
+---
+apiVersion: v1alpha1
+kind: UnattendedInstallConfig
+provisioning:
+    diskSelector:
+        match: disk.dev_path == "${install_disk}"
+    wipe: true
+---
+apiVersion: v1alpha1
+kind: KubeNodeConfig
+labels:
+    node.kubernetes.io/exclude-from-external-load-balancers:
+        \$patch: delete
+taints:
+    node-role.kubernetes.io/control-plane:
+        \$patch: delete
+---
+apiVersion: v1alpha1
+kind: KubeFlannelCNIConfig
+\$patch: delete
+---
+apiVersion: v1alpha1
+kind: KubeProxyConfig
+enabled: false
+---
+apiVersion: v1alpha1
+kind: KubeAPIServerConfig
+extraArgs:
+    service-account-issuer: "${oidc_issuer}"
+    api-audiences: "https://${network}${lbvip}:6443,${wif_audience}"
+---
+apiVersion: v1alpha1
+kind: KubeAuditPolicyConfig
+configuration:
+    apiVersion: audit.k8s.io/v1
+    kind: Policy
+    omitStages:
         - RequestReceived
-      rules:
+    rules:
         - level: Metadata
-    admissionControl:
-      - name: PodSecurity
-        configuration:
-          defaults:
-            enforce: baseline
-            audit: restricted
+---
+apiVersion: v1alpha1
+kind: KubeAdmissionControlConfig
+name: PodSecurity
+configuration:
+    defaults:
+        enforce: baseline
+        audit: restricted
+---
+apiVersion: v1alpha1
+kind: KubeControllerManagerConfig
+extraArgs:
+    terminated-pod-gc-threshold: "1000"
+---
+apiVersion: v1alpha1
+kind: KubeInlineManifestConfig
+name: cluster-bootstrap
+manifest: |-
+  ---
+  apiVersion: v1
+  kind: Namespace
+  metadata:
+    name: external-secrets
+  ---
+  apiVersion: rbac.authorization.k8s.io/v1
+  kind: ClusterRoleBinding
+  metadata:
+    name: bootstrap-admin
+  roleRef:
+    apiGroup: rbac.authorization.k8s.io
+    kind: ClusterRole
+    name: cluster-admin
+  subjects:
+  - kind: ServiceAccount
+    name: default
+    namespace: kube-system
+  ---
+  apiVersion: batch/v1
+  kind: Job
+  metadata:
+    name: bootstrap-install
+    namespace: kube-system
+  spec:
+    backoffLimit: 6
+    activeDeadlineSeconds: 900
+    ttlSecondsAfterFinished: 1000
+    template:
+      metadata:
+        labels:
+          app: bootstrap-install
+      spec:
+        restartPolicy: OnFailure
+        tolerations:
+          - effect: NoSchedule
+            operator: Exists
+          - effect: NoExecute
+            operator: Exists
+          - effect: PreferNoSchedule
+            operator: Exists
+          - key: node-role.kubernetes.io/control-plane
+            operator: Exists
+            effect: NoSchedule
+          - key: node-role.kubernetes.io/control-plane
+            operator: Exists
+            effect: NoExecute
+          - key: node-role.kubernetes.io/control-plane
+            operator: Exists
+            effect: PreferNoSchedule
+        affinity:
+          nodeAffinity:
+            requiredDuringSchedulingIgnoredDuringExecution:
+              nodeSelectorTerms:
+                - matchExpressions:
+                    - key: node-role.kubernetes.io/control-plane
+                      operator: Exists
+        serviceAccount: default
+        serviceAccountName: default
+        hostNetwork: true
+        volumes:
+        - name: bootstrap-log
+          hostPath:
+            path: /var/log/bootstrap
+            type: DirectoryOrCreate
+        containers:
+        - name: bootstrap-install
+          image: alpine/curl
+          volumeMounts:
+          - name: bootstrap-log
+            mountPath: /var/log/bootstrap
+          env:
+          - name: KUBERNETES_SERVICE_HOST
+            value: "localhost"
+          - name: KUBERNETES_SERVICE_PORT
+            value: "7445"
+          command:
+            - "/bin/sh"
+            - "-c"
+            - |
+              set -uo pipefail
+              LOG=/var/log/bootstrap/bootstrap-install.log
+              : > "\${LOG}"
+              exec >> "\${LOG}" 2>&1
 
-  controllerManager:
-    extraArgs:
-      terminated-pod-gc-threshold: "1000"
+              TOKEN=\$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)
+              API_SERVER="https://localhost:7445"
+              AUTH_HEADER="Authorization: Bearer \${TOKEN}"
 
-  allowSchedulingOnControlPlanes: true
+              retry() {
+                until "\$@"; do
+                  echo "retrying: \$*"
+                  sleep 5
+                done
+              }
 
-  inlineManifests:
-    - name: cluster-bootstrap
-      contents: |-
-        ---
-        apiVersion: v1
-        kind: Namespace
-        metadata:
-          name: external-secrets
-        ---
-        apiVersion: rbac.authorization.k8s.io/v1
-        kind: ClusterRoleBinding
-        metadata:
-          name: bootstrap-admin
-        roleRef:
-          apiGroup: rbac.authorization.k8s.io
-          kind: ClusterRole
-          name: cluster-admin
-        subjects:
-        - kind: ServiceAccount
-          name: default
-          namespace: kube-system
-        ---
-        apiVersion: batch/v1
-        kind: Job
-        metadata:
-          name: bootstrap-install
-          namespace: kube-system
-        spec:
-          backoffLimit: 6
-          activeDeadlineSeconds: 900
-          ttlSecondsAfterFinished: 1000
-          template:
-            metadata:
-              labels:
-                app: bootstrap-install
-            spec:
-              restartPolicy: OnFailure
-              tolerations:
-                - effect: NoSchedule
-                  operator: Exists
-                - effect: NoExecute
-                  operator: Exists
-                - effect: PreferNoSchedule
-                  operator: Exists
-                - key: node-role.kubernetes.io/control-plane
-                  operator: Exists
-                  effect: NoSchedule
-                - key: node-role.kubernetes.io/control-plane
-                  operator: Exists
-                  effect: NoExecute
-                - key: node-role.kubernetes.io/control-plane
-                  operator: Exists
-                  effect: PreferNoSchedule
-              affinity:
-                nodeAffinity:
-                  requiredDuringSchedulingIgnoredDuringExecution:
-                    nodeSelectorTerms:
-                      - matchExpressions:
-                          - key: node-role.kubernetes.io/control-plane
-                            operator: Exists
-              serviceAccount: default
-              serviceAccountName: default
-              hostNetwork: true
-              volumes:
-              - name: bootstrap-log
-                hostPath:
-                  path: /var/log/bootstrap
-                  type: DirectoryOrCreate
-              containers:
-              - name: bootstrap-install
-                image: alpine/curl
-                volumeMounts:
-                - name: bootstrap-log
-                  mountPath: /var/log/bootstrap
-                env:
-                - name: KUBERNETES_SERVICE_HOST
-                  value: "localhost"
-                - name: KUBERNETES_SERVICE_PORT
-                  value: "7445"
-                command:
-                  - "/bin/sh"
-                  - "-c"
-                  - |
-                    set -uo pipefail
-                    LOG=/var/log/bootstrap/bootstrap-install.log
-                    : > "\${LOG}"
-                    exec >> "\${LOG}" 2>&1
+              until curl -sfk -H "\${AUTH_HEADER}" "\${API_SERVER}/readyz" > /dev/null 2>&1; do
+                sleep 2
+              done
 
-                    TOKEN=\$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)
-                    API_SERVER="https://localhost:7445"
-                    AUTH_HEADER="Authorization: Bearer \${TOKEN}"
+              apk update && apk add --no-cache git kubectl kustomize helm
 
-                    retry() {
-                      until "\$@"; do
-                        echo "retrying: \$*"
-                        sleep 5
-                      done
-                    }
+              rm -rf /repo
+              retry git clone -b dev --single-branch https://github.com/nheimlich/homelab.git /repo
 
-                    until curl -sfk -H "\${AUTH_HEADER}" "\${API_SERVER}/readyz" > /dev/null 2>&1; do
-                      sleep 2
-                    done
+              cd /repo/manifests || exit 1
 
-                    apk update && apk add --no-cache git kubectl kustomize helm
+              kustomize build cilium/overlays/homelab | kubectl apply --server-side --force-conflicts -f -
+              sleep 5
 
-                    rm -rf /repo
-                    retry git clone -b dev --single-branch https://github.com/nheimlich/homelab.git /repo
+              kustomize build spegel/overlays/homelab | kubectl apply --server-side --force-conflicts -f -
+              sleep 5
 
-                    cd /repo/manifests || exit 1
+              kustomize build argocd/overlays/homelab | kubectl apply --server-side --force-conflicts -n argocd -f -
 
-                    kustomize build cilium/overlays/homelab | kubectl apply --server-side --force-conflicts -f -
-                    sleep 5
+              cd /repo || exit 1
 
-                    kustomize build spegel/overlays/homelab | kubectl apply --server-side --force-conflicts -f -
-                    sleep 5
+              retry sh -c 'kubectl apply --server-side --force-conflicts -f clusters/envs/homelab/applications.yaml'
 
-                    kustomize build argocd/overlays/homelab | kubectl apply --server-side --force-conflicts -n argocd -f -
+              until kubectl get deployment -n argocd argocd-server > /dev/null 2>&1; do
+                sleep 5
+              done
 
-                    cd /repo || exit 1
+              until ! kubectl get clusterrolebinding bootstrap-admin > /dev/null 2>&1; do
+                kubectl delete clusterrolebinding bootstrap-admin --wait=false > /dev/null 2>&1 || true
+                sleep 10
+              done
 
-                    retry sh -c 'kubectl apply --server-side --force-conflicts -f clusters/envs/homelab/applications.yaml'
-
-                    until kubectl get deployment -n argocd argocd-server > /dev/null 2>&1; do
-                      sleep 5
-                    done
-
-                    until ! kubectl get clusterrolebinding bootstrap-admin > /dev/null 2>&1; do
-                      kubectl delete clusterrolebinding bootstrap-admin --wait=false > /dev/null 2>&1 || true
-                      sleep 10
-                    done
-
-                    echo "Bootstrap complete!"
+              echo "Bootstrap complete!"
 EOF
     echo "Creating config for ${n} (${network}${i})..."
     talosctl machineconfig patch controlplane.yaml --patch @configs/patches/"${n}".patch --output configs/"${n}".yaml
